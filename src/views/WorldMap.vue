@@ -4,13 +4,8 @@
     <div>
       <button @click="() => {incrementCanvasWidth(20); incrementCanvasHeigth(20)}">Increase size</button>
       <button @click="() => {incrementCanvasWidth(-20); incrementCanvasHeigth(-20)}">Decrease size</button>
-      <div>
-        Grab map
-        <label class="switch">
-          <input type="checkbox" v-model="grabMap">
-          <span class="slider round"></span>
-        </label>
-      </div>
+      <Toggle label="Grab map"/>
+      <Toggle label="Draw"/>
     </div>
     <div
       class="frame"
@@ -29,11 +24,11 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
 import { Watch } from 'vue-property-decorator';
-import HelloWorld from '@/components/HelloWorld.vue'; // @ is an alias to /src
+import Toggle from '@/components/Toggle.vue';
 
 @Options({
   components: {
-    HelloWorld,
+    Toggle,
   },
 })
 export default class WorldMap extends Vue {
@@ -141,8 +136,6 @@ export default class WorldMap extends Vue {
 </script>
 
 <style lang="scss">
-@import '@/style/global.scss';
-
 .map-wrapper {
   display: flex;
   flex-flow: column;
