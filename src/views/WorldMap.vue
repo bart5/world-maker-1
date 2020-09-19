@@ -4,17 +4,24 @@
     <div>
       <button @click="() => {incrementCanvasWidth(20); incrementCanvasHeigth(20)}">Increase size</button>
       <button @click="() => {incrementCanvasWidth(-20); incrementCanvasHeigth(-20)}">Decrease size</button>
-      <!-- <button @click="() => {this.grabMap = !this.grabMap}">Move map</button> -->
-      <label class="switch">
-        <input type="checkbox">
-        <span class="slider round"></span>
-      </label>
+      <div>
+        Grab map
+        <label class="switch">
+          <input type="checkbox" v-model="grabMap">
+          <span class="slider round"></span>
+        </label>
+      </div>
     </div>
     <div
       class="frame"
-      :class="{ grabMap }"
+      ref="mapFrame"
     >
-      <canvas :width="canvasWidth" :height="canvasHeight" id="canvas"></canvas>
+      <canvas :width="canvasWidth" :height="canvasHeight" id="canvas"
+        :class="{ grabMap, dragMap }"
+        ref="mapCanvas"
+        @mousedown="handleCanvasMousedown"
+        @mouseup="handleCanvasMouseup"
+      ></canvas>
     </div>
   </div>
 </template>
@@ -37,6 +44,8 @@ export default class WorldMap extends Vue {
   drawCallId = 0
 
   grabMap = false
+
+  dragMap = false
 
   @Watch('canvasWidth')
   @Watch('canvasHeight')
@@ -91,6 +100,43 @@ export default class WorldMap extends Vue {
   incrementCanvasHeigth(dy: number) {
     this.setCanvasHeight(this.canvasHeight + dy)
   }
+
+  startDrag() {
+    this.dragMap = true
+    window.addEventListener('mousemove', this.onMovement)
+    window.addEventListener('mouseup', this.endDrag)
+  }
+
+  endDrag() {
+    this.dragMap = false
+    window.removeEventListener('mousemove', this.onMovement)
+    window.removeEventListener('mouseup', this.endDrag)
+  }
+
+  onMovement(event: MouseEvent) {
+    const dx = event.movementX
+    const dy = event.movementY
+    this.mapFrame.scrollBy(-dx, -dy)
+  }
+
+  handleCanvasMousedown(e: MouseEvent) {
+    console.log('mousedown event: ', e)
+    if (this.grabMap) {
+      this.startDrag()
+    }
+  }
+
+  handleCanvasMouseup(e: MouseEvent) {
+    console.log('mouseup event: ', e)
+  }
+
+  get mapCanvas() {
+    return this.$refs.mapCanvas as HTMLCanvasElement
+  }
+
+  get mapFrame() {
+    return this.$refs.mapFrame as HTMLDivElement
+  }
 }
 </script>
 
@@ -107,18 +153,19 @@ export default class WorldMap extends Vue {
   border: 2px solid;
   width: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: baseline;
   overflow: scroll;
 }
 
 #canvas {
   border: 1px solid gray;
-}
 
-.grabMap {
-  &:hover {
-    cursor: pointer;
+  &.grabMap:hover {
+    cursor: grab;
+  }
+
+  &.dragMap:hover {
+    cursor: grabbing;
   }
 }
 
