@@ -19,5 +19,6 @@ module.exports = {
     // 'no-trailing-spaces': 0,
     'comma-dangle': 0,
     'max-len': 0,
+    'no-explicit-any': 0
   },
 };

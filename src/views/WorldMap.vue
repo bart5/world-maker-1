@@ -4,7 +4,10 @@
     <div>
       <button @click="() => {incrementCanvasWidth(20); incrementCanvasHeigth(20)}">Increase size</button>
       <button @click="() => {incrementCanvasWidth(-20); incrementCanvasHeigth(-20)}">Decrease size</button>
-      <Toggle label="Grab map"/>
+      <Toggle label="Grab map"
+        :value="grabMap"
+        @checked="(newValue) => grabMap = newValue"
+      />
       <Toggle label="Draw"/>
     </div>
     <div
@@ -131,6 +134,10 @@ export default class WorldMap extends Vue {
 
   get mapFrame() {
     return this.$refs.mapFrame as HTMLDivElement
+  }
+
+  print(msg: string) {
+    console.log(msg)
   }
 }
 </script>
