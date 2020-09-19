@@ -4,8 +4,16 @@
     <div>
       <button @click="() => {incrementCanvasWidth(20); incrementCanvasHeigth(20)}">Increase size</button>
       <button @click="() => {incrementCanvasWidth(-20); incrementCanvasHeigth(-20)}">Decrease size</button>
+      <!-- <button @click="() => {this.grabMap = !this.grabMap}">Move map</button> -->
+      <label class="switch">
+        <input type="checkbox">
+        <span class="slider round"></span>
+      </label>
     </div>
-    <div class="frame">
+    <div
+      class="frame"
+      :class="{ grabMap }"
+    >
       <canvas :width="canvasWidth" :height="canvasHeight" id="canvas"></canvas>
     </div>
   </div>
@@ -27,6 +35,8 @@ export default class WorldMap extends Vue {
   canvasHeight = 1000
 
   drawCallId = 0
+
+  grabMap = false
 
   @Watch('canvasWidth')
   @Watch('canvasHeight')
@@ -85,6 +95,8 @@ export default class WorldMap extends Vue {
 </script>
 
 <style lang="scss">
+@import '@/style/global.scss';
+
 .map-wrapper {
   display: flex;
   flex-flow: column;
@@ -97,11 +109,17 @@ export default class WorldMap extends Vue {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: scroll;
 }
 
 #canvas {
   border: 1px solid gray;
+}
+
+.grabMap {
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 </style>
