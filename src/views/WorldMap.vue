@@ -8,7 +8,10 @@
         :value="grabMap"
         @checked="(newValue) => grabMap = newValue"
       />
-      <Toggle label="Draw"/>
+      <Toggle label="Draw"
+        :value="drawOnMap"
+        @checked="(newValue) => drawOnMap = newValue"
+      />
     </div>
     <div
       class="frame"
@@ -45,6 +48,13 @@ export default class WorldMap extends Vue {
 
   dragMap = false
 
+  drawOnMap = false
+
+  lastDrawPosition = {
+    x: 0,
+    y: 0
+  }
+
   @Watch('canvasWidth')
   @Watch('canvasHeight')
   renderCanvas() {
@@ -68,19 +78,8 @@ export default class WorldMap extends Vue {
 
   drawMap() {
     console.log('drawing')
-    const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-    if (canvas && canvas.getContext) {
-      const ctx = canvas.getContext('2d')
-
-      if (!ctx) {
-        console.warn('Could not obtain rendering context')
-        return
-      }
-
-      console.log('about to draw')
-      ctx.fillStyle = 'green'
-      ctx.fillRect(500, 500, 150, 100)
-    }
+    this.ctx.fillStyle = 'green'
+    this.ctx.fillRect(500, 500, 150, 100)
   }
 
   setCanvasWidth(x: number) {
@@ -101,26 +100,62 @@ export default class WorldMap extends Vue {
 
   startDrag() {
     this.dragMap = true
-    window.addEventListener('mousemove', this.onMovement)
+    window.addEventListener('mousemove', this.onDrag)
     window.addEventListener('mouseup', this.endDrag)
   }
 
   endDrag() {
     this.dragMap = false
-    window.removeEventListener('mousemove', this.onMovement)
+    window.removeEventListener('mousemove', this.onDrag)
     window.removeEventListener('mouseup', this.endDrag)
   }
 
-  onMovement(event: MouseEvent) {
-    const dx = event.movementX
-    const dy = event.movementY
+  onDrag(e: MouseEvent) {
+    const dx = e.movementX
+    const dy = e.movementY
     this.mapFrame.scrollBy(-dx, -dy)
+  }
+
+  startDraw(e: MouseEvent) {
+    this.lastDrawPosition = {
+      x: e.offsetX,
+      y: e.offsetY
+    }
+    window.addEventListener('mousemove', this.onDraw)
+    window.addEventListener('mouseup', this.endDraw)
+  }
+
+  endDraw() {
+    window.removeEventListener('mousemove', this.onDraw)
+    window.removeEventListener('mouseup', this.endDraw)
+  }
+
+  onDraw(e: MouseEvent) {
+    const x1 = this.lastDrawPosition.x
+    const y1 = this.lastDrawPosition.y
+    const x2 = e.offsetX
+    const y2 = e.offsetY
+
+    this.ctx.beginPath();
+    this.ctx.strokeStyle = 'black';
+    this.ctx.lineWidth = 1;
+    this.ctx.moveTo(x1, y1);
+    this.ctx.lineTo(x2, y2);
+    this.ctx.stroke();
+    this.ctx.closePath();
+
+    this.lastDrawPosition = {
+      x: x2,
+      y: y2
+    }
   }
 
   handleCanvasMousedown(e: MouseEvent) {
     console.log('mousedown event: ', e)
     if (this.grabMap) {
       this.startDrag()
+    } else if (this.drawOnMap) {
+      this.startDraw(e)
     }
   }
 
@@ -128,16 +163,36 @@ export default class WorldMap extends Vue {
     console.log('mouseup event: ', e)
   }
 
-  get mapCanvas() {
-    return this.$refs.mapCanvas as HTMLCanvasElement
+  get mapCanvas(): HTMLCanvasElement {
+    const canvas = this.$refs.mapCanvas as HTMLCanvasElement
+    if (canvas && canvas.getContext) {
+      return canvas
+    }
+    throw Error('Could not locate canvas.')
+  }
+
+  get ctx() {
+    const ctx = this.mapCanvas.getContext('2d')
+    if (ctx) {
+      return ctx
+    }
+    throw Error('Could not get 2D context')
   }
 
   get mapFrame() {
     return this.$refs.mapFrame as HTMLDivElement
   }
 
-  print(msg: string) {
-    console.log(msg)
+  getCanvasCoords(x: number, y: number) {
+    const rect = this.mapCanvas.getBoundingClientRect()
+    console.log('x: ', x)
+    console.log('rect left: ', rect.left)
+    console.log('y: ', y)
+    console.log('rect top: ', rect.top)
+    return {
+      x: x - rect.left,
+      y: y - rect.top
+    }
   }
 }
 </script>
