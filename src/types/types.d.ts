@@ -1,3 +1,6 @@
+
+type taskId = string
+
 export interface Task {
   readonly id: string;
   readonly name: string;
@@ -16,15 +19,15 @@ export interface Task {
   done: boolean;
   isFirstTask: boolean;
   isLastTask: boolean;
-  children: Task[];
-  parents: Task[];
+  formerTask: taskId;
+  nextTasks: taskId[];
 }
 /*
   Task needs additional data to form tree structure
 */
 
 export interface Quest {
-  tasks: Task[];
+  tasks: taskId[];
   active: boolean;
   done: boolean;
   failed: boolean;
@@ -62,6 +65,7 @@ enum EffectType {
   GrantItem = 'Grant item',
   RemoveItem = 'Remove item',
   EnableDialog = 'Enable dialog',
+  DisableDialog = 'Remove dialog',
   AddMember = 'Add member to the party',
   RemoveMember = 'Remove member from the party',
   UncoverLocation = 'Uncover location',
@@ -94,6 +98,8 @@ export function ValidateQuests(): void
 
 interface Journal {}
 
+interface Conversations {}
+
 interface JournalEntry {}
 
 interface QuestTracker {}
@@ -101,8 +107,24 @@ interface QuestTracker {}
 interface DialogOptions {}
 
 
-interface Dialog {
+type agentId = string
 
+type groupId = string
+
+interface Dialog {
+  type: DialogType;
+  agentId?: agentId;
+  groupId?: groupdId;
+}
+
+type utteranceId = string
+
+interface Utterance {
+  id: utteranceId,
+  agent: agentId,
+  content: string,
+  formerUtterance: utteranceId,
+  nextUtterances: utteranceId[],
 }
 
 export function Prompter(agentId: string): DialogOptions
