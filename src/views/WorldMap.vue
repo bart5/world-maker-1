@@ -21,8 +21,8 @@
         :class="{ grabMap, dragMap }"
         ref="mapCanvas"
         @mousedown="handleCanvasMousedown"
-        @mouseup="handleCanvasMouseup"
       ></canvas>
+        <!-- @mouseup="handleCanvasMouseup" -->
     </div>
   </div>
 </template>
@@ -151,7 +151,6 @@ export default class WorldMap extends Vue {
   }
 
   handleCanvasMousedown(e: MouseEvent) {
-    console.log('mousedown event: ', e)
     if (this.grabMap) {
       this.startDrag()
     } else if (this.drawOnMap) {
@@ -159,9 +158,9 @@ export default class WorldMap extends Vue {
     }
   }
 
-  handleCanvasMouseup(e: MouseEvent) {
-    console.log('mouseup event: ', e)
-  }
+  // handleCanvasMouseup(e: MouseEvent) {
+  //   console.log('mouseup event: ', e)
+  // }
 
   get mapCanvas(): HTMLCanvasElement {
     const canvas = this.$refs.mapCanvas as HTMLCanvasElement
