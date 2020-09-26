@@ -1,53 +1,79 @@
 export interface Task {
   readonly id: string;
   readonly name: string;
+  /**
+   * labour result is subscribing to proper state transition on
+   * entity it concerns (e.g. expectation to win in battle encounter)
+   */
   readonly labours: any[];
+  /**
+   * effect result is usually immediate (e.g. granting currenty)
+   */
   readonly effects: any[];
 
   allowed: boolean;
   active: boolean; // allowed && !done
   done: boolean;
+  isFirstTask: boolean;
+  isLastTask: boolean;
+  children: Task[];
+  parents: Task[];
 }
-
-export interface InitiationTask {
-  readonly labours: any[];
-  readonly allowQuests: AllowQuest;
-  readonly allowed: true;
-  readonly active: true;
-
-  done: boolean;
-}
+/*
+  Task needs additional data to form tree structure
+*/
 
 export interface Quest {
-  initiationTask: InitiationTask;
   tasks: Task[];
-
-  allowed: boolean;
   active: boolean;
   done: boolean;
-}
-
-
-interface ActiveQuests {
-
+  failed: boolean;
 }
 
 interface Labour {
-  target;
-
+  labourType: LabourType;
+  payload: {
+    entityId?: string
+  }
 }
 
-
-export function Labour(battleId: string): boolean
-export function Labour(dialogId: string): boolean
-export function Labour(itemId: string): boolean
-
 enum LabourType {
+  WinBattle = 'Win battle',
+  SelectDialog = 'Select dialog',
+  VisitRegion = 'Visit region',
+  VisitLocation = 'Visit location',
+  VisitMarker = 'Visit marker',
+  ObtainItem = 'Obtain item',
 
+  Custom = 'Custom labour'
+}
+
+interface Effect {
+  effectType: EffectType,
+  payload: {
+    entityId?: string
+  }
 }
 
 enum EffectType {
+  GrantExperience = 'Grant experience points',
+  GrantCurrency = 'Grant currency',
+  RemoveCurrency = 'Remove currency',
+  GrantItem = 'Grant item',
+  RemoveItem = 'Remove item',
+  EnableDialog = 'Enable dialog',
+  AddMember = 'Add member to the party',
+  RemoveMember = 'Remove member from the party',
+  UncoverLocation = 'Uncover location',
+  GrantSkillPoints = 'Grant skill points',
+  RemoveSkillPoints = 'Remove skill points',
+  GrantAbility = 'Grant ability',
+  RemoveAbility = 'Remove ability',
+  RepairItem = 'Repair item',
+  TransportParty = 'Transport party',
+  GrantLoot = 'Grant loot',
 
+  Custom = 'Custom effect',
 }
 
 
@@ -66,11 +92,23 @@ export function FinishQuest(questId: string): void
 export function ValidateQuests(): void
 
 
-/*
-  FLOW
+interface Journal {}
 
-  At the beginning of the game we go through all the quests.
-  All initiation tasks attach their triggers.
+interface JournalEntry {}
 
-*/
+interface QuestTracker {}
+
+interface DialogOptions {}
+
+
+interface Dialog {
+
+}
+
+export function Prompter(agentId: string): DialogOptions
+
+interface Location {}
+
+interface Region {}
+
 
