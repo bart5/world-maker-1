@@ -2,45 +2,57 @@
 type taskId = string
 
 export interface Task {
-  readonly id: string;
-  readonly name: string;
+  id: taskId;
+  name: string;
   /**
-   * labour result is subscribing to proper state transition on
-   * entity it concerns (e.g. expectation to win in battle encounter)
+   * labours end up as subscriptions to proper state transition on
+   * entity they concern (e.g. expectation to win in battle encounter)
    */
-  readonly labours: any[];
+  labours: Labour[];
   /**
-   * effect result is usually immediate (e.g. granting currenty)
+   * effect is some immediate result of fulfilling labours (e.g. granting currenty)
    */
-  readonly effects: any[];
+  effects: Effect[];
 
-  allowed: boolean;
-  active: boolean; // allowed && !done
+  /**
+   * Becomes active when previous task is done. Active task generates
+   * subscriptions according to labours.
+   */
+  active: boolean;
   done: boolean;
   isFirstTask: boolean;
   isLastTask: boolean;
   formerTask: taskId;
-  nextTasks: taskId[];
+  nextTasks: taskId[]; // most of the times there is just one next task
 }
 /*
   Task needs additional data to form tree structure
 */
 
+type questId = string
+
 export interface Quest {
-  tasks: taskId[];
+  id: questId;
+  name: string;
+  firstTask: taskId;
+  /**
+   * is active when is neither done nor failed nor obsolete
+   */
   active: boolean;
   done: boolean;
   failed: boolean;
+  obsolete: boolean;
+  dialog?: dialogId;
 }
 
-interface Labour {
+export interface Labour {
   labourType: LabourType;
   payload: {
     entityId?: string
   }
 }
 
-enum LabourType {
+export enum LabourType {
   WinBattle = 'Win battle',
   SelectDialog = 'Select dialog',
   VisitRegion = 'Visit region',
@@ -51,21 +63,21 @@ enum LabourType {
   Custom = 'Custom labour'
 }
 
-interface Effect {
+export interface Effect {
   effectType: EffectType,
   payload: {
     entityId?: string
   }
 }
 
-enum EffectType {
+export enum EffectType {
   GrantExperience = 'Grant experience points',
   GrantCurrency = 'Grant currency',
   RemoveCurrency = 'Remove currency',
   GrantItem = 'Grant item',
   RemoveItem = 'Remove item',
   EnableDialog = 'Enable dialog',
-  DisableDialog = 'Remove dialog',
+  DisableDialog = 'Disable dialog',
   AddMember = 'Add member to the party',
   RemoveMember = 'Remove member from the party',
   UncoverLocation = 'Uncover location',
@@ -76,10 +88,9 @@ enum EffectType {
   RepairItem = 'Repair item',
   TransportParty = 'Transport party',
   GrantLoot = 'Grant loot',
-
-  Custom = 'Custom effect',
+  AddJournalEntry = 'Add journal entry',
+  RunScript = 'Run script',
 }
-
 
 export function AllowQuest(id: string): void
 
@@ -89,48 +100,99 @@ export function SetTaskWatchers(): void
 
 export function FinishQuest(questId: string): void
 
-/**
- * Check if all existing not-done quests have active
- * initiationTask or Task.
- */
-export function ValidateQuests(): void
-
-
-interface Journal {}
+interface Journal {
+  activeQuests:
+}
 
 interface Conversations {}
 
-interface JournalEntry {}
+interface JournalEntry {
+
+}
 
 interface QuestTracker {}
 
 interface DialogOptions {}
 
-
 type agentId = string
 
 type groupId = string
 
-interface Dialog {
-  type: DialogType;
-  agentId?: agentId;
-  groupId?: groupdId;
+type dialogId = string
+
+export interface Dialog {
+  id: dialogId;
+  /**
+   * Allowed dialog is one that user is eligible to see.
+   */
+  allowed: boolean;
+  /**
+   * Active dialog is currently displayed.
+   */
+  active: boolean;
+  /**
+   * It's meant to disallow certain conversations as special effect
+   * of some story-related developments.
+   * Be careful about disabling shared dialog.
+   */
+  disabled: boolean;
+  dirty: boolean;
+  /**
+   * Private dialogs are ment for only a single agent.
+   * Non-private dialog is by definition shared or common,
+   * and will be used by many agents.
+   */
+  isPrivate: boolean;
+  agentsIncluded?: agentId[];
+  agentsExcluded?: agentId[];
+  groupsIncluded?: groupId[];
+  groupsExcluded?: groupId[];
+  startLine: lineId;
 }
 
-type utteranceId = string
+export type lineId = string
 
-interface Utterance {
-  id: utteranceId,
-  agent: agentId,
-  content: string,
-  formerUtterance: utteranceId,
-  nextUtterances: utteranceId[],
+export interface Line {
+  id: lineId;
+  dialogId: dialogId;
+  agent: agentId;
+  content: string;
+  formerLine: lineId;
+  nextLines: lineId[];
+  effects: Effect[];
+  /**
+   * ChoiceRank allows manual control of dialog options ordering.
+   */
+  choiceRank?: number;
 }
 
-export function Prompter(agentId: string): DialogOptions
+export function Prompter(agentId: agentId): DialogOptions
+
+/*  */
+
+
+
+
+/*  */
 
 interface Location {}
 
 interface Region {}
 
 
+/*  */
+
+/*
+  Identify which values can mutate and thus should be saved.
+*/
+
+interface SavedGame {}
+
+/*  */
+
+/**
+ * This is dev-time debug
+ *
+ * On game state initiation look for unfinishable quests
+ */
+export function ValidateQuests(): void
