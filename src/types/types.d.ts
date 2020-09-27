@@ -230,6 +230,15 @@ export function Prompter(agentId: agentId): DialogOptions
 interface Agent {}
 
 
+interface Party {}
+
+
+interface Item {
+  obj3D: any;
+  // ...
+}
+
+
 /*  */
 
 /**
@@ -238,7 +247,42 @@ interface Agent {}
  */
 interface Region {}
 
+
 /**
+ * Generic object indicating anything interactive outside battle
+ * environment.
+ *
+ * Interactable can be an abstract UI-only object or can be attached
+ * to 'physical' entity like a model.
+ */
+interface Interactable {}
+
+interface RegionMarker {}
+
+/**
+ * Map
+ */
+interface MapMarker {}
+
+
+enum MapMarkerType {
+
+}
+
+/**
+ * Location is a symbol and a portal:
+ * - from region to location
+ * - from region to region
+ * - from location to location
+ * - from location to region
+ *
+ * Location can be:
+ * - 3D environment abiding to some 2D map
+ * - view of a city or town with selection of locations in them
+ * - interior view of some building (house, show, throne room) usually
+ * allowing to further select inhabitants for dialog-based interaction
+ *
+ *
  * Location denotes a place that would commonly be understood
  * as a permanent or temporary structure or their collections
  * and being habitable or serviceable in other way to some creatures.
@@ -249,6 +293,37 @@ interface Region {}
  * world-objects that can be interacted with from the map level.
  */
 interface Location {}
+
+/**
+ * Scene type.
+ *
+ * Simplified presentation of a location, usually and overview
+ * with highlights of points of interests.
+ */
+interface LocationView {}
+
+/**
+ * Scene type.
+ *
+ * Interior view shows insides of some building.
+ * It is similar to LocationView in that it also provides
+ * some form of highlight of 'interactables'.
+ */
+interface InteriorView {}
+
+/**
+ * Scene type.
+ *
+ * View of camping party.
+ * Provides interface for interaction allowed only during camping.
+ */
+interface CampView {}
+
+interface DialogInteraction {}
+
+interface TradeInteraction {}
+
+
 
 /*  */
 
