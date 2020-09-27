@@ -10,20 +10,20 @@ type journalEntryId = string
 export interface Task {
   id: taskId;
   name: string;
-  lineId: lineId;
+  questId: questId;
   /**
-   * labours end up as subscriptions to proper state transition on
-   * entity they concern (e.g. expectation to win in battle encounter)
+   * Labours end up as subscriptions to proper state transition on
+   * entity they concern (e.g. expectation to win in battle encounter).
    */
   labours: Labour[];
   /**
-   * effect is some immediate result of fulfilling labours (e.g. granting currenty)
+   * Effect is some immediate result of fulfilling labours (e.g. granting currency).
    */
   effects: Effect[];
   /**
    * Certain states which will result in player failing the task and the quest.
    */
-  dealBreakers?: Labour[];
+  dealBreakers: Labour[];
   onFailure: Effects[];
   /**
    * Becomes active when previous task is done. Active task generates
@@ -33,11 +33,10 @@ export interface Task {
   done: boolean;
   failed: boolean;
   /**
-   * First task is one that is hidden and is meant to establish
-   * if actual quest should begin.
+   * First task is one that is hidden and is meant to decide
+   * if the actual quest should begin.
    * For this reason it will almost always be hidden to the player.
-   * First task will generate subscriptions just as
-   * the game world is booted.
+   * First task will generate subscriptions just as the game world is booted.
    */
   isFirstTask: boolean;
   /**
@@ -45,12 +44,13 @@ export interface Task {
    */
   isLastTask: boolean;
   formerTask: taskId;
-  nextTasks: taskId[]; // most of the times there is just one next task
+  nextTasks: taskId[]; // most of the times there will be just one next task
 }
-/*
-  Task needs additional data to form tree structure
-*/
 
+/**
+ * Quest is just a wrapper for tasks which are *the* meat and potatoes
+ * of the quest-system.
+ */
 export interface Quest {
   id: questId;
   name: string;
@@ -66,12 +66,12 @@ export interface Quest {
    * has no longer reason to exist.
    */
   obsolete: boolean;
-  dialog?: dialogId;
+  dialog: dialogId;
 }
 
 export interface Labour {
   labourType: LabourType;
-  payload: {
+  payload?: {
     entityId?: string
   }
 }
@@ -121,29 +121,61 @@ export enum EffectType {
   RunScript = 'Run script',
 }
 
-interface Journal {
-  activeQuests: JournalEntry[];
-  completedQests: JournalEntry[];
-  failedQuests: JournalEntry[];
+/* Journal */
+
+/**
+ * Journal keeps quest-related entires.
+ * Entries are created as effects of tasks.
+ */
+export interface Journal {
+  activeQuests: {
+    [questId as string]: Array<JournalEntry> // later filtered by date for display
+  };
+  completedQests: {
+    [questId as string]: Array<JournalEntry>
+  };
+  failedQuests: {
+    [questId as string]: Array<JournalEntry>
+  };
 }
 
 interface JournalEntry {
   id: journalEntryId;
-  entryDate: string;
   questId: questId;
+  entryDate: string;
 }
 
-type Conversations = Array<Conversation>
+/* Conversations */
 
-interface Conversation {
+/**
+ * Conversations keep record of lines exchanged with NPCs
+ * in order of their appearance.
+ * No duplicates.
+ */
+
+interface Conversations {
+  [agentId as string]: Array<ConversationEntry>
+}
+
+interface ConversationEntry {
+  id: conversationEntryId;
   agentId: agentId;
   line: Line;
+  entryDate: string;
 }
+
+/* Bestiary */
+
+/* Notes about locations and regions */
+
+/* Notes about people */
+
+/* Dialogs */
 
 export interface Dialog {
   id: dialogId;
   /**
-   * Allowed dialog is one that user is eligible to see.
+   * Allowed dialog is one that user is allowed to see.
    */
   allowed: boolean;
   /**
@@ -151,8 +183,8 @@ export interface Dialog {
    */
   active: boolean;
   /**
-   * It's meant to disallow certain conversations as special effect
-   * of some story-related developments.
+   * It's meant to disallow certain conversations as a result
+   * of story-related developments.
    * Be careful about disabling shared dialog.
    */
   disabled: boolean;
@@ -163,10 +195,17 @@ export interface Dialog {
    * and will be used by many agents.
    */
   isPrivate: boolean;
-  agentsIncluded?: agentId[];
+  /**
+   * Priority:
+   * G1 = [A1, A21]
+   * G2 = [A21, A22]
+   * + G1 - G2 + A1 + A22 => [A1, A22]
+   * + G1 - A21 => [A1]
+   */
   agentsExcluded?: agentId[];
-  groupsIncluded?: groupId[];
   groupsExcluded?: groupId[];
+  agentsIncluded?: agentId[];
+  groupsIncluded?: groupId[];
   startLine: lineId;
 }
 
@@ -188,21 +227,28 @@ export function Prompter(agentId: agentId): DialogOptions
 
 /*  */
 
+interface Agent {}
+
 
 /*  */
 
-interface Location {}
-
+/**
+ * Region is a single piece of world-map containing "region"
+ * and being a wrapper for collection of locations.
+ */
 interface Region {}
 
-
-/*  */
-
-/*
-  Identify which values can mutate and thus should be saved.
-*/
-
-interface SavedGame {}
+/**
+ * Location denotes a place that would commonly be understood
+ * as a permanent or temporary structure or their collections
+ * and being habitable or serviceable in other way to some creatures.
+ *
+ * In more in-game meaning: it's one of few possible and most common
+ * point of interest on the map for the player that can be 'visited'.
+ * Other being creatures moving on the map, or any kind of special
+ * world-objects that can be interacted with from the map level.
+ */
+interface Location {}
 
 /*  */
 
@@ -212,3 +258,30 @@ interface SavedGame {}
  * On game state initiation look for unfinishable quests
  */
 export function ValidateQuests(): void
+
+
+/* Game state inspector */
+
+/**
+ * Game state is minimal required information that feed
+ * to the game allows restoring it's state from any
+ * previous time that the information pertains to.
+ *
+ * That information is easiet to determine by taking look
+ * at any mutations that game systems allow.
+ * Everything that is mutated at least once is stateful
+ * and should be possible to save.
+ */
+
+interface GameState {}
+
+/**
+ * Properties that may be constant, or that are modifiable
+ * independently on the in-game operations and can vary
+ * for two identical states running at different points in time.
+ *
+ * Examples of this modifiable data:
+ *  - quotients and stats modifying slightly game mechanics
+ *  - graphical, audio and gameplay settings
+ */
+interface GameConfiguration {}
