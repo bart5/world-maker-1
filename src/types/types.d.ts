@@ -8,6 +8,9 @@ type lineId = string
 type journalEntryId = string
 type regionMapId = string
 type locationMapId = string
+type regionId = string
+type locationId = string
+type mapMarkerId = string
 
 export interface Task {
   id: taskId;
@@ -231,44 +234,36 @@ export function Prompter(agentId: agentId): DialogOptions
 
 interface Agent {}
 
-
 interface Party {}
-
 
 interface Item {
   obj3D: any;
   // ...
 }
 
+enum ItemType {
+
+}
 
 /*  */
 
 /**
- * Region is a largest unit of game-world that player is presented with.
+ * Scene type.
+ *
+ * Region is presented as a (largely) 2D map.
+ * It is the largest part of game-world that player is presented with at once.
+ *
+ * Region should always synonymous with some world part that can
+ * also be seen as separate in world-building terms.
  */
 interface Region {
   name: string;
-  id: string;
+  id: regionId;
   map: regionMapId;
 }
 
-/**
- * Marker on a map.
- * Has different function depending on it's type.
- */
-interface MapMarker {
-  type: MapMarkerType;
-  parentMap: mapId;
-
-}
-
-
-enum MapMarkerType {
-
-}
-
-interface locationMap {
-
+interface RegionMap {
+  id: regionMapId;
 }
 
 /**
@@ -277,7 +272,28 @@ interface locationMap {
  * Location is a 3D level.
  */
 interface Location {
-  map: mapId;
+  name: string,
+  id: locationId;
+  map: locationMapId;
+}
+
+interface LocationMap {
+  id: locationMapId;
+}
+
+/**
+ * Marker on a map.
+ * Has different function depending on it's type.
+ */
+interface MapMarker {
+  name: string,
+  id: mapMarkerId;
+  type: MapMarkerType;
+  parentMap: mapId;
+}
+
+enum MapMarkerType {
+
 }
 
 /**
@@ -312,6 +328,12 @@ interface DialogInteraction {}
 interface TradeInteraction {}
 
 
+interface PartyUI {}
+
+interface CharacterUI {}
+
+
+
 
 /*  */
 
@@ -336,7 +358,7 @@ export function ValidateQuests(): void
  * and should be possible to save.
  */
 
-interface GameState {}
+interface GameWorldState {}
 
 /**
  * Properties that may be constant, or that are modifiable
