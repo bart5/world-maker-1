@@ -6,6 +6,8 @@ type groupId = string
 type dialogId = string
 type lineId = string
 type journalEntryId = string
+type regionMapId = string
+type locationMapId = string
 
 export interface Task {
   id: taskId;
@@ -242,57 +244,41 @@ interface Item {
 /*  */
 
 /**
- * Region is a single piece of world-map containing "region"
- * and being a wrapper for collection of locations.
+ * Region is a largest unit of game-world that player is presented with.
  */
-interface Region {}
-
+interface Region {
+  name: string;
+  id: string;
+  map: regionMapId;
+}
 
 /**
- * Generic object indicating anything interactive outside battle
- * environment.
- *
- * Interactable can be an abstract UI-only object or can be attached
- * to 'physical' entity like a model.
+ * Marker on a map.
+ * Has different function depending on it's type.
  */
-interface Interactable {}
+interface MapMarker {
+  type: MapMarkerType;
+  parentMap: mapId;
 
-interface RegionMarker {}
-
-/**
- * Map
- */
-interface MapMarker {}
+}
 
 
 enum MapMarkerType {
 
 }
 
+interface locationMap {
+
+}
+
 /**
- * Location is a symbol and a portal:
- * - from region to location
- * - from region to region
- * - from location to location
- * - from location to region
+ * Scene type.
  *
- * Location can be:
- * - 3D environment abiding to some 2D map
- * - view of a city or town with selection of locations in them
- * - interior view of some building (house, show, throne room) usually
- * allowing to further select inhabitants for dialog-based interaction
- *
- *
- * Location denotes a place that would commonly be understood
- * as a permanent or temporary structure or their collections
- * and being habitable or serviceable in other way to some creatures.
- *
- * In more in-game meaning: it's one of few possible and most common
- * point of interest on the map for the player that can be 'visited'.
- * Other being creatures moving on the map, or any kind of special
- * world-objects that can be interacted with from the map level.
+ * Location is a 3D level.
  */
-interface Location {}
+interface Location {
+  map: mapId;
+}
 
 /**
  * Scene type.
@@ -318,6 +304,8 @@ interface InteriorView {}
  * Provides interface for interaction allowed only during camping.
  */
 interface CampView {}
+
+
 
 interface DialogInteraction {}
 
