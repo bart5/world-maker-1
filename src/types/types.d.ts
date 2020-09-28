@@ -1,16 +1,19 @@
 
 type taskId = string
 type questId = string
-type agentId = string
+type actorId = string
 type groupId = string
 type dialogId = string
-type lineId = string
+type dialogLineId = string
 type journalEntryId = string
-type regionMapId = string
-type locationMapId = string
 type regionId = string
 type locationId = string
-type mapMarkerId = string
+type regionMapId = string
+type locationMapId = string
+type MarkerId = string
+type roadId = string
+type locationViewId = string
+type DungeonMapId = string
 
 export interface Task {
   id: taskId;
@@ -123,6 +126,9 @@ export enum EffectType {
   ActivateTask = 'Activate task',
   CompleteQuest = 'Complete quest',
   FailQuest = 'Fail quest',
+  TravelToCoordinates = 'Travel to coordinates on the road',
+  TravelToMarker = 'Travel to map marker',
+  ActivateMarker = 'Activate marker',
   RunScript = 'Run script',
 }
 
@@ -159,13 +165,13 @@ interface JournalEntry {
  */
 
 interface Conversations {
-  [agentId as string]: Array<ConversationEntry>
+  [actorId as string]: Array<ConversationEntry>
 }
 
 interface ConversationEntry {
   id: conversationEntryId;
-  agentId: agentId;
-  line: Line;
+  actorId: actorId;
+  dialogLine: DialogLine;
   entryDate: string;
 }
 
@@ -195,32 +201,31 @@ export interface Dialog {
   disabled: boolean;
   dirty: boolean;
   /**
-   * Private dialogs are ment for only a single agent.
+   * Private dialogs are ment for only a single actor.
    * Non-private dialog is by definition shared or common,
-   * and will be used by many agents.
+   * and will be used by many actors.
    */
   isPrivate: boolean;
   /**
-   * Priority:
-   * G1 = [A1, A21]
-   * G2 = [A21, A22]
-   * + G1 - G2 + A1 + A22 => [A1, A22]
+   * Priority - single trumps group, e.g.:
+   * G1 = [A1, A21], G2 = [A21, A22]
+   * + G1 - G2 + A22 => [A1, A22]
    * + G1 - A21 => [A1]
    */
-  agentsExcluded?: agentId[];
+  actorsExcluded?: actorId[];
   groupsExcluded?: groupId[];
-  agentsIncluded?: agentId[];
+  actorsIncluded?: actorId[];
   groupsIncluded?: groupId[];
-  startLine: lineId;
+  startDialogLine: dialogLineId;
 }
 
-export interface Line {
-  id: lineId;
+export interface DialogLine {
+  id: dialogLineId;
   dialogId: dialogId;
-  agent: agentId;
+  actor: actorId;
   content: string;
-  formerLine: lineId;
-  nextLines: lineId[];
+  formerDialogLine: dialogLineId;
+  nextDialogLines: dialogLineId[];
   effects: Effect[];
   /**
    * option number allows manual control of dialog options ordering.
@@ -228,13 +233,23 @@ export interface Line {
   optionNumber?: number;
 }
 
-export function Prompter(agentId: agentId): DialogOptions
+export function Prompter(actorId: actorId): DialogOptions
 
 /*  */
 
-interface Agent {}
+interface Actor {
+  type: actorType;
+}
 
-interface Party {}
+enum ActorType {
+
+}
+
+interface PartyMarker {}
+
+interface PlayerParty {}
+
+interface NpcParty {}
 
 interface Item {
   obj3D: any;
@@ -259,11 +274,35 @@ enum ItemType {
 interface Region {
   name: string;
   id: regionId;
+  locations: Array<locationId>;
   map: regionMapId;
 }
 
 interface RegionMap {
   id: regionMapId;
+  markers: Array<Marker>;
+  width: number;
+  height: number;
+  roads: Array<Road>;
+  data: unknown;
+}
+
+/**
+ * It represents real road on which entities on the map
+ * can move.
+ *
+ * Most likely it's some kind of bit format that should be
+ * possible to interpret both on JS side and Unreal side.
+ * It should also be editable on both ends.
+ *
+ * It would be perfect if Maker could scan roads drawn
+ * on maps and turn them into meaningful data.
+ */
+interface Road {
+  name: string;
+  id: roadId;
+  map: regionMapId;
+  data: unknown;
 }
 
 /**
@@ -272,46 +311,140 @@ interface RegionMap {
  * Location is a 3D level.
  */
 interface Location {
-  name: string,
+  type: LocationType;
+  name: string;
   id: locationId;
-  map: locationMapId;
+  parentRegion: regionId;
+  locations: Array<locationId>;
+  parentLocation?: locationId;
 }
 
-interface LocationMap {
-  id: locationMapId;
+enum LocationType {
+  level = 'Explorable level type location',
+  overview = 'Overview type location',
+  interior = 'Interior type location',
+  camp = 'Camp type location',
+}
+
+interface Dungeon extends Location {
+  level: DungeonLevel;
+  map: DungeonMap;
+}
+
+interface Settlement extends Location {
+  level: SettlementLevel;
+  inhabitants: Array<Actors>;
+}
+
+interface Interior extends Location {
+  capacity: number;
+  type: InteriorType;
+  typeVariant: unknown;
+}
+
+interface Camp extends Location {
+  type: CampType;
+  typeVariant: unknown;
+}
+
+interface DungeonLevel {
+  id: levelId;
+  data?: any;
+}
+
+interface SettlementLevel {
+  id: levelId;
+  data?: any;
+}
+
+interface DungeonMap {
+  id: DungeonMapId;
+  markers: Array<Marker>;
+  width: number;
+  height: number;
+  data: unknown;
 }
 
 /**
  * Marker on a map.
  * Has different function depending on it's type.
  */
-interface MapMarker {
+interface Marker {
   name: string,
-  id: mapMarkerId;
-  type: MapMarkerType;
-  parentMap: mapId;
+  id: MarkerId;
+  type: MarkerType;
+  location: locationId;
+  parentMap?: mapId;
+  parentLocations?: locationId;
+  hidden: boolean;
+  coordinates: {
+    x: number,
+    y: number,
+  };
 }
 
-enum MapMarkerType {
-
+enum MarkerType {
+  toLevel = 'Marker leading to location scene',
+  toRegion = 'Marker leading to region scene',
+  toOverview = 'Marker opening location overview scene',
+  toInterior = 'Marker opening interior view scene',
+  toDialog = 'Marker opening dialog UI',
+  enemy = 'Marker opening enemy interaction UI',
+  regionMapObject = 'Marker for generic region map object',
 }
 
 /**
  * Scene type.
  *
- * Simplified presentation of a location, usually and overview
- * with highlights of points of interests.
+ * Simplified presentation of a location - an overview
+ * with points of interest highlighted.
+ *
+ * It has fixed camera and you don't move your party around.
  */
-interface LocationView {}
+interface Overview {
+  name: string;
+  id: overviewId;
+  locations: Array<Marker>;
+  data?: unknown; // Unknown data describing 3D scene
+}
 
 /**
  * Scene type.
  *
- * Interior view shows insides of some building.
- * It is similar to LocationView in that it also provides
- * some form of highlight of 'interactables'.
+ * ????
  */
-interface InteriorView {}
+interface InteriorView {
+  name: string;
+  id: locationViewId;
+  scenes: Array<InteriorScene>;
+}
+
+interface Overview {
+  name: string;
+  id: locationViewId;
+}
+
+interface CampView {
+  name: string;
+  id: locationViewId;
+}
+
+/**
+ * Scene type.
+ *
+ * ????
+ */
+interface CityView {
+  name: string;
+  id: locationViewId;
+  scenes: Array<InteriorScene>;
+}
+
+interface DialogBackground {}
+
+interface DialogUI {
+
+}
 
 /**
  * Scene type.
@@ -319,7 +452,11 @@ interface InteriorView {}
  * View of camping party.
  * Provides interface for interaction allowed only during camping.
  */
-interface CampView {}
+interface CampView {
+  name: string;
+  id: locationViewId;
+  scene3d: scene3dId;
+}
 
 
 
@@ -330,8 +467,7 @@ interface TradeInteraction {}
 
 interface PartyUI {}
 
-interface CharacterUI {}
-
+interface PartyMemberUI {}
 
 
 
@@ -370,3 +506,5 @@ interface GameWorldState {}
  *  - graphical, audio and gameplay settings
  */
 interface GameConfiguration {}
+
+interface GameController {}
