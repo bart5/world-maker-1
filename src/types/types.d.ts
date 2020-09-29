@@ -253,14 +253,19 @@ declare global {
 
   /* Actors */
 
-  interface ActorsGroup {
+  interface Group {
     name: string;
     id: groupId;
+    actors: Array<actorId>;
   }
 
   interface Actor {
+    name: string;
     id: actorId;
     type: actorType;
+    occupation: any;
+    routine: routineId;
+    group?: groupId;
   }
 
   enum ActorType {
@@ -288,29 +293,48 @@ declare global {
   /*  */
 
   /**
-   * Scene type.
+   * World is base container for everything that player interacts with.
+   * Game needs at least 1 world.
+   */
+  interface World {
+    name: string;
+    id: worldId;
+    locations: Array<locationId>;
+    markers: Array<LocationMarker | UnitMarker>;
+    // map: worldMapId;
+    level: WorldLevel;
+  }
+
+  /**
+   * World is presented as a 3D level that looks like a map.
+   * It's camera is always looking straight down so it seems largely flat and 2D.
    *
-   * Region is presented as a (largely) 2D map.
-   * It is the largest part of game-world that player is presented with at once.
+   * Since world is a kind of location that is itself presented as a map,
+   * it doesn't have map of it's own.
+   */
+  interface WorldLevel {
+    id: levelId;
+    data: unknown;
+  }
+
+  /**
+   * Region is fragment of the world.
+   * Maps that player can buy pertain to regions.
    *
-   * Region should always synonymous with some world part that can
-   * also be seen as separate in world-building terms.
+   * Obtaining a map discloses all features of the region (except hidden ones).
+   *
+   * Region exists only to provide player with more contextual (political, geographic...)
+   * information about various areas of the world by being able
+   * to divide world map into such.
    */
   interface Region {
     name: string;
     id: regionId;
     locations: Array<locationId>;
-    map: regionMapId;
-  }
-
-  interface RegionMap {
-    id: regionMapId;
-    markers: Array<LocationMarker | RegionMarker | UnitMarker>;
-    width: number;
-    height: number;
-    roads: Array<Road>;
     data: unknown; // bitmap?
   }
+
+  /* World Level features */
 
   /**
    * It represents real road on which entities on the map
@@ -322,13 +346,99 @@ declare global {
    *
    * It would be perfect if Maker could scan roads drawn
    * on maps and turn them into meaningful data.
+   *
+   * Road going through the river is by default a bridge.
+   *
    */
   interface Road {
     name: string;
     id: roadId;
-    map: regionMapId;
+    // map: regionMapId;
     data: unknown;
   }
+
+  interface LandFeature {
+    speedModifier: number;
+    impassable: boolean;
+  }
+
+  interface Forest {}
+
+  interface River {}
+
+  interface Lake {}
+
+  interface CoastLine {}
+
+  interface MountainRange {}
+
+  interface Mountain {}
+
+  interface Volcano {}
+
+  interface Marsh {}
+
+  interface Ford {}
+
+  interface Meadow {}
+
+  interface Grassland {}
+
+  interface Desert {}
+
+  interface Jungle {}
+
+  interface Bushes {}
+
+  interface Hills {}
+
+  interface Canyon {}
+
+  interface Quicksand {}
+
+  interface Delta {}
+
+  interface Beach {}
+
+  interface Pond {}
+
+  interface Floodplains {}
+
+  interface Cliffs {}
+
+  interface Glacier {}
+
+  interface Caldera {}
+
+  interface Crater {}
+
+  interface HotSprings {}
+
+  interface Geyser {}
+
+  interface Fumaroles {}
+
+  interface Mudpots {}
+
+  interface Gully {}
+
+  interface Ravine {}
+
+  /**
+   * Some geographical names:
+   *
+   * plateau
+   * plane
+   * tableland
+   * badland
+   * valley
+   *
+   */
+
+
+  /* Abstract feature: */
+
+  interface EncounterZone {}
 
   /**
    * Locations are places that player can visit.
@@ -338,7 +448,8 @@ declare global {
     type: LocationType;
     name: string;
     id: locationId;
-    parentRegion: regionId;
+    marker: LocationMarker;
+    importance: Importance;
     locations?: Array<locationId>;
     parentLocation?: locationId;
     /**
@@ -346,6 +457,16 @@ declare global {
      * It is suitable for encounters.
      */
     temporary?: boolean;
+  }
+
+  /**
+   * Importance could later be used to differentiate
+   * markers on the map.
+   */
+  enum Importance {
+    Low = 'Low',
+    Medium = 'Medium',
+    High = 'High',
   }
 
   enum LocationType {
@@ -363,7 +484,7 @@ declare global {
 
   interface Settlement extends Location {
     level: SettlementLevel;
-    inhabitants: Array<Actor>;
+    inhabitants: Array<actorId>;
   }
 
   interface Interior extends Location {
@@ -399,7 +520,7 @@ declare global {
 
   interface DungeonMap {
     id: dungeonMapId;
-    markers: Array<LocationMarker | RegionMarker>;
+    markers: Array<LocationMarker | WorldMarker>;
     width: number;
     height: number;
     data?: unknown;
@@ -414,11 +535,11 @@ declare global {
       x: number,
       y: number,
     };
-    parentMap: regionMapId | dungeonMapId;
+    parentMap: worldMapId | dungeonMapId;
   }
 
   enum MarkerType {
-    MarkerToRegion = 'MarkerToRegion', // 'Marker to region',
+    MarkerToWorld = 'MarkerToWorld', // 'Marker to world',
     MarkerToDungeon = 'MarkerToDungeon', // 'Marker to dungeon location',
     MarkerToSettlement = 'MarkerToSettlement', // 'Marker to settlement location',
     MarkerToInterior = 'MarkerToInterior', // 'Marker to interior location',
@@ -429,8 +550,8 @@ declare global {
     target: locationId;
   }
 
-  interface RegionMarker extends Marker {
-    target: regionId;
+  interface WorldMarker extends Marker {
+    target: worldId;
   }
 
   interface UnitMarker extends LocationMarker {
@@ -441,11 +562,11 @@ declare global {
 
   interface View {
     type: ViewType;
-    subject: regionId | locationId;
+    subject: worldId | locationId;
   }
 
   enum ViewType {
-    regionMapView = 'regionMapView',
+    worldMapView = 'worldMapView',
     dungeonView = 'dungeonView',
     settlementView = 'settlementView',
     titleScreenView = 'titleScreenView',
