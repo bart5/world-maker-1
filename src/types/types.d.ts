@@ -157,6 +157,7 @@ declare global {
     ModifyItem = 'EnhanceItem',
     CraftItem = 'CraftItem',
     DestroyItem = 'DestroyItem',
+    UseItem = 'UseItem',
 
     CompleteTask = 'CompleteTask', // 'Activate task',
     ActivateTask = 'ActivateTask', // 'Activate task',
@@ -175,20 +176,37 @@ declare global {
     RunScript = 'RunScript', // 'Run script',
   }
 
+  /**
+   * Various combat effect.
+   * This is going to be very big section.
+   * It will be developed further when working on skills
+   * and combat more in detail.
+   */
   enum CombatEffectType {
     Attack,
     Pierce,
     Slash,
     Bludgeon,
-    Evade,
-    Parry,
-    Block,
-    Shield,
+
+    GrantActionPoint,
+    RemoveActionPoint,
+
+    Evade, // Avoid attack by whole body movement
+    Block, // Stop or deflect incoming attack with a shield or weapon
+    DefensiveStance,
+
+    Bash, // Attack with shield
+    Batter, // Ram into enemy with your body mass to move him
+
+    Dash, // You can make some 'intense' actions with higher stamina cost doing more in a
+    // single turn for a cost of exhaustion later on
+    Jump, // Allows going past some obstacles
 
     Wound,
     HealWound,
     MendWound, // Mended wound is closed for X turns
-    DamageStamina,
+    DamageStamina, // Various attack and statuses damage stamina
+    DamageHealth, // Wounds damage health
 
     ApplyBruise,
     ApplyPoison,
@@ -200,22 +218,60 @@ declare global {
     ApplyCold, // Debilitating cold
     ApplyStench, //
     Curse,
+    Infect,
 
     Stun,
     Cripple,
     Entange,
     Shock,
     Intimidate,
+    Slow,
+    Daze,
+
+    UseItem,
+
+    Enrage,
+    Refresh,
+    Rest,
+    Encourage,
+    Desensitize,
+    Haste,
+    Focus,
+    Concentrate,
+    Strengthen,
+    Exhaust,
   }
 
   enum CombatStatusEffectType {
+    Burnt,
+    Burning,
+    Frozen,
+    Frostbitten,
+    Stunned,
+    Crippled,
+    Entangled,
+    Poisoned,
+    Shocked,
+    Freightened,
+    Slowed,
+    Infected,
 
+    Curageous,
+    Strengthened,
+    Refreshed,
+    Focused,
+    Hastened,
+
+    Desensitized,
+    Concentrated
   }
 
   enum SystemEffectType {
     NewGame = 'NewGame',
     SaveGame = 'SaveGame',
     LoadGame = 'LoadGame',
+    ExitToSystem = 'ExitToSystem',
+    ExitToTitleScreen = 'ExitToTitleScreen',
   }
 
   enum ComplexEffectType {
