@@ -18,6 +18,7 @@ declare global {
   type dungeonMapId = string
   type levelId = string
   type unitId = string
+  type effectId = string
 
   export interface Task {
     id: taskId;
@@ -31,12 +32,12 @@ declare global {
     /**
      * Effect is some immediate result of fulfilling labours (e.g. granting currency).
      */
-    effects: Effect[];
+    effects: effectId[];
     /**
      * Certain states which will result in player failing the task and the quest.
      */
     failures: Labour[];
-    onFailure: Effects[];
+    onFailure: effectId[];
     /**
      * Becomes active when previous task is done. Active task generates
      * subscriptions according to labours.
@@ -82,9 +83,11 @@ declare global {
   }
 
   export interface Labour {
+    id: labourId;
     labourType: LabourType;
     payload?: {
       entityId?: string
+      labourParams: unknown;
     }
   }
 
@@ -100,39 +103,88 @@ declare global {
     CustomLabour = 'CustomLabour', // 'Custom labour'
   }
 
+  /**
+   * Effects are fundamental building blocks of any change
+   * in the game world.
+   * Any action that player can take to alter the game world state
+   * ends-up with an effect.
+   */
+
   interface Effect {
-    effectType: EffectType,
+    name: string;
+    id: effectId;
     payload: {
-      entityId?: string
+      entityId?: string;
+      data: unknown;
     }
   }
 
+  interface GameWorldEffect extends Effect {
+    effectType:NonCombatEffectType | CombatEffectType | ComplexEffectType
+  }
+
+  interface SystemEffect extends Effect {
+    effectType: SystemEffectType,
+  }
+
+  interface ComplexEffect extends Effect {
+    effects: effectId[]
+  }
+
   enum EffectType {
-    GrantExperienceEffect = 'GrantExperienceEffect', // 'Grant experience points',
-    GrantCurrencyEffect = 'GrantCurrencyEffect', // 'Grant currency',
-    RemoveCurrencyEffect = 'RemoveCurrencyEffect', // 'Remove currency',
-    GrantItemEffect = 'GrantItemEffect', // 'Grant item',
-    RemoveItemEffect = 'RemoveItemEffect', // 'Remove item',
-    EnableDialogEffect = 'EnableDialogEffect', // 'Enable dialog',
-    DisableDialogEffect = 'DisableDialogEffect', // 'Disable dialog',
-    AddMemberEffect = 'AddMemberEffect', // 'Add member to the party',
-    RemoveMemberEffect = 'RemoveMemberEffect', // 'Remove member from the party',
-    UncoverLocationEffect = 'UncoverLocationEffect', // 'Uncover location',
-    GrantSkillPointsEffect = 'GrantSkillPointsEffect', // 'Grant skill points',
-    RemoveSkillPointsEffect = 'RemoveSkillPointsEffect', // 'Remove skill points',
-    GrantAbilityEffect = 'GrantAbilityEffect', // 'Grant ability',
-    RemoveAbilityEffect = 'RemoveAbilityEffect', // 'Remove ability',
-    RepairItemEffect = 'RepairItemEffect', // 'Repair item',
-    TransportPartyEffect = 'TransportPartyEffect', // 'Transport party',
-    GrantLootEffect = 'GrantLootEffect', // 'Grant loot',
-    AddJournalEntryEffect = 'AddJournalEntryEffect', // 'Add journal entry',
-    ActivateTaskEffect = 'ActivateTaskEffect', // 'Activate task',
-    CompleteQuestEffect = 'CompleteQuestEffect', // 'Complete quest',
-    FailQuestEffect = 'FailQuestEffect', // 'Fail quest',
-    TravelToCoordinatesEffect = 'TravelToCoordinatesEffect', // 'Travel to coordinates on the road',
-    TravelToMarkerEffect = 'TravelToMarkerEffect', // 'Travel to map marker',
-    ActivateMarkerEffect = 'ActivateMarkerEffect', // 'Activate marker',
-    RunScriptEffect = 'RunScriptEffect', // 'Run script',
+    GrantExperience = 'GrantExperience', // 'Grant experience points',
+    GrantCurrency = 'GrantCurrency', // 'Grant currency',
+    RemoveCurrency = 'RemoveCurrency', // 'Remove currency',
+    GrantLoot = 'GrantLoot', // 'Grant loot',
+
+    EnableDialog = 'EnableDialog', // 'Enable dialog',
+    DisableDialog = 'DisableDialog', // 'Disable dialog',
+
+    AddMember = 'AddMember', // 'Add member to the party',
+    RemoveMember = 'RemoveMember', // 'Remove member from the party',
+
+    UncoverLocation = 'UncoverLocation', // 'Uncover location',
+    UncoverRegion = 'UncoverRegion', // 'Uncover location',
+
+    GrantSkillPoints = 'GrantSkillPoints', // 'Grant skill points',
+    RemoveSkillPoints = 'RemoveSkillPoints', // 'Remove skill points',
+    GrantAbility = 'GrantAbility', // 'Grant ability',
+    RemoveAbility = 'RemoveAbility', // 'Remove ability',
+
+    GrantItem = 'GrantItem', // 'Grant item',
+    RemoveItem = 'RemoveItem', // 'Remove item',
+    RepairItem = 'RepairItem', // 'Repair item',
+    EnhanceItem = 'EnhanceItem',
+    CraftItem = 'CraftItem',
+    DestroyItem = 'DestroyItem',
+
+    CompleteTask = 'CompleteTask', // 'Activate task',
+    ActivateTask = 'ActivateTask', // 'Activate task',
+
+    CompleteQuest = 'CompleteQuest', // 'Complete quest',
+    FailQuest = 'FailQuest', // 'Fail quest',
+
+    AddJournalEntry = 'AddJournalEntry', // 'Add journal entry',
+
+    MoveToCoordinates = 'TravelToCoordinates', // 'Travel to coordinates on the road',
+    MoveToMarker = 'MoveToMarker', // 'Travel to map marker',
+
+    TravelToCoordinates = 'TravelToCoordinates', // 'Travel to coordinates on the road',
+    TravelToMarker = 'TravelToMarker', // 'Travel to map marker',
+
+    RunScript = 'RunScript', // 'Run script',
+  }
+
+  enum CombatEffectType {}
+
+  enum SystemEffectType {
+    NewGame = 'NewGame',
+    SaveGame = 'SaveGame',
+    LoadGame = 'LoadGame',
+  }
+
+  enum ComplexEffectType {
+    ComplexEffect = 'ComplexEffect'
   }
 
   /* Journal */
@@ -229,7 +281,7 @@ declare global {
     content: string;
     formerDialogLine: dialogLineId;
     nextDialogLines: dialogLineId[];
-    effects: Effect[];
+    effects: effectId[];
     emotion: Emotions;
     /**
      * option number allows manual control of dialog options ordering.
@@ -359,7 +411,7 @@ declare global {
 
   interface LandFeature {
     speedModifier: number;
-    impassable: boolean;
+    passable: boolean;
   }
 
   interface Forest {}
@@ -424,6 +476,14 @@ declare global {
 
   interface Ravine {}
 
+  interface Waterfall {}
+
+  interface Hillside {}
+
+  interface Mountainside {}
+
+  interface CustomLandFeature {}
+
   /**
    * Some geographical names:
    *
@@ -436,9 +496,23 @@ declare global {
    */
 
 
-  /* Abstract feature: */
-
-  interface EncounterZone {}
+  /**
+   * Zone is a WorldMap-bound trigger for party location.
+   *
+   * It is meant as a convenient way of installing various effects
+   * on the WorldMap that can happen if party reaches certain area.
+   *
+   * It could be scripted encounter, it could be commentary from
+   * a party member, it could be some other special event related
+   * to the place.
+   */
+  interface Zone {
+    name: string;
+    id: zoneId;
+    triggerArea: unknown;
+    effects: effectId[];
+    payload: unknown;
+  }
 
   /**
    * Locations are places that player can visit.
@@ -572,6 +646,14 @@ declare global {
     titleScreenView = 'titleScreenView',
   }
 
+  /* -------------------------------------------------------------------------- */
+  /* UI */
+  /**
+   * UI is everything that has interactive or presentational function
+   * and is not integral part of the level.
+   * (It's difficult to be really precise here.)
+   */
+
   interface DialogBackground {}
 
   interface DialogUI {
@@ -586,7 +668,12 @@ declare global {
 
   interface PartyMemberUI {}
 
-  /*  */
+  /* -------------------------------------------------------------------------- */
+  /* Debug, testing and validation */
+  /**
+   * Things helpful to see the state, check data for consistency and
+   * validate behaviour as much as possible.
+   */
 
   /**
    * This is dev-time debug
@@ -595,8 +682,8 @@ declare global {
    */
   function ValidateQuests(): void
 
-
-  /* Game state inspector */
+  /* -------------------------------------------------------------------------- */
+  /* Game state and configuration */
 
   /**
    * Game state is minimal required information that feed
