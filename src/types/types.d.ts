@@ -25,22 +25,22 @@ declare global {
     name: string;
     questId: questId;
     /**
-     * Labours end up as subscriptions to proper state transition on
+     * Work end up as subscriptions to proper state transition on
      * entity they concern (e.g. expectation to win in battle encounter).
      */
-    labours: Labour[];
+    work: Work[];
     /**
-     * Effect is some immediate result of fulfilling labours (e.g. granting currency).
+     * Effect is some immediate result of fulfilling work (e.g. granting currency).
      */
     effects: effectId[];
     /**
      * Certain states which will result in player failing the task and the quest.
      */
-    failures: Labour[];
+    failures: Work[];
     onFailure: effectId[];
     /**
      * Becomes active when previous task is done. Active task generates
-     * subscriptions according to labours.
+     * subscriptions according to work.
      */
     active: boolean;
     done: boolean;
@@ -82,25 +82,25 @@ declare global {
     dialog: dialogId;
   }
 
-  export interface Labour {
-    id: labourId;
-    labourType: LabourType;
+  export interface Work {
+    id: workId;
+    workType: WorkType;
     payload?: {
       entityId?: string
-      labourParams: unknown;
+      workParams: unknown;
     }
   }
 
-  enum LabourType {
-    WinBattleLabour = 'WinBattleLabour', // 'Win battle',
-    LoseBattleLabour = 'LoseBattleLabour', // 'Lose battle',
-    SelectDialogLabour = 'SelectDialogLabour', // 'Select dialog',
-    VisitRegionLabour = 'VisitRegionLabour', // 'Visit region',
-    VisitLocationLabour = 'VisitLocationLabour', // 'Visit location',
-    VisitMarkerLabour = 'VisitMarkerLabour', // 'Visit marker',
-    ObtainItemLabour = 'ObtainItemLabour', // 'Obtain item',
-    InteractWithLabour = 'InteractWithLabour', // 'Interact with object',
-    CustomLabour = 'CustomLabour', // 'Custom labour'
+  enum WorkType {
+    WinBattle = 'WinBattle', // 'Win battle',
+    LoseBattle = 'LoseBattle', // 'Lose battle',
+    SelectDialog = 'SelectDialog', // 'Select dialog',
+    VisitRegion = 'VisitRegion', // 'Visit region',
+    VisitLocation = 'VisitLocation', // 'Visit location',
+    VisitMarker = 'VisitMarker', // 'Visit marker',
+    ObtainItem = 'ObtainItem', // 'Obtain item',
+    InteractWith = 'InteractWith', // 'Interact with object',
+    Custom = 'Custom', // 'Custom work'
   }
 
   /**
@@ -113,14 +113,14 @@ declare global {
   interface Effect {
     name: string;
     id: effectId;
+    target?: actorId | AreaOfEffect;
     payload: {
-      entityId?: string;
       data: unknown;
     }
   }
 
   interface GameWorldEffect extends Effect {
-    effectType:NonCombatEffectType | CombatEffectType | ComplexEffectType
+    effectType: NonCombatEffectType | CombatEffectType | ComplexEffectType
   }
 
   interface SystemEffect extends Effect {
@@ -154,7 +154,7 @@ declare global {
     GrantItem = 'GrantItem', // 'Grant item',
     RemoveItem = 'RemoveItem', // 'Remove item',
     RepairItem = 'RepairItem', // 'Repair item',
-    EnhanceItem = 'EnhanceItem',
+    ModifyItem = 'EnhanceItem',
     CraftItem = 'CraftItem',
     DestroyItem = 'DestroyItem',
 
@@ -175,7 +175,42 @@ declare global {
     RunScript = 'RunScript', // 'Run script',
   }
 
-  enum CombatEffectType {}
+  enum CombatEffectType {
+    Attack,
+    Pierce,
+    Slash,
+    Bludgeon,
+    Evade,
+    Parry,
+    Block,
+    Shield,
+
+    Wound,
+    HealWound,
+    MendWound, // Mended wound is closed for X turns
+    DamageStamina,
+
+    ApplyBruise,
+    ApplyPoison,
+    ApplyDisease,
+    ApplyBurn,
+    Freeze,
+    ApplyFrostbite,
+    ApplyHeat, // Debilitating heat
+    ApplyCold, // Debilitating cold
+    ApplyStench, //
+    Curse,
+
+    Stun,
+    Cripple,
+    Entange,
+    Shock,
+    Intimidate,
+  }
+
+  enum CombatStatusEffectType {
+
+  }
 
   enum SystemEffectType {
     NewGame = 'NewGame',
@@ -186,6 +221,8 @@ declare global {
   enum ComplexEffectType {
     ComplexEffect = 'ComplexEffect'
   }
+
+  interface AreaOfEffect {}
 
   /* Journal */
 
@@ -345,7 +382,7 @@ declare global {
   /*  */
 
   /**
-   * World is base container for everything that player interacts with.
+   * World is a base container for everything that player interacts with.
    * Game needs at least 1 world.
    */
   interface World {
@@ -353,7 +390,6 @@ declare global {
     id: worldId;
     locations: Array<locationId>;
     markers: Array<LocationMarker | UnitMarker>;
-    // map: worldMapId;
     level: WorldLevel;
   }
 
@@ -632,7 +668,15 @@ declare global {
     unit: unitId;
   }
 
-  interface PartyMarker extends Marker {}
+  interface PartyMarker extends UnitMarker {
+    unit: 0;
+  }
+
+  interface Unit {
+    name: string;
+    id: unitId;
+
+  }
 
   interface View {
     type: ViewType;
@@ -654,11 +698,11 @@ declare global {
    * (It's difficult to be really precise here.)
    */
 
+  interface Inventory {}
+
   interface DialogBackground {}
 
-  interface DialogUI {
-
-  }
+  interface DialogUI {}
 
   interface DialogInteraction {}
 
@@ -667,6 +711,16 @@ declare global {
   interface PartyUI {}
 
   interface PartyMemberUI {}
+
+  interface GameMenu {}
+
+  interface GraphicsOptions {}
+
+  interface AudioOptions {}
+
+  interface GameplayOptions {}
+
+  interface Controls {}
 
   /* -------------------------------------------------------------------------- */
   /* Debug, testing and validation */
