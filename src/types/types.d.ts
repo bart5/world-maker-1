@@ -409,19 +409,111 @@ declare global {
     id: actorId;
     type: actorType;
     occupation: any;
-    routine: routineId;
+    /**
+     * data will information related to graphics and sounds.
+     */
+    data: unknown;
+    /**
+     * Config defines how actor may vary accross instances.
+     * Actor may be set as non-configurable, meaning that
+     * every instance will be identical.
+     */
+    config: unknown;
     group?: groupId;
+    attributes: ActorAttributes;
+    traits: ActorTraits;
+    abilities: ActorAbilities;
+    skills?: ActorSkills;
+  }
+
+  interface ActorAttributes {}
+
+  interface ActorTraits {}
+
+  interface ActorAbilities {}
+
+  interface ActorSkills {}
+
+  /**
+   * PlayerCharacter and party actors instances
+   * are the only actors that are modified throughout
+   * the game.
+   */
+  interface PlayerCharacter extends Actor {
+    actorId: '0';
+  }
+
+  interface ActorSchedule {
+    monday: DayPlan;
+  }
+
+  interface DayPlan {
+    chores: Array<Chore | Travel>;
+  }
+
+  interface Chore {
+    timeFrom: number;
+    timeTo: number;
+    location: locationId;
+    activity: unknown;
+  }
+
+  interface Travel {
+    start: locationId | Coordinates;
+    route: Array<Checkpoint>;
+  }
+
+  interface Checkpoint {
+    destination: locationId | Coordinates;
+    onArrival: unknown;
+  }
+
+  interface Coordinates {
+    x: number;
+    y: number;
+  }
+
+  interface ActorInstance extends Actor {
+    config: unknown;
+  }
+
+  interface ActorCombatInstance extends ActorInstance {
+    combatStatus: ActorCombatStatus;
   }
 
   enum ActorType {
 
   }
 
-  interface Party {}
+  interface Party {
+    name: string;
+    id: partyId;
+    hostile: boolean;
+    type: PartyType;
+    actors: Array<actorId>;
+  }
 
-  interface Unit {}
+  interface PlayerParty extends Party {
+    id: '0';
+    actors: Array<actorId>;
+  }
 
-  enum UnitType {
+  interface NpcParty {
+    name: string;
+    id: unitId;
+    hostile: boolean;
+    type: UnitType;
+    actors: Array<actorId>;
+  }
+
+  enum PartyType {
+    Player = 'Player',
+    Unknown = 'Unknown',
+    Merchant,
+    Soldier,
+    Beast,
+    Animal,
+    // ...
     HostileUnit = 'HostileUnit', // 'Hostile unit',
     NeutralUnit = 'NeutralUnit', // 'Neutral unit',
   }
@@ -504,6 +596,8 @@ declare global {
   interface LandFeature {
     speedModifier: number;
     passable: boolean;
+    isZone?: boolean;
+    zone: zoneId;
   }
 
   interface Forest {}
@@ -726,12 +820,6 @@ declare global {
 
   interface PartyMarker extends UnitMarker {
     unit: 0;
-  }
-
-  interface Unit {
-    name: string;
-    id: unitId;
-
   }
 
   interface View {
