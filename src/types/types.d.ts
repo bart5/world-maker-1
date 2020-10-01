@@ -426,6 +426,10 @@ declare global {
     skills?: ActorSkills;
   }
 
+  interface ActorTypeSymbol {
+
+  }
+
   interface ActorAttributes {}
 
   interface ActorTraits {}
@@ -443,36 +447,6 @@ declare global {
     actorId: '0';
   }
 
-  interface ActorSchedule {
-    monday: DayPlan;
-  }
-
-  interface DayPlan {
-    chores: Array<Chore | Travel>;
-  }
-
-  interface Chore {
-    timeFrom: number;
-    timeTo: number;
-    location: locationId;
-    activity: unknown;
-  }
-
-  interface Travel {
-    start: locationId | Coordinates;
-    route: Array<Checkpoint>;
-  }
-
-  interface Checkpoint {
-    destination: locationId | Coordinates;
-    onArrival: unknown;
-  }
-
-  interface Coordinates {
-    x: number;
-    y: number;
-  }
-
   interface ActorInstance extends Actor {
     config: unknown;
   }
@@ -482,14 +456,19 @@ declare global {
   }
 
   enum ActorType {
-
+    Player = 'Player',
+    Unknown = 'Unknown',
+    Merchant,
+    Soldier,
+    Beast,
+    Animal,
   }
 
   interface Party {
     name: string;
     id: partyId;
     hostile: boolean;
-    type: PartyType;
+    composition: Array<ActorType>
     actors: Array<actorId>;
   }
 
@@ -506,17 +485,152 @@ declare global {
     actors: Array<actorId>;
   }
 
-  enum PartyType {
-    Player = 'Player',
-    Unknown = 'Unknown',
-    Merchant,
-    Soldier,
-    Beast,
-    Animal,
-    // ...
-    HostileUnit = 'HostileUnit', // 'Hostile unit',
-    NeutralUnit = 'NeutralUnit', // 'Neutral unit',
+  /*  */
+
+  /**
+   * Schedule.
+   *
+   * It's important to make sure schedules are either valid
+   * or have good fallbacks, and that primary functions
+   * of the Actor (expecially one that Player may need)
+   * are fulfilled.
+   */
+  interface ActorSchedule {
+    name: string;
+    id: scheduleId;
+    schedule: {
+      [day in WeekDays]: DayPlan;
+    }
   }
+
+  /**
+   * Can change later to something fancy.
+   */
+  enum WeekDays {
+    Monday = 'Monday',
+    Tuesday = 'Tuesday',
+    Wednesday = 'Wednesday',
+    Thursday = 'Thursday',
+    Friday = 'Friday',
+    Sunday = 'Sunday',
+  }
+
+  /*
+    Schedule is one of the hardest part of the entire system.
+    It adds variety and life to the game world.
+    But it's a difficult task from implementation and testing point of view.
+
+    In thinking about the system let's remember that it's not meant for the
+    simulation of the world - it's as an illusion and something
+    to fool the player into thinking of tha game as a living system.
+    Keeping that in mind remember to cut corners whenever player
+    cannot see it, and 'simulate' only that what player will notice
+    and appreciate.
+
+    From development and content production perspective scheduling
+    system has to fulfill couple of requirements, it needs to:
+    - Be possible to easily be turned off
+    - Be possible to be turned off for all quest NPCs
+    - Give way of ease schedule definition and edition
+
+    Key assumptions and decisions:
+    - NPC parties cannot engage in combat if player
+    is not around
+    - NPC parties combat can go in a couple of ways:
+      -- If both parties are hostile type they can kill one another
+      -- If one party is non-hostile then it can:
+        --- Get robbed
+        --- Escort* can get killed and Citizens battered
+        --- Citizens get battered and beated unconscious. The enemy leaves.
+        Citizens come to life after some time and continue the travel.
+        --- Citizens with escort can beat the hostile party
+    - Hostile parties have their spawn zones and have chance of appearing there
+    every time player is nearby. The chance realization zeroes the spawn-point chance
+    for next couple of days. Further, if player fought the party it zeroes the next
+    spawn chance for even longer.
+    Player also has their own multiplayer for enemy spawn chance to prevent enemies
+    spawning too often - i.e. if Player have 'spawned' 1 enemy, then they get -X% chance
+    to spawn at next "hostile spawning" zone they enter.
+    If hostile party is not observed for a day it disappears.
+    Hostile parties have their own AI and will go about various activities depending
+    on the type of their party.
+
+    * Escort - Expendable actors which are generated for certain kind of
+    NPC parties and exist only for the purpose of the travel.
+    * Statists - Actors generated for each city who don't travel
+    but have some simple schedule within the city. They generate some additional
+    crowd and are automatically assigned to some interiors.
+    * Locations like hauses get automatically additional rooms for every actor
+    who has interior assigned as a house.
+    * Taverns in theory have infinite capacity (if not rooms, then maybe a barn or just
+      anywhere)
+
+    # Interactions connected to the fact of NPCs traveling:
+
+    # Defining actor schedule:
+    -
+
+    # Resolving actor schedule
+
+    # What if actor get's out of sync with it's schedule by any
+      kind interference possible?
+
+    - For citizen:
+      -- He prioritizes going back to home location and continue schedule
+    - For Hostile:
+      --
+
+    # What about combat-capable parties?
+    - They are formed
+
+    # What about assigning quest to travel-capable NPC later on?
+      Just rule-of-thumb - that should not happen?
+
+  */
+
+
+  /**
+   * Day plan
+   */
+  interface DayPlan {
+    // chores: Array<Chore | Travel>;
+    queue: Array<activityId>;
+  }
+
+  interface Activity {
+    name: string;
+    id: activityId;
+    startTime: number;
+    endTime: number;
+  }
+
+  /**
+   * Chore is an activity in a given location.
+   */
+  interface Chore {
+    earliestStartTime: number;
+    latestEndTime: number;
+    location: locationId;
+    activity: unknown;
+  }
+
+  interface TravelPlan {
+    start: locationId | Coordinates;
+    route: Array<Checkpoint>;
+  }
+
+  interface Checkpoint {
+    id: checkpointId;
+    destination: locationId | Coordinates;
+    onArrival?: Array<choreId>;
+  }
+
+  interface Coordinates {
+    x: number;
+    y: number;
+  }
+
+  /*  */
 
   interface Item {
     obj3D: any;
