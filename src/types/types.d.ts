@@ -3,9 +3,10 @@ declare global {
 
   type taskId = string
   type questId = string
+  type actorTemplateId = string
   type actorId = string
   type actorInstanceId = string
-  type groupId = string
+  type actorGroupId = string
   type dialogId = string
   type dialogLineId = string
   type journalEntryId = string
@@ -20,6 +21,10 @@ declare global {
   type levelId = string
   type unitId = string
   type effectId = string
+  type zoneId = string
+  type spawnId = string
+  type npcPartyId = string
+  type landResourceId = string
 
   export interface Task {
     id: taskId;
@@ -314,12 +319,12 @@ declare global {
    */
 
   interface Conversations {
-    [actorInstanceId as string]: Array<ConversationEntry>
+    [actorId as string]: Array<ConversationEntry>
   }
 
   interface ConversationEntry {
     id: conversationEntryId;
-    actorInstanceId: actorInstanceId;
+    actorId: actorId;
     dialogLine: DialogLine;
     entryDate: string;
   }
@@ -332,8 +337,18 @@ declare global {
 
   /* Dialogs */
 
-  export interface Dialog {
+  interface DialogGroup {
+    name: string;
+    id: dialogGroupId;
+    /**
+     * For dialog characteristic to given location
+     */
+    location?: locationId;
+  }
+
+  interface Dialog {
     id: dialogId;
+    group: dialogGroupId;
     /**
      * Allowed dialog is one that user is allowed to see.
      */
@@ -361,10 +376,10 @@ declare global {
      * + G1 - G2 + A22 => [A1, A22]
      * + G1 - A21 => [A1]
      */
-    actorsExcluded?: actorInstanceId[];
-    groupsExcluded?: groupId[];
-    actorsIncluded?: actorInstanceId[];
-    groupsIncluded?: groupId[];
+    actorsExcluded?: actorId[];
+    groupsExcluded?: actorGroupId[];
+    actorsIncluded?: actorId[];
+    groupsIncluded?: actorGroupId[];
     startDialogLine: dialogLineId;
   }
 
@@ -395,14 +410,14 @@ declare global {
     Sarcastic = 'Sarcastic',
   }
 
-  function Prompter(actorInstanceId: actorInstanceId): DialogOptions
+  function Prompter(actorInstanceId: actorId): DialogOptions
 
   /* Actors */
 
-  interface Group {
+  interface ActorGroup {
     name: string;
-    id: groupId;
-    actors: Array<actorInstanceId>;
+    id: actorGroupId;
+    actors: Array<actorId>;
   }
 
   interface ActorTemplate {
@@ -416,30 +431,30 @@ declare global {
    * customized for direct in-game use.
    * Each actor is unique.
    *
-   * If situation requires randomness instances
-   * then proper Template can be created and used in ad-hoc
+   * If situation requires random instances
+   * then proper Template can be created and used for ad-hoc
    * Actor creation and Instantiation.
    * But it will be more resource intensive.
    */
   interface Actor {
     name: string;
     id: actorId;
+    group: actorGroupId;
     type: actorType;
     occupation: any;
+    faction: factionId;
     /**
-     * data will information related to graphics and sounds.
+     * information related to graphics and sounds.
      */
     data: unknown;
-    group?: groupId;
+    group?: actorGroupId;
     attributes: ActorAttributes;
     traits: ActorTraits;
     abilities: ActorAbilities;
     skills?: ActorSkills;
   }
 
-  interface ActorTypeSymbol {
-
-  }
+  interface ActorTypeSymbol {}
 
   interface ActorAttributes {}
 
@@ -464,12 +479,7 @@ declare global {
    * than map.
    */
   interface ActorSceneInstance extends Actor {
-    id: actorInstanceId;
-    /**
-     * Config defines set of variables that make this
-     * instance produced from Actor special.
-     */
-    config: unknown;
+    data: unknown;
     combatStatus?: ActorCombatStatus;
   }
 
@@ -497,10 +507,10 @@ declare global {
 
   interface NpcParty {
     name: string;
-    id: unitId;
+    id: npcPartyId;
     hostile: boolean;
     type: UnitType;
-    actors: Array<actorInstanceId>;
+    actors: Array<actorId>;
   }
 
   /*  */
@@ -532,80 +542,6 @@ declare global {
     Friday = 'Friday',
     Sunday = 'Sunday',
   }
-
-  /*
-    Schedule is one of the hardest part of the entire system.
-    It adds variety and life to the game world.
-    But it's a difficult task from implementation and testing point of view.
-
-    In thinking about the system let's remember that it's not meant for the
-    simulation of the world - it's as an illusion and something
-    to fool the player into thinking of tha game as a living system.
-    Keeping that in mind remember to cut corners whenever player
-    cannot see it, and 'simulate' only that what player will notice
-    and appreciate.
-
-    For development and content production sake scheduling system has to
-    - Be possible to be turned off
-    - Be possible to be turned off for all quest NPCs
-    - Give tools for easy schedule creation and edition
-
-    Key assumptions and decisions:
-    - NPC parties cannot engage in combat if player is not around
-    - NPC parties combat scenarios:
-      -- If both parties are hostile type they can kill one another
-      -- If one party is non-hostile then it can:
-        --- Get robbed
-        --- Get battered and beaten unconscious. The enemy leaves.
-            Citizens come to life after some time and continue the travel.
-        --- Citizens can beat the hostile party
-    - Hostile parties have their spawn zones and have chance of appearing there
-    every time player is nearby. The chance realization zeroes the spawn-point chance
-    for next couple of days. Further, if player fought the party it zeroes the next
-    spawn chance for even longer.
-    Player also has their own multiplayer for enemy spawn chance to prevent enemies
-    spawning too often - i.e. if Player have 'spawned' 1 enemy, then they get -X% chance
-    to spawn at next "hostile spawning" zone they enter.
-    If hostile party is not observed for a day it disappears.
-    Hostile parties have their own AI and will go about various activities depending
-    on the type of their party.
-
-    * Escort - Expendable actors which are generated for certain kind of
-    NPC parties and exist only for the purpose of the travel.
-    * Statists - Actors generated for each city who don't travel
-    but have some simple schedule within the city. They generate some additional
-    crowd and are automatically assigned to some interiors.
-    * Locations like hauses get automatically additional rooms for every actor
-    who has interior assigned as a house.
-    * Taverns in theory have infinite capacity (if not rooms, then maybe a barn or just
-      anywhere)
-
-    # Interactions connected to the fact of NPCs traveling:
-
-    # Defining actor schedule:
-    -
-
-    # Resolving actor schedule
-
-    # What if actor get's out of sync with it's schedule by any
-      kind interference possible?
-
-    - For citizen:
-      -- He prioritizes going back to home location and continue schedule
-    - For Hostile:
-      --
-
-    # What about combat-capable parties?
-    - They are formed
-
-    # What about assigning quest to travel-capable NPC later on?
-      Just rule-of-thumb - that should not happen?
-
-    # How actually are NPC going to be created?
-      Some of them play important role being traders, trainers or quest NPCs.
-
-  */
-
 
   /**
    * Day plan
@@ -725,95 +661,6 @@ declare global {
     data: unknown;
   }
 
-  interface LandFeature {
-    speedModifier: number;
-    passable: boolean;
-    isZone?: boolean;
-    zone: zoneId;
-  }
-
-  interface Forest {}
-
-  interface River {}
-
-  interface Lake {}
-
-  interface CoastLine {}
-
-  interface MountainRange {}
-
-  interface Mountain {}
-
-  interface Volcano {}
-
-  interface Marsh {}
-
-  interface Ford {}
-
-  interface Meadow {}
-
-  interface Grassland {}
-
-  interface Desert {}
-
-  interface Jungle {}
-
-  interface Bushes {}
-
-  interface Hills {}
-
-  interface Canyon {}
-
-  interface Quicksand {}
-
-  interface Delta {}
-
-  interface Beach {}
-
-  interface Pond {}
-
-  interface Floodplains {}
-
-  interface Cliffs {}
-
-  interface Glacier {}
-
-  interface Caldera {}
-
-  interface Crater {}
-
-  interface HotSprings {}
-
-  interface Geyser {}
-
-  interface Fumaroles {}
-
-  interface Mudpots {}
-
-  interface Gully {}
-
-  interface Ravine {}
-
-  interface Waterfall {}
-
-  interface Hillside {}
-
-  interface Mountainside {}
-
-  interface CustomLandFeature {}
-
-  /**
-   * Some geographical names:
-   *
-   * plateau
-   * plane
-   * tableland
-   * badland
-   * valley
-   *
-   */
-
-
   /**
    * Zone is a WorldMap-bound trigger for party location.
    *
@@ -827,9 +674,97 @@ declare global {
   interface Zone {
     name: string;
     id: zoneId;
-    triggerArea: unknown;
-    effects: effectId[];
-    payload: unknown;
+    border: unknown;
+    spawn: Array<Spawn>;
+    onEnter?: Array<effectId[]>;
+  }
+
+  interface Spawn {
+    name: string;
+    id: spawnId;
+    currentSpawn: number;
+    maxSpawn: number;
+    respawnTime: number;
+    respawnTimeDamping: number;
+    entity: npcPartyId | landResourceId;
+  }
+
+  interface LandResource {
+    name: string;
+    id: landResourceId;
+    type: LandResourceType;
+    quantity: number;
+    description: string;
+  }
+
+  interface LandFeatureTemplate extends Zone {
+    id: landFeatureTemplateId;
+    parameters: unknown;
+  }
+
+  interface LandFeatureInstance extends Zone {
+    name?: string;
+    id: LandFeatureInstanceId;
+    speedModifier: number;
+    passable: boolean;
+    type: LandFeatureType;
+    size: unknown;
+    activitiesAllowed: Array<ActivityType>;
+    description: string;
+  }
+
+  enum ActivityType {
+
+  }
+
+  enum LandFeatureType {
+    Forest = 'Forest',
+    TropicalForest = 'TropicalForest',
+    Jungle = 'Jungle',
+    Jungle = 'Jungle',
+    River = 'River',
+    Lake = 'Lake',
+    CoastLine = 'CoastLine',
+    MountainRange = 'MountainRange',
+    Mountain = 'Mountain',
+    Volcano = 'Volcano',
+    Marsh = 'Marsh',
+    Ford = 'Ford',
+    Meadow = 'Meadow',
+    Grassland = 'Grassland',
+    Desert = 'Desert',
+    Jungle = 'Jungle',
+    Bushes = 'Bushes',
+    Hills = 'Hills',
+    Canyon = 'Canyon',
+    Quicksand = 'Quicksand',
+    Delta = 'Delta',
+    Beach = 'Beach',
+    Pond = 'Pond',
+    Floodplains = 'Floodplains',
+    Cliffs = 'Cliffs',
+    Glacier = 'Glacier',
+    Caldera = 'Caldera',
+    Crater = 'Crater',
+    HotSprings = 'HotSprings',
+    Geyser = 'Geyser',
+    Fumaroles = 'Fumaroles',
+    Mudpots = 'Mudpots',
+    Gully = 'Gully',
+    Ravine = 'Ravine',
+    Waterfall = 'Waterfall',
+    Hillside = 'Hillside',
+    Mountainside = 'Mountainside',
+    CustomLandFeature = 'CustomLandFeature'
+  }
+
+  /**
+   * Label on the map region.
+   * It would either be imprint on the map, or maybe
+   * show as a nice tooltip, or sub-header (under the Region name)
+   * when you enter given Zone.
+   */
+  interface MapLabel extends Zone {
   }
 
   /**
@@ -881,8 +816,8 @@ declare global {
 
   interface Settlement extends Location {
     level: SettlementLevel;
-    // inhabitants: Array<actorInstanceId>;
     buildings: Array<buildingId>;
+    inhabitants: Array<actorId>;
   }
 
   /**
@@ -1167,4 +1102,3 @@ declare global {
 
   interface GameController {}
 }
-
