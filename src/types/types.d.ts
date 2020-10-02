@@ -294,13 +294,13 @@ declare global {
    */
   export interface Journal {
     activeQuests: {
-      [questId as string]: Array<JournalEntry> // later filtered by date for display
+      [questId: string]: Array<JournalEntry> // later filtered by date for display
     };
     completedQests: {
-      [questId as string]: Array<JournalEntry>
+      [questId: string]: Array<JournalEntry>
     };
     failedQuests: {
-      [questId as string]: Array<JournalEntry>
+      [questId: string]: Array<JournalEntry>
     };
   }
 
@@ -319,7 +319,7 @@ declare global {
    */
 
   interface Conversations {
-    [actorId as string]: Array<ConversationEntry>
+    [actorId: string]: Array<ConversationEntry>
   }
 
   interface ConversationEntry {
@@ -340,6 +340,7 @@ declare global {
   interface DialogGroup {
     name: string;
     id: dialogGroupId;
+    type: DialogType;
     /**
      * For dialog characteristic to given location
      */
@@ -348,6 +349,7 @@ declare global {
 
   interface Dialog {
     id: dialogId;
+    type: DialogType;
     group: dialogGroupId;
     /**
      * Allowed dialog is one that user is allowed to see.
@@ -380,7 +382,18 @@ declare global {
     groupsExcluded?: actorGroupId[];
     actorsIncluded?: actorId[];
     groupsIncluded?: actorGroupId[];
+    /* Linked list */
     startDialogLine: dialogLineId;
+  }
+
+  enum DialogType {
+    Welcome = 'WelcomeDialog',
+    Banter = 'BanterDialog',
+    Job = 'JobDialog',
+    Pastime = 'PastimeDialog',
+    Quest = 'QuestDialog',
+    Wtf = 'WtfDialog',
+    Mixed = 'Mixed',
   }
 
   export interface DialogLine {
@@ -441,7 +454,7 @@ declare global {
     id: actorId;
     group: actorGroupId;
     type: actorType;
-    occupation: any;
+    home: interiorId | zoneId;
     faction: factionId;
     /**
      * information related to graphics and sounds.
@@ -452,6 +465,9 @@ declare global {
     traits: ActorTraits;
     abilities: ActorAbilities;
     skills?: ActorSkills;
+
+    // occupation: unknown;
+    // ... ?
   }
 
   interface ActorTypeSymbol {}
@@ -509,32 +525,103 @@ declare global {
     name: string;
     id: npcPartyId;
     hostile: boolean;
-    type: UnitType;
+    type: PartyType;
     actors: Array<actorId>;
   }
+
+  /**
+   * Player reputation
+   */
+  interface Reputation {}
+
+  /**
+   * Individual disposition of NPCs
+   */
+  interface Disposition {}
 
   /*  */
 
   /**
    * Schedule.
    *
-   * It's important to make sure schedules are either valid
-   * or have good fallbacks, and that primary functions
-   * of the Actor (expecially one that Player may need)
-   * are fulfilled.
+   * Scheduling is simple.
+   *
+   * Sleep always takes precedence and always *is* in the
+   * schedule.
+   *
+   * Every actor has one job.
+   *
+   * Every actor has some pastime activities which
+   * he choses based on time available, activities
+   * available and their current popularity.
+   *
+   * This could be made far more complex and dynamic but
+   * for the sake of not rabbit-holing myself I keep it simple.
    */
-  interface ActorSchedule {
-    name: string;
+  interface Schedule {
     id: scheduleId;
-    schedule: {
-      [day in WeekDays]: DayPlan;
-    }
+    job: jobId | patrolDutyId | travelJobId;
+    workingHours: {
+      from: number;
+      to: number;
+    };
+    sleepHours: {
+      from: number;
+      to: number;
+    };
+    vacationDays: Array<WeekDayType>;
+    pastimePreference: Array<pastimeId>;
   }
 
-  /**
-   * Can change later to something fancy.
-   */
-  enum WeekDays {
+  interface Activity {
+    name: string;
+    type: ActivityType;
+    behaviour: WorldMapBehaviour | LevelBehaviour;
+    dialog: dialogId | dialogGroupId;
+  }
+
+  interface Rule {
+    checker: unknown;
+    effect: effectId;
+  }
+
+  interface StateMachine {
+    [stateCase: string]: Rule;
+  }
+
+  interface WorldMapBehaviour {
+    id: worldMapbehaviourId;
+    brain: StateMachine;
+  }
+
+  interface LevelBehaviour {
+    id: levelBehaviourId;
+    brain: StateMachine;
+  }
+
+  interface Job extends Activity {
+    id: jobId;
+    site: interiorId | zoneId;
+  }
+
+  interface PatrolDuty extends Activity {
+    id: patrolDutyId;
+    site: zoneId;
+  }
+
+  interface TravelJob {
+    id: travelJobId;
+    routes: Array<Route>;
+  }
+
+  interface Pastime extends Activity {
+    id: pastimeId;
+    startTime: number;
+    endTime: number;
+    site: interiorId | zoneId;
+  }
+
+  enum WeekDayType {
     Monday = 'Monday',
     Tuesday = 'Tuesday',
     Wednesday = 'Wednesday',
@@ -543,45 +630,21 @@ declare global {
     Sunday = 'Sunday',
   }
 
-  /**
-   * Day plan
-   */
-  interface DayPlan {
-    // chores: Array<Chore | Travel>;
-    queue: Array<activityId>;
-  }
-
-  interface Activity {
+  interface Route {
     name: string;
-    id: activityId;
-    startTime: number;
-    endTime: number;
+    id: routeId;
+    route: Array<TravelCheckpointMarker>;
   }
 
-  /**
-   * Chore is an activity in a given location.
-   */
-  interface Chore {
-    earliestStartTime: number;
-    latestEndTime: number;
-    location: locationId;
-    activity: unknown;
+  interface TravelCheckpointMarker extends Marker {
+    id: travelMarkerId;
+    hidden: true;
+    parentRoute: routeId;
+    onArrival: activityId;
   }
 
-  interface TravelPlan {
-    start: locationId | Coordinates;
-    route: Array<Checkpoint>;
-  }
+  enum ActivityType {
 
-  interface Checkpoint {
-    id: checkpointId;
-    destination: locationId | Coordinates;
-    onArrival?: Array<choreId>;
-  }
-
-  interface Coordinates {
-    x: number;
-    y: number;
   }
 
   /*  */
@@ -605,7 +668,7 @@ declare global {
     name: string;
     id: worldId;
     locations: Array<locationId>;
-    markers: Array<LocationMarker | UnitMarker>;
+    markers: Array<LocationMarker | PartyMarker>;
     level: WorldLevel;
   }
 
@@ -662,21 +725,24 @@ declare global {
   }
 
   /**
-   * Zone is a WorldMap-bound trigger for party location.
+   * Zone is one of fundamental building block of the WorlMap.
    *
-   * It is meant as a convenient way of installing various effects
-   * on the WorldMap that can happen if party reaches certain area.
+   * Zone covers specific area.
+   * Every zone can be employed for:
+   * - triggering effects once player enters it
+   * - spawning NpcParties
+   * - spawning resources
    *
-   * It could be scripted encounter, it could be commentary from
-   * a party member, it could be some other special event related
-   * to the place.
+   * Zone can additionally be a land feature.
    */
   interface Zone {
     name: string;
     id: zoneId;
     border: unknown;
+    size: unknown;
     spawn: Array<Spawn>;
     onEnter?: Array<effectId[]>;
+    description: string;
   }
 
   interface Spawn {
@@ -697,24 +763,26 @@ declare global {
     description: string;
   }
 
-  interface LandFeatureTemplate extends Zone {
-    id: landFeatureTemplateId;
+  interface SpawnZoneTemplate extends SpawnZoneInstance {
+    id: spawnZoneTemplateId;
     parameters: unknown;
   }
 
-  interface LandFeatureInstance extends Zone {
-    name?: string;
-    id: LandFeatureInstanceId;
+  interface SpawnZoneInstance extends Zone {
+    id: spawnZoneInstanceId;
+  }
+
+  interface LandFeatureZoneTemplate extends LandFeatureInstance {
+    id: landFeatureZoneTemplateId;
+    parameters: unknown;
+  }
+
+  interface LandFeatureZoneInstance extends Zone {
+    id: landFeatureZoneInstanceId;
     speedModifier: number;
     passable: boolean;
     type: LandFeatureType;
-    size: unknown;
     activitiesAllowed: Array<ActivityType>;
-    description: string;
-  }
-
-  enum ActivityType {
-
   }
 
   enum LandFeatureType {
@@ -876,6 +944,13 @@ declare global {
     gateways?: Array<locationId>;
   }
 
+  enum InteriorType {
+    hause,
+    barack,
+    shop,
+    //...
+  }
+
   interface Camp extends Location {
     type: CampType;
     typeVariant: unknown;
@@ -938,11 +1013,11 @@ declare global {
     target: worldId;
   }
 
-  interface UnitMarker extends LocationMarker {
+  interface PartyMarker extends LocationMarker {
     unit: unitId;
   }
 
-  interface PartyMarker extends UnitMarker {
+  interface PartyMarker extends PartyMarker {
     unit: 0;
   }
 
