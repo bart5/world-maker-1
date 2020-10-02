@@ -4,6 +4,7 @@ declare global {
   type taskId = string
   type questId = string
   type actorId = string
+  type actorInstanceId = string
   type groupId = string
   type dialogId = string
   type dialogLineId = string
@@ -113,7 +114,7 @@ declare global {
   interface Effect {
     name: string;
     id: effectId;
-    target?: actorId | AreaOfEffect;
+    target?: actorInstanceId | AreaOfEffect;
     payload: {
       data: unknown;
     }
@@ -313,12 +314,12 @@ declare global {
    */
 
   interface Conversations {
-    [actorId as string]: Array<ConversationEntry>
+    [actorInstanceId as string]: Array<ConversationEntry>
   }
 
   interface ConversationEntry {
     id: conversationEntryId;
-    actorId: actorId;
+    actorInstanceId: actorInstanceId;
     dialogLine: DialogLine;
     entryDate: string;
   }
@@ -360,9 +361,9 @@ declare global {
      * + G1 - G2 + A22 => [A1, A22]
      * + G1 - A21 => [A1]
      */
-    actorsExcluded?: actorId[];
+    actorsExcluded?: actorInstanceId[];
     groupsExcluded?: groupId[];
-    actorsIncluded?: actorId[];
+    actorsIncluded?: actorInstanceId[];
     groupsIncluded?: groupId[];
     startDialogLine: dialogLineId;
   }
@@ -370,19 +371,19 @@ declare global {
   export interface DialogLine {
     id: dialogLineId;
     dialogId: dialogId;
-    actor: actorId;
+    actor: actorInstanceId;
     content: string;
     formerDialogLine: dialogLineId;
     nextDialogLines: dialogLineId[];
     effects: effectId[];
-    emotion: Emotions;
+    emotion: EmotionType;
     /**
      * option number allows manual control of dialog options ordering.
      */
     optionNumber?: number;
   }
 
-  enum Emotions {
+  enum EmotionType {
     Happy = 'Happy',
     Angry = 'Angry',
     Neutral = 'Neutral',
@@ -394,16 +395,32 @@ declare global {
     Sarcastic = 'Sarcastic',
   }
 
-  function Prompter(actorId: actorId): DialogOptions
+  function Prompter(actorInstanceId: actorInstanceId): DialogOptions
 
   /* Actors */
 
   interface Group {
     name: string;
     id: groupId;
-    actors: Array<actorId>;
+    actors: Array<actorInstanceId>;
   }
 
+  interface ActorTemplate {
+    name: string;
+    id: actorTemplateId;
+    parameters: unknown;
+  }
+
+  /**
+   * Actor created from the template and then
+   * customized for direct in-game use.
+   * Each actor is unique.
+   *
+   * If situation requires randomness instances
+   * then proper Template can be created and used in ad-hoc
+   * Actor creation and Instantiation.
+   * But it will be more resource intensive.
+   */
   interface Actor {
     name: string;
     id: actorId;
@@ -413,12 +430,6 @@ declare global {
      * data will information related to graphics and sounds.
      */
     data: unknown;
-    /**
-     * Config defines how actor may vary accross instances.
-     * Actor may be set as non-configurable, meaning that
-     * every instance will be identical.
-     */
-    config: unknown;
     group?: groupId;
     attributes: ActorAttributes;
     traits: ActorTraits;
@@ -444,15 +455,22 @@ declare global {
    * the game.
    */
   interface PlayerCharacter extends Actor {
-    actorId: '0';
+    actorInstanceId: '0';
   }
 
-  interface ActorInstance extends Actor {
+  /**
+   * ActorInstance is Actor with additional
+   * data required to show it in 3D scene other
+   * than map.
+   */
+  interface ActorSceneInstance extends Actor {
+    id: actorInstanceId;
+    /**
+     * Config defines set of variables that make this
+     * instance produced from Actor special.
+     */
     config: unknown;
-  }
-
-  interface ActorCombatInstance extends ActorInstance {
-    combatStatus: ActorCombatStatus;
+    combatStatus?: ActorCombatStatus;
   }
 
   enum ActorType {
@@ -469,12 +487,12 @@ declare global {
     id: partyId;
     hostile: boolean;
     composition: Array<ActorType>
-    actors: Array<actorId>;
+    actors: Array<actorInstanceId>;
   }
 
   interface PlayerParty extends Party {
     id: '0';
-    actors: Array<actorId>;
+    actors: Array<actorInstanceId>;
   }
 
   interface NpcParty {
@@ -482,7 +500,7 @@ declare global {
     id: unitId;
     hostile: boolean;
     type: UnitType;
-    actors: Array<actorId>;
+    actors: Array<actorInstanceId>;
   }
 
   /*  */
@@ -527,23 +545,20 @@ declare global {
     cannot see it, and 'simulate' only that what player will notice
     and appreciate.
 
-    From development and content production perspective scheduling
-    system has to fulfill couple of requirements, it needs to:
-    - Be possible to easily be turned off
+    For development and content production sake scheduling system has to
+    - Be possible to be turned off
     - Be possible to be turned off for all quest NPCs
-    - Give way of ease schedule definition and edition
+    - Give tools for easy schedule creation and edition
 
     Key assumptions and decisions:
-    - NPC parties cannot engage in combat if player
-    is not around
-    - NPC parties combat can go in a couple of ways:
+    - NPC parties cannot engage in combat if player is not around
+    - NPC parties combat scenarios:
       -- If both parties are hostile type they can kill one another
       -- If one party is non-hostile then it can:
         --- Get robbed
-        --- Escort* can get killed and Citizens battered
-        --- Citizens get battered and beated unconscious. The enemy leaves.
-        Citizens come to life after some time and continue the travel.
-        --- Citizens with escort can beat the hostile party
+        --- Get battered and beaten unconscious. The enemy leaves.
+            Citizens come to life after some time and continue the travel.
+        --- Citizens can beat the hostile party
     - Hostile parties have their spawn zones and have chance of appearing there
     every time player is nearby. The chance realization zeroes the spawn-point chance
     for next couple of days. Further, if player fought the party it zeroes the next
@@ -585,6 +600,9 @@ declare global {
 
     # What about assigning quest to travel-capable NPC later on?
       Just rule-of-thumb - that should not happen?
+
+    # How actually are NPC going to be created?
+      Some of them play important role being traders, trainers or quest NPCs.
 
   */
 
@@ -817,12 +835,11 @@ declare global {
   /**
    * Locations are places that player can visit.
    */
-
   interface Location {
     type: LocationType;
     name: string;
     id: locationId;
-    marker: LocationMarker;
+    marker: markerId;
     importance: Importance;
     locations?: Array<locationId>;
     parentLocation?: locationId;
@@ -831,6 +848,11 @@ declare global {
      * It is suitable for encounters.
      */
     temporary?: boolean;
+    /**
+     * Every location knows ActorInstances that
+     * can exist in it.
+     */
+    actors: Array<actorInstanceId>;
   }
 
   /**
@@ -844,11 +866,12 @@ declare global {
   }
 
   enum LocationType {
-    LevelLocation = 'LevelLocation', // 'Explorable level type location',
-    SettlementLocation = 'SettlementLocation', // 'settlement type location',
-    InteriorLocation = 'InteriorLocation', // 'Interior type location',
-    CampLocation = 'CampLocation', // 'Camp type location',
-    EncounterLocation = 'EncounterLocation', // 'Encounter type location',
+    Level = 'Level', // 'Explorable level type location',
+    Settlement = 'Settlement', // 'settlement type location',
+    Building = 'Building', // 'settlement type location',
+    Interior = 'Interior', // 'Interior type location',
+    Camp = 'Camp', // 'Camp type location',
+    Encounter = 'Encounter', // 'Encounter type location',
   }
 
   interface Dungeon extends Location {
@@ -858,13 +881,64 @@ declare global {
 
   interface Settlement extends Location {
     level: SettlementLevel;
-    inhabitants: Array<actorId>;
+    // inhabitants: Array<actorInstanceId>;
+    buildings: Array<buildingId>;
   }
 
+  /**
+   * BuildingTemplate is a template used in development
+   * time to generate new Building.
+   */
+  interface BuildingTemplate {
+    name: string;
+    id: buildingTemplateId;
+    /**
+     * Building features that can be automatically
+     * modified in instantiation process.
+     */
+    parameters: unknown;
+  }
+
+  /**
+   * Building is generated and hand-edited building
+   * later used in game.
+   * Building is also a location but it's not standalone
+   * since it's always a container for Interior.
+   */
+  interface Building {
+    name: string;
+    id: buildingId;
+    parentLocation: locationId;
+    interiors: Array<interiorId>;
+  }
+
+  interface BuildingSceneInstance extends Building {
+    data: unknown;
+  }
+
+  /**
+   * Interior is a type of location.
+   * It can either exist wrapped in Building (usually in case
+   * of the City), or it can be stand-alone (usually lonely
+   * non-dungeon location on the map).
+   *
+   * If part of a building it is generated properly
+   * for that building.
+   */
   interface Interior extends Location {
-    capacity: number;
+    id: interiorId;
     type: InteriorType;
-    typeVariant: unknown;
+    /**
+     * List of other locations interior leads to.
+     *
+     * Since those are locations there is a lot of possibilities here:
+     * it could be a cellar infested with monsters,
+     * it could be your bedroom in a tavern,
+     * it could be exit back to the city,
+     * it could be just another interior,
+     * it could be an entry to another building...
+     */
+    gateways?: Array<locationId>;
   }
 
   interface Camp extends Location {
@@ -904,6 +978,7 @@ declare global {
     name: string,
     id: markerId;
     type: MarkerType;
+    size: number;
     hidden: boolean;
     coordinates: {
       x: number,
@@ -958,6 +1033,11 @@ declare global {
 
   interface Inventory {}
 
+  /**
+   * It is container for data allowing to construct
+   * believable background for NPC you have dialog with
+   * appropriate to the place you are in.
+   */
   interface DialogBackground {}
 
   interface DialogUI {}
@@ -979,6 +1059,68 @@ declare global {
   interface GameplayOptions {}
 
   interface Controls {}
+
+  /* Memory Management */
+
+  /**
+   * Entity responsible for smart usage of memory.
+   */
+  interface MemoryManager {}
+
+  /**
+   * Scene is crucial object that holds references
+   * to Instances created for the purpose of given
+   * scene.
+   *
+   * This object is used to preload data reuired for
+   * the scene that player is likely to enter, to shorten
+   * loading time.
+   *
+   * This object is also used to free Memory when
+   * player is not likely to need the scene for
+   * a longer time.
+   */
+  interface Scene {
+    id: sceneId;
+    type: SceneType;
+    /**
+     * The location that requires given Scene data.
+     */
+    location: worldId | locationId;
+    /**
+     * Probably list of Actor, Building and SceneryObject Instances.
+     */
+    data: unknown;
+    /**
+     * How long player is in the scene.
+     */
+    age: number;
+  }
+
+  enum SceneType {
+    WorldMap = 'WorldMap',
+    Dungeon = 'Dungeon',
+    Settlement = 'Settlement',
+    Interior = 'Interior',
+    Camp = 'Camp',
+    Inventory = 'Inventory',
+  }
+
+  /**
+   * Container for various types of information
+   * not directly connected to scenes.
+   */
+  interface AuxiliaryData {
+    id: auxDataId;
+    type: DataType;
+    data: unknown;
+  }
+
+  enum DataType {
+    Dialog = 'Dialog',
+    UI = 'UI',
+    Party = 'Party',
+  }
 
   /* -------------------------------------------------------------------------- */
   /* Debug, testing and validation */
