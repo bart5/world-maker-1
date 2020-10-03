@@ -1,9 +1,22 @@
 import { createStore } from 'vuex';
 
+interface State {
+  selectedTask: taskId | null;
+}
+
+const stateTemplate: State = {
+  selectedTask: null,
+}
+
 export default createStore({
-  state: {
+  state: stateTemplate,
+  getters: {
+    selectedTask: (state) => state.selectedTask
   },
   mutations: {
+    selectTask(state, taskId: string) {
+      state.selectedTask = taskId
+    }
   },
   actions: {
   },

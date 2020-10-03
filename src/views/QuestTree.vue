@@ -3,6 +3,7 @@
   <div class="tree-wrapper">
     <TreeNode
       :task="firstTask"
+      @select-task="onSelectTask"
     >
     </TreeNode>
   </div>
@@ -29,6 +30,11 @@ export default class QuestTree extends Vue {
 
   get firstTask() {
     return staticData.tasks[this.anyQuest.id][this.anyQuest.firstTask]
+  }
+
+  onSelectTask(id: string) {
+    console.log('Task :', id, ' selected')
+    this.$emit('select-task', { questId: this.anyQuest.id, taskId: id })
   }
 }
 </script>

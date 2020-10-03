@@ -9832,6 +9832,11 @@ vue-class-component@^8.0.0-0:
   resolved "https://registry.yarnpkg.com/vue-class-component/-/vue-class-component-8.0.0-beta.3.tgz#eef38348fe914f391c034ec9b53457402dae5b7b"
   integrity sha512-Dj9ZGZJpncSw6KJe3wpK35bDKEzWajQe+umUR9CpCmp3fVof1VwUc2pZG786gnvOghKspgeDfHYTMna3HMQxoQ==
 
+vue-class-store@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/vue-class-store/-/vue-class-store-3.0.0.tgz#64b5abffc7dee251d867872ff5d3cd106d06918a"
+  integrity sha512-OsAQUGOGgA7xwgSSrQ7R8oQpDV3HJ3lXEU7jGEIubkJzUrQAi0EaP1juvNe4wZuyWt5nUYesLWGOb+uFdOO+fQ==
+
 vue-cli-plugin-electron-builder@~2.0.0-rc.4:
   version "2.0.0-rc.4"
   resolved "https://registry.yarnpkg.com/vue-cli-plugin-electron-builder/-/vue-cli-plugin-electron-builder-2.0.0-rc.4.tgz#c819279e00fe6771912f5f0468ee26f279750a5b"

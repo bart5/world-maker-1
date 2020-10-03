@@ -7,10 +7,10 @@
       <div
         class="current-node"
         :class="directionClasses"
+        @click="selectTask(task.id)"
       >
         <span>{{ task.id }}</span>
       </div>
-
     </div>
     <div class="child-nodes">
       <template v-if="!isLastTask">
@@ -19,6 +19,7 @@
           :key="taskId"
           :task="getTaskOfId(taskId)"
           :isBranching="taskId !== nextTasks[0] /*first task is not branching*/"
+          @select-task="selectTask"
         />
       </template>
     </div>
@@ -65,6 +66,10 @@ export default class TreeNode extends Vue {
 
   getTaskOfId(id: string) {
     return staticData.tasks[this.task.questId][id]
+  }
+
+  selectTask(id: string) {
+    this.$emit('select-task', id)
   }
 }
 </script>
