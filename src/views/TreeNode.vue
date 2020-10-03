@@ -10,7 +10,7 @@
   <div class="branch-box">
     <div
       class="node-box"
-      :class="{ leftArrow, rightArrow }"
+      :class="[ arrowClass ]"
     >
       <div class="task"></div>
 
@@ -41,10 +41,16 @@ export default class TreeNode extends Vue {
 
   @Prop({ default: 'right' }) direction!: direction
 
+  @Prop({ default: false }) isBranching!: boolean
+
   customDirection: direction | null = null
 
   setCustomDirection(value: direction) {
     this.customDirection = value
+  }
+
+  get arrowClasses() {
+    return [!this.isBranching ? 'straight' : '', this.direction]
   }
 
   get isLastTask() {
@@ -66,5 +72,15 @@ export default class TreeNode extends Vue {
 .node-box {
   width: 30px;
   height: 30px;
+
+  &:not(.straight) {
+    border-top: 3px solid;
+  }
+  &.right {
+    border-right: 3px solid;
+  }
+  &.left {
+    border-left: 3px solid;
+  }
 }
 </style>

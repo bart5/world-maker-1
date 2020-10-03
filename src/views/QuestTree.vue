@@ -1,40 +1,35 @@
 <template>
   <h2>QuestTree</h2>
-  <div class="treeLevel">
-    <!-- <div
-      v-for="task in task.nextTasks"
-      :key="task.id"
-      class="taskNode"
-    ></div> -->
-  </div>
-  <div
-    class="treeNode"
-    :class="{}"
+  <TreeNode
+    :task="firstTask"
   >
-  </div>
-  <div class="branch-box">
-    <div class="node-box"></div>
-  </div>
+  </TreeNode>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
+import staticData from '@/game/data/static'
+import TreeNode from '@/views/TreeNode.vue'
 
 @Options({
   components: {
+    TreeNode
   },
 })
 export default class QuestTree extends Vue {
+  get quests() {
+    return staticData.quests
+  }
+
+  get anyQuest() {
+    return this.quests[Object.keys(this.quests)[0]]
+  }
+
+  get firstTask() {
+    return staticData.tasks[this.anyQuest.id][this.anyQuest.firstTask]
+  }
 }
 </script>
 
 <style lang="scss">
-.branch-box {
-  display: flex;
-}
-
-.node-box {
-  width: 30px;
-  height: 30px;
-}
 </style>

@@ -14,10 +14,12 @@ const quests: {
 }
 
 const tasks: {
-  [Key in keyof typeof quests]: Array<Task>
+  [Key in keyof typeof quests]: {
+    [taskId: string]: Task
+  }
 } = {
-  '1': [
-    {
+  '1': {
+    '1': {
       id: '1',
       name: 'Test task 1',
       questId: '1',
@@ -33,7 +35,7 @@ const tasks: {
       formerTask: null,
       nextTasks: ['2', '3'],
     },
-    {
+    '2': {
       id: '2',
       name: 'Test task 2',
       questId: '1',
@@ -49,7 +51,7 @@ const tasks: {
       formerTask: '1',
       nextTasks: null,
     },
-    {
+    '3': {
       id: '3',
       name: 'Test task 3',
       questId: '1',
@@ -64,8 +66,8 @@ const tasks: {
       isLastTask: true,
       formerTask: '1',
       nextTasks: null,
-    },
-  ]
+    }
+  }
 }
 
 export default {
