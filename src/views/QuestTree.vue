@@ -1,9 +1,11 @@
 <template>
   <h2>QuestTree</h2>
-  <TreeNode
-    :task="firstTask"
-  >
-  </TreeNode>
+  <div class="tree-wrapper">
+    <TreeNode
+      :task="firstTask"
+    >
+    </TreeNode>
+  </div>
 </template>
 
 <script lang="ts">
@@ -32,4 +34,9 @@ export default class QuestTree extends Vue {
 </script>
 
 <style lang="scss">
+.tree-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 500px;
+}
 </style>
