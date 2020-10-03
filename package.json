@@ -17,7 +17,6 @@
     "electron": "^9.0.0",
     "vue": "^3.0.0-0",
     "vue-class-component": "^8.0.0-0",
-    "vue-class-store": "^3.0.0",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.4",
     "vue-property-decorator": "^9.0.0",
     "vue-router": "^4.0.0-0",

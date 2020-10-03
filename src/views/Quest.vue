@@ -42,10 +42,6 @@ export default class Quest extends Vue {
     const task = staticData.tasks[questId][taskId]
     this.selectedTask = task
   }
-
-  // mounted() {
-  //   console.log('root: ', root)
-  // }
 }
 </script>
 
