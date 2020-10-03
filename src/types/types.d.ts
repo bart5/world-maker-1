@@ -30,15 +30,15 @@ interface Task {
    * Work end up as subscriptions to proper state transition on
    * entity they concern (e.g. expectation to win in battle encounter).
    */
-  work: Work[];
+  successConditions: Work[];
   /**
    * Effect is some immediate result of fulfilling work (e.g. granting currency).
    */
-  effects: effectId[];
+  onSuccess: effectId[];
   /**
    * Certain states which will result in player failing the task and the quest.
    */
-  failures: Work[];
+  failureConditions: Work[];
   onFailure: effectId[];
   /**
    * Becomes active when previous task is done. Active task generates
@@ -58,8 +58,8 @@ interface Task {
    * Last task, when done, marks entire quest as done also.
    */
   isLastTask: boolean;
-  formerTask: taskId;
-  nextTasks: taskId[]; // most of the times there will be just one next task
+  formerTask: taskId | null;
+  nextTasks: taskId[] | null; // most of the times there will be just one next task
 }
 
 /**
