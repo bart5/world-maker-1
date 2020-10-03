@@ -20,6 +20,7 @@ module.exports = {
     'comma-dangle': 0,
     'max-len': 0,
     'no-explicit-any': 0,
-    'quote-props': 0
+    'quote-props': 0,
+    'member-delimiter-style': 0,
   },
 };

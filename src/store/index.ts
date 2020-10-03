@@ -1,7 +1,8 @@
 import { createStore } from 'vuex';
+import staticData from '@/game/data/static'
 
 export interface State {
-  selectedTask: taskId | null;
+  selectedTask: { questId: string; taskId: string } | null;
 }
 
 const stateTemplate: State = {
@@ -11,14 +12,22 @@ const stateTemplate: State = {
 export default createStore({
   state: stateTemplate,
   getters: {
-    selectedTask: (state) => state.selectedTask
+    selectedTask: (state) => {
+      console.log('gettin value')
+      // return state.selectedTask
+      if (!state.selectedTask) return {}
+      return staticData.tasks[state.selectedTask?.questId][state.selectedTask.taskId]
+    }
   },
   mutations: {
-    selectTask(state, taskId: string) {
-      state.selectedTask = taskId
+    setSelectedTask(state, { questId, taskId }) {
+      state.selectedTask = { questId, taskId }
     }
   },
   actions: {
+    selectTask(state, taskId: string) {
+      this.commit('setSelectedTask', taskId)
+    }
   },
   modules: {
   },

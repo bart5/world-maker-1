@@ -33,6 +33,7 @@ export default class QuestTree extends Vue {
   }
 
   onSelectTask(id: string) {
+    this.$store.dispatch('selectTask', { questId: this.anyQuest.id, taskId: id })
     console.log('Task :', id, ' selected')
     this.$emit('select-task', { questId: this.anyQuest.id, taskId: id })
   }

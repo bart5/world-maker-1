@@ -2,9 +2,7 @@
   <div class="map-wrapper">
     <h1>Quest</h1>
     <div>Selected task id: {{ selectedTask && selectedTask.id }}</div>
-    <QuestTree
-      @select-task="onSelectTask"
-    />
+    <QuestTree/>
     <TaskEditor
       :selectedTask="selectedTask"
       :isNewTask="false"
@@ -16,7 +14,6 @@
 import { Options, Vue } from 'vue-class-component'
 import QuestTree from '@/views/QuestTree.vue'
 import TaskEditor from '@/views/TaskEditor.vue'
-import staticData from '@/game/data/static'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { remote } = window.require('electron')
@@ -36,11 +33,8 @@ console.log(root)
   },
 })
 export default class Quest extends Vue {
-  selectedTask: Task | null = null
-
-  onSelectTask({ questId, taskId }: { questId: string; taskId: string }) {
-    const task = staticData.tasks[questId][taskId]
-    this.selectedTask = task
+  get selectedTask() {
+    return this.$store.getters.selectedTask
   }
 }
 </script>
