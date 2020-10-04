@@ -1,5 +1,5 @@
 import { createStore } from 'vuex';
-import staticData from '@/game/data/static'
+import staticData from '@/game/data/dataManager'
 
 export interface State {
   selectedTask: { questId: string; taskId: string } | null;

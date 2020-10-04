@@ -58,7 +58,7 @@ interface Task {
    * Last task, when done, marks entire quest as done also.
    */
   isLastTask: boolean;
-  formerTask: taskId | null;
+  formerTasks: taskId[] | null;
   nextTasks: taskId[] | null; // most of the times there will be just one next task
 }
 
