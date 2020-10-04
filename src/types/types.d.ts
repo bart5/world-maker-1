@@ -81,7 +81,6 @@ interface Quest {
    * has no longer reason to exist.
    */
   obsolete: boolean;
-  dialog: dialogId;
 }
 
 interface Work {

@@ -1,3 +1,19 @@
+/**
+ * This file manages staticData in context of WorldMaker.
+ * It loads game data from staticData and saves it there
+ * when it's edited, added or deleted.
+ */
+
+interface QuestStore {
+  [questId: string]: Quest
+}
+
+interface TaskStore {
+  [questId: string]: {
+    [taskId: string]: Task
+  }
+}
+
 const quests: {
   [questId: string]: Quest
 } = {
@@ -9,7 +25,6 @@ const quests: {
     done: false,
     failed: false,
     obsolete: false,
-    dialog: '1',
   }
 }
 
