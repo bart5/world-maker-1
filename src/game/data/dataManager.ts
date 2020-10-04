@@ -47,7 +47,7 @@ const tasks: {
       failed: false,
       isFirstTask: true,
       isLastTask: false,
-      formerTask: null,
+      formerTasks: null,
       nextTasks: ['2', '3'],
     },
     '2': {
@@ -63,7 +63,7 @@ const tasks: {
       failed: false,
       isFirstTask: false,
       isLastTask: true,
-      formerTask: '1',
+      formerTasks: ['1'],
       nextTasks: null,
     },
     '3': {
@@ -79,7 +79,7 @@ const tasks: {
       failed: false,
       isFirstTask: false,
       isLastTask: true,
-      formerTask: '1',
+      formerTasks: ['1'],
       nextTasks: null,
     }
   }

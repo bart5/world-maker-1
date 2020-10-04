@@ -15,17 +15,6 @@ import { Options, Vue } from 'vue-class-component'
 import QuestTree from '@/views/QuestTree.vue'
 import TaskEditor from '@/views/TaskEditor.vue'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { remote } = window.require('electron')
-
-const electronFs = remote.require('fs')
-
-console.log(electronFs)
-
-const root = electronFs.readdirSync('/')
-
-console.log(root)
-
 @Options({
   components: {
     QuestTree,
