@@ -1,8 +1,9 @@
 import { ipcMain, dialog } from "electron"
 import fs from 'fs'
 
-const stateDataSubpath = '/dame/data/stateData.json'
-const staticDataSubpath = '/dame/data/staticData.json'
+/* TODO: Figure out later better placemed */
+const stateDataSubpath = '/src/game/data/stateData.json'
+const staticDataSubpath = '/src/game/data/staticData.json'
 const cwd = process.cwd()
 
 const stateDataPath = cwd + stateDataSubpath
@@ -54,7 +55,7 @@ function saveFile(path: string, data: {}, event: Electron.IpcMainEvent, callback
   })
 }
 
-export function stupCommunicaton() {
+export function setupCommunicaton() {
   console.log('setting up ipc communication')
 
   ipcMain.on('ipc-test', (event, arg: any) => {
@@ -78,6 +79,3 @@ export function stupCommunicaton() {
     operationWrapper(event, 'saveStaticData', saveFile(staticDataPath, data, event))
   })
 }
-
-// event.reply('asynchronous-reply', 'pong')
-// event.returnValue = 'pong'

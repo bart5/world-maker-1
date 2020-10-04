@@ -7,9 +7,21 @@
 window.ipcRenderer.on('ipc-test-reply', (event, arg) => {
   console.log(arg) // prints "pong"
 })
+window.ipcRenderer.on('loadStaticData-reply', (event, arg) => {
+  console.log('on loadStaticData-reply, received data:, ', arg)
+})
+window.ipcRenderer.on('saveStaticData-reply', (event, arg) => {
+  console.log('on saveStaticData-reply, result:, ', arg)
+})
 
 console.log('sending test message')
 window.ipcRenderer.send('ipc-test', 'ping')
+
+const loadStatic = () => window.ipcRenderer.send('loadStaticData')
+const saveStatic = () => window.ipcRenderer.send('saveStaticData', quests)
+
+console.log(loadStatic)
+console.log(saveStatic)
 
 const quests: {
   [questId: string]: Quest;

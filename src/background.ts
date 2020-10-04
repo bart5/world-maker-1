@@ -1,7 +1,7 @@
 import { app, protocol, BrowserWindow } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
-import { stupCommunicaton } from './backend';
+import { setupCommunicaton } from './ipcHandling';
 import path from 'path'
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -15,7 +15,7 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
 
-stupCommunicaton()
+setupCommunicaton()
 
 function createWindow() {
   // Create the browser window.
@@ -27,7 +27,6 @@ function createWindow() {
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: (process.env.ELECTRON_NODE_INTEGRATION as unknown) as boolean,
       preload: path.join(__dirname, 'preload.js')
-      // nodeIntegration: true,
     },
   });
 
