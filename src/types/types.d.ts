@@ -22,6 +22,11 @@ type spawnId = string
 type npcPartyId = string
 type landResourceId = string
 
+interface StaticData {
+  quests: QuestStore,
+  tasks: TaskStore,
+}
+
 interface Task {
   id: taskId;
   name: string;
@@ -62,6 +67,12 @@ interface Task {
   nextTasks: taskId[] | null; // most of the times there will be just one next task
 }
 
+interface TaskStore {
+  [questId: string]: {
+    [taskId: string]: Task
+  }
+}
+
 /**
  * Quest is just a wrapper for tasks which are *the* meat and potatoes
  * of the quest-system.
@@ -81,6 +92,10 @@ interface Quest {
    * has no longer reason to exist.
    */
   obsolete: boolean;
+}
+
+interface QuestStore {
+  [questId: string]: Quest
 }
 
 interface Work {

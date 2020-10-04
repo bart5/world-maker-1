@@ -11,7 +11,6 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
-import staticData from '@/game/data/static'
 import TreeNode from '@/views/TreeNode.vue'
 
 @Options({
@@ -21,7 +20,7 @@ import TreeNode from '@/views/TreeNode.vue'
 })
 export default class QuestTree extends Vue {
   get quests() {
-    return staticData.quests
+    return this.$store.getters.allQuests
   }
 
   get anyQuest() {
@@ -29,7 +28,7 @@ export default class QuestTree extends Vue {
   }
 
   get firstTask() {
-    return staticData.tasks[this.anyQuest.id][this.anyQuest.firstTask]
+    return this.$store.getters.task(this.anyQuest.id, this.anyQuest.firstTask)
   }
 
   onSelectTask(id: string) {

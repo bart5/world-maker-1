@@ -29,7 +29,6 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
 import { Prop } from 'vue-property-decorator';
-import staticData from '@/game/data/static'
 
 type direction = 'left' | 'right'
 
@@ -65,7 +64,7 @@ export default class TreeNode extends Vue {
   }
 
   getTaskOfId(id: string) {
-    return staticData.tasks[this.task.questId][id]
+    return this.$store.getters.task(this.task.questId, id)
   }
 
   selectTask(id: string) {

@@ -1,23 +1,33 @@
 import { createStore } from 'vuex';
-import staticData from '@/game/data/dataManager'
+import quests from '@/game/data/dataManager'
 
 export interface State {
   selectedTask: { questId: string; taskId: string } | null;
+  staticData: StaticData,
+  stateData: {},
 }
 
 const stateTemplate: State = {
   selectedTask: null,
+  // staticData: {} as StaticData,
+  staticData: quests,
+  stateData: {},
 }
 
 export default createStore({
   state: stateTemplate,
   getters: {
-    selectedTask: (state) => {
-      console.log('gettin value')
-      // return state.selectedTask
+    selectedTask: (state, getters) => {
       if (!state.selectedTask) return {}
-      return staticData.tasks[state.selectedTask?.questId][state.selectedTask.taskId]
-    }
+      return getters.task(state.selectedTask)
+    },
+    task: (state) => (questId: string, taskId: string) => {
+      return state.staticData.tasks[questId][taskId]
+    },
+    quest: (state) => (questId: string) => {
+      return state.staticData.quests[questId]
+    },
+    allQuests: (state) => state.staticData.quests
   },
   mutations: {
     setSelectedTask(state, { questId, taskId }) {

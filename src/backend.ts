@@ -54,26 +54,30 @@ function saveFile(path: string, data: {}, event: Electron.IpcMainEvent, callback
   })
 }
 
-ipcMain.on('ipc-test', (event, arg: any) => {
-  console.log(`received arguments: ${arg}`)
-  event.reply('ipc-test-reply', 'pong')
-})
+export function stupCommunicaton() {
+  console.log('setting up ipc communication')
 
-ipcMain.on('loadStateData', (event) => {
-  operationWrapper(event, 'loadStateData', loadFile(stateDataPath, event))
-})
+  ipcMain.on('ipc-test', (event, arg: any) => {
+    console.log(`received arguments: ${arg}`)
+    event.reply('ipc-test-reply', 'pong')
+  })
 
-ipcMain.on('saveStateData', (event, data: {}) => {
-  operationWrapper(event, 'saveStateData', saveFile(stateDataPath, data, event))
-})
+  ipcMain.on('loadStateData', (event) => {
+    operationWrapper(event, 'loadStateData', loadFile(stateDataPath, event))
+  })
 
-ipcMain.on('loadStaticData', (event) => {
-  operationWrapper(event, 'loadStaticData', loadFile(staticDataPath, event))
-})
+  ipcMain.on('saveStateData', (event, data: {}) => {
+    operationWrapper(event, 'saveStateData', saveFile(stateDataPath, data, event))
+  })
 
-ipcMain.on('saveStaticData', (event, data: {}) => {
-  operationWrapper(event, 'saveStaticData', saveFile(staticDataPath, data, event))
-})
+  ipcMain.on('loadStaticData', (event) => {
+    operationWrapper(event, 'loadStaticData', loadFile(staticDataPath, event))
+  })
+
+  ipcMain.on('saveStaticData', (event, data: {}) => {
+    operationWrapper(event, 'saveStaticData', saveFile(staticDataPath, data, event))
+  })
+}
 
 // event.reply('asynchronous-reply', 'pong')
 // event.returnValue = 'pong'

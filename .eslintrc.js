@@ -22,5 +22,16 @@ module.exports = {
     'no-explicit-any': 0,
     'quote-props': 0,
     'member-delimiter-style': 0,
+    "@typescript-eslint/member-delimiter-style": 0,
+    // "@typescript-eslint/member-delimiter-style": ["error", {
+    //   multiline: {
+    //     delimiter: 'none',    // 'none' or 'semi' or 'comma'
+    //     requireLast: true,
+    //   },
+    //   singleline: {
+    //     delimiter: 'semi',    // 'semi' or 'comma'
+    //     requireLast: false,
+    //   },
+    // }]
   },
 };

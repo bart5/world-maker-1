@@ -4,18 +4,15 @@
  * when it's edited, added or deleted.
  */
 
-interface QuestStore {
-  [questId: string]: Quest
-}
+window.ipcRenderer.on('ipc-test-reply', (event, arg) => {
+  console.log(arg) // prints "pong"
+})
 
-interface TaskStore {
-  [questId: string]: {
-    [taskId: string]: Task
-  }
-}
+console.log('sending test message')
+window.ipcRenderer.send('ipc-test', 'ping')
 
 const quests: {
-  [questId: string]: Quest
+  [questId: string]: Quest;
 } = {
   '1': {
     id: '1',
@@ -30,7 +27,7 @@ const quests: {
 
 const tasks: {
   [Key in keyof typeof quests]: {
-    [taskId: string]: Task
+    [taskId: string]: Task;
   }
 } = {
   '1': {
