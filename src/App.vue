@@ -1,7 +1,8 @@
 <template>
   <div id="nav">
     <!-- <router-link to="/">World Map</router-link> | -->
-    <router-link to="/">Quest</router-link> |
+    <router-link to="/">Loader</router-link> |
+    <router-link to="/quest">Quest</router-link> |
     <router-link to="/about">About</router-link>
   </div>
   <router-view/>

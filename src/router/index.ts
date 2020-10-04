@@ -1,10 +1,16 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
+import ProjectLoader from '../views/ProjectLoader.vue';
 import Quest from '../views/Quest.vue';
 // import WorldMap from '../views/WorldMap.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
+    name: 'Project Loaded',
+    component: ProjectLoader,
+  },
+  {
+    path: '/quest',
     name: 'Quest',
     component: Quest,
   },

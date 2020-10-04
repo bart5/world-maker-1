@@ -1,27 +1,23 @@
+import { Vue } from 'vue-class-component'
+
 /**
  * This file manages staticData in context of WorldMaker.
  * It loads game data from staticData and saves it there
  * when it's edited, added or deleted.
  */
 
-window.ipcRenderer.on('ipc-test-reply', (event, arg) => {
-  console.log(arg) // prints "pong"
-})
-window.ipcRenderer.on('loadStaticData-reply', (event, arg) => {
-  console.log('on loadStaticData-reply, received data:, ', arg)
-})
-window.ipcRenderer.on('saveStaticData-reply', (event, arg) => {
-  console.log('on saveStaticData-reply, result:, ', arg)
-})
+export const initializeDataManager = (vm: Vue) => {
+  vm.$store.dispatch('setStaticData')
 
-console.log('sending test message')
-window.ipcRenderer.send('ipc-test', 'ping')
+  window.ipcRenderer.on('loadStaticData-reply', (event, data: StaticData) => {
+    console.log('on loadStaticData-reply, received data:, ', data)
+    vm.$store.dispatch('setStaticData', data)
+  })
 
-const loadStatic = () => window.ipcRenderer.send('loadStaticData')
-const saveStatic = () => window.ipcRenderer.send('saveStaticData', quests)
-
-console.log(loadStatic)
-console.log(saveStatic)
+  window.ipcRenderer.on('saveStaticData-reply', (event, arg) => {
+    console.log('on saveStaticData-reply, result:, ', arg)
+  })
+}
 
 const quests: {
   [questId: string]: Quest;
