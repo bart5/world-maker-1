@@ -48,16 +48,19 @@ export default createStore({
     allQuests: (state) => state.staticData.quests,
     loadingStaticData: (state) => state.loadingStaticData,
     staticData: (state) => state.staticData,
+    workspaces: (state) => state.ui.project.workspaces,
     activeWorkspaceId: (state) => state.ui.project.activeWorkspaceId,
     allTilesOfWorkspace: (state) => (workspaceId: string) => state.ui.project.tiles.filter(tile => {
       return tile.workspaceId === workspaceId
     }),
-    // allBoxesOfWorkspace: (state) => (workspaceId: string) => state.ui.project.boxes.filter(box => {
-    //   return box.workspaceId === workspaceId
-    // }),
+    allBoxesOfWorkspace: (state, getters) => (workspaceId: string) => {
+      const allTilesOfWorkspace = getters.allTilesOfWorkspace(workspaceId)
+      return state.ui.project.boxes.filter(box => {
+        return allTilesOfWorkspace.some((tile: Tile) => tile.boxId === box.id)
+      })
+    },
     activeWorkspaceTiles: (state, getters) => getters.allTilesOfWorkspace(getters.activeWorkspaceId),
-    // activeWorkspaceBoxes: (state, getters) => getters.allBoxesOfWorkspace(getters.activeWorkspaceId),
-    allBoxedTilesOfWorkspace: (state, getters) => (workspaceId: string) => {
+    allBoxedTilesOfWorkspace: (state, getters) => (workspaceId: string): Tile[] => {
       return getters.allTilesOfWorkspaceId(getters.activeWorkspaceId).filter((tile: Tile) => {
         return tile.boxId !== ''
       })
@@ -66,6 +69,20 @@ export default createStore({
       return getters.allTilesOfWorkspaceId(getters.activeWorkspaceId).filter((tile: Tile) => {
         return tile.boxId === ''
       })
+    },
+    workspaceTilesByBox: (state, getters) => (workspaceId: string) => {
+      return getters.allBoxedTilesOfWorkspace(workspaceId).reduce((acc: { [k:string]: Tile[] }, tile: Tile) => {
+        const boxId = tile.boxId
+        if (acc.boxId) {
+          acc[boxId].push(tile)
+        } else {
+          acc[boxId] = [tile]
+        }
+        return acc
+      }, {} as { [k:string]: Tile[] })
+    },
+    workspaceTilesOfBox: (state, getters) => (worskapceId: string, boxId: string) => {
+      return getters.workspaceTilesByBox(worskapceId)[boxId]
     },
     boxOfId: (state) => (boxId: string) => state.ui.project.boxes.filter(b => b.id === boxId)
   },

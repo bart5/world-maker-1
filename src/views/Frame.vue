@@ -13,17 +13,17 @@
           @click="onWorkspaceClick"
         >
           <TileComponent
-            v-for="tile in getUnboxedTiles(workspace)"
+            v-for="tile in allFreeTilesOfWorkspace(workspace.id)"
             :key="tile.id"
             :id="tile.id"
           />
           <TileBox
-            v-for="boxId in workspace"
-            :key="boxId"
-            :id="boxId"
+            v-for="box in allBoxesOfWorkspace(workspace.id)"
+            :key="box.id"
+            :id="box.id"
           >
             <TileComponent
-              v-for="tile in getTilesFromTheBox(workspace.id, boxId)"
+              v-for="tile in workspaceTilesOfBox(workspace.id, box.id)"
               :key="tile.id"
               :id="tile.id"
             />
@@ -44,41 +44,31 @@ import TileComponent from '@/views/Tile.vue'
 })
 export default class Frame extends Vue {
 
+  get workspaces(): Workspace[] {
+    return this.$store.getters.workspaces
+  }
+
   showWorkspace(workspaceId: string) {
     return this.$store.getters.activeWorkspaceId === workspaceId
   }
 
-  getWorkspaceTiles(workspace: Workspace): Tile[] {
-    return workspace.tiles.map(tileId => this.getWorkspaceTile(workspace.id, tileId))
+  allFreeTilesOfWorkspace(workspaceId: string): Tile[] {
+    return this.$store.getters.allFreeTilesOfWorkspace(workspaceId)
   }
 
-  getUnboxedTiles(workspace: Workspace): Tile[] {
-    return this.getWorkspaceTiles(workspace).filter(t => t.boxId === '')
+  allBoxedTilesOfWorkspace(workspaceId: string): Tile[] {
+    return this.$store.getters.allBoxedTilesOfWorkspace(workspaceId)
   }
 
-  getTilesFromTheBox(workspaceId: string, boxId: string): Tile[] {
-    return this.getWorkspaceBox(workspaceId, boxId).tiles.map(tileId => {
-      return this.getWorkspaceTile(workspaceId, tileId)
-    })
+  allBoxesOfWorkspace(workspaceId: string): Tile[] {
+    return this.$store.getters.allBoxesOfWorkspace(workspaceId)
   }
 
-  getWorkspaceBox(workspaceId: string, boxId: string): TileBox {
-    return this.$store.getters.getWorkspaceBox({ workspaceId, boxId })
-  }
-
-  getBoxedTiles(workspace: Workspace): Tile[] {
-    return this.getWorkspaceTiles(workspace).filter(t => t.boxId !== '')
-  }
-
-  getWorkspaceTile(workspaceId: string, tileId: string): Tile {
-    return this.$store.getters.getTile({ workspaceId, tileId })
+  workspaceTilesOfBox(workspaceId: string, boxId: string): { [boxId: string]: Tile[] } {
+    return this.$store.getters.workspaceTilesOfBox(workspaceId, boxId)
   }
 
   createTile() {
-
-  }
-
-  activeWorkspace() {
 
   }
 
@@ -96,9 +86,6 @@ export default class Frame extends Vue {
 
   get workspaceTiles() {
 
-  }
-
-  get workspaces(): Array<Workspace> {
   }
 
   calcNewTilePosition() {
