@@ -1,5 +1,5 @@
 <template>
-  <div class="tile-wrapper">
+  <div class="tile-wrapper" :style="tileStyle">
     <div class="header"></div>
     <div class="tile">
       <component :is="TaskEditor"></component>
@@ -18,13 +18,17 @@ import { Prop } from 'vue-property-decorator'
     TaskEditor
   },
 })
-export default class Tile extends Vue {
+export default class TileComponent extends Vue {
   @Prop() id!: string
 
   @Prop() isBox!: boolean
 
-  get self() {
+  resizeInProgress = false
 
+  dragInProgress = false
+
+  get self(): Tile {
+    return this.$store.getters.activeWorkspaceTileById(this.id)
   }
 
   startConnecting() {
@@ -39,28 +43,50 @@ export default class Tile extends Vue {
 
   }
 
-  get tileDragInProgress() {
-
+  startDrag() {
+    this.dragInProgress = true
   }
 
-  onMouseDown() {
-    if (this.connectingInProgress) {
-      this.connect()
-    } else if (this.tileDragInProgress) {
-      this.stopDrag()
+  startResize() {
+    this.resizeInProgress = true
+  }
+
+  onMouseMove(e: MouseEvent) {
+    if (this.resizeInProgress) {
+      this.resizeHandler(e)
+    } else if (this.dragInProgress) {
+      this.dragHandler(e)
     }
   }
 
-  startDrag() {
-    this.$store.dispatch('startTileDrag', { id: this.id })
+  getMouseMoveDelta(e: MouseEvent) {
+    return {
+      x: e.movementX,
+      y: e.movementY
+    }
+  }
+
+  resizeHandler(e: MouseEvent) {
+    this.$store.dispatch('resizeTile', { tileId: this.id, delta: this.getMouseMoveDelta(e) })
+  }
+
+  dragHandler(e: MouseEvent) {
+    this.$store.dispatch('moveTile', { tileId: this.id, delta: this.getMouseMoveDelta(e) })
   }
 
   stopDrag() {
-
+    window.addEventListener('mousemove', this.onMouseMove)
   }
 
-  get top() {
-    this.self
+  get tileStyle() {
+    const { width, height, x, y } = this.self
+
+    return {
+      width: width + 'px',
+      height: height + 'px',
+      left: x + 'px',
+      right: y + 'px'
+    }
   }
 
   // onFocus() {
@@ -88,7 +114,8 @@ export default class Tile extends Vue {
 }
 
 .footer {
-
+  height: 8px;
+  background: darkviolet;
 }
 
 .tile {

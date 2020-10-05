@@ -1,5 +1,6 @@
 <template>
-  <div>
+  <div class="tile-box-wrapper">
+    <slot></slot>
   </div>
 </template>
 
@@ -11,15 +12,11 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class TilesBox extends Vue {
-  get self() {
-
-  }
-
-  onResize() {
-
-  }
 }
 </script>
 
 <style lang="scss">
+.tile-box-wrapper {
+  position: relative;
+}
 </style>

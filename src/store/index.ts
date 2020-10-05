@@ -31,6 +31,11 @@ const initialState: State = {
   }
 }
 
+const minTileSize = {
+  width: 80,
+  height: 100
+}
+
 export default createStore({
   state: initialState,
   getters: {
@@ -84,7 +89,10 @@ export default createStore({
     workspaceTilesOfBox: (state, getters) => (worskapceId: string, boxId: string) => {
       return getters.workspaceTilesByBox(worskapceId)[boxId]
     },
-    boxOfId: (state) => (boxId: string) => state.ui.project.boxes.filter(b => b.id === boxId)
+    boxOfId: (state) => (boxId: string) => state.ui.project.boxes.filter(b => b.id === boxId),
+    activeWorkspaceTileById: (state, getters) => (tileId: string) => {
+      return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
+    }
   },
   mutations: {
     setSelectedTask(state, { questId, taskId }) {
@@ -128,6 +136,16 @@ export default createStore({
         name: 'New Workspace',
         order,
       })
+    },
+    RESIZE_TILE(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
+      const tile = state.ui.project.tiles.filter((tile) => tile.id === tileId)[0]
+      tile.width = Math.max(tile.width + delta.x, minTileSize.width)
+      tile.height = Math.max(tile.height + delta.y, minTileSize.height)
+    },
+    DRAG_TILE(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
+      const tile = state.ui.project.tiles.filter((tile) => tile.id === tileId)[0]
+      tile.x = tile.x + delta.x
+      tile.y = Math.min(tile.y + delta.y, 0)
     }
   },
   actions: {
@@ -190,7 +208,13 @@ export default createStore({
     },
     activateWorkspace(state, workspaceId: string) {
       this.commit('setActiveWorkspace', workspaceId)
-    }
+    },
+    resizeTile(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
+      this.commit('RESIZE_TILE', { tileId, delta })
+    },
+    dragTile(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
+      this.commit('DRAG_TILE', { tileId, delta })
+    },
   },
   modules: {
   },

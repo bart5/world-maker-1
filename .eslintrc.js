@@ -22,6 +22,8 @@ module.exports = {
     'quote-props': 0,
     'member-delimiter-style': 0,
     'arrow-body-style': 0,
+    'object-curly-newline': 0,
+    'prefer-template': 0,
     // 'arrow-parens': 0,
     "@typescript-eslint/member-delimiter-style": 0,
     "@typescript-eslint/no-use-before-define": 0,
