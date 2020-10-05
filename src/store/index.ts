@@ -117,6 +117,18 @@ export default createStore({
     setTileFilter(state) {
 
     },
+    setActiveWorkspace(state, workspaceId: string) {
+      state.ui.project.activeWorkspaceId = workspaceId
+    },
+    setNewWorkspace(state, workspaceId: string) {
+      const order = state.ui.project.workspaces.length
+
+      state.ui.project.workspaces.push({
+        id: workspaceId,
+        name: 'New Workspace',
+        order,
+      })
+    }
   },
   actions: {
     selectTask(state, taskId: string) {
@@ -139,7 +151,7 @@ export default createStore({
     },
 
     createNewTile(state, { boxId }: { workspaceId: string, boxId?: string }) {
-      const tileId = `Tile_${Date.now()}${Math.random()}`
+      const tileId = `tile_${Date.now()}${Math.random()}`
 
       const getTileInitialPosition = (): { x: number, y: number } => {
         /* get minimal y */
@@ -173,7 +185,11 @@ export default createStore({
       this.commit('setNewTile', { workspaceId: state.getters.activeWorkspaceId, tileId, boxId, position })
     },
     createNewWorkspace(state) {
-
+      const workspaceId = `workspace_${Date.now()}${Math.random()}`
+      this.commit('setNewWorkspace', workspaceId)
+    },
+    activateWorkspace(state, workspaceId: string) {
+      this.commit('setActiveWorkspace', workspaceId)
     }
   },
   modules: {

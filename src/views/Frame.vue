@@ -43,7 +43,6 @@ import TileComponent from '@/views/Tile.vue'
   },
 })
 export default class Frame extends Vue {
-
   get workspaces(): Workspace[] {
     return this.$store.getters.workspaces
   }
@@ -68,32 +67,12 @@ export default class Frame extends Vue {
     return this.$store.getters.workspaceTilesOfBox(workspaceId, boxId)
   }
 
-  createTile() {
-
+  activateWorkspace(workspaceId: string) {
+    this.$store.dispatch('activateWorkspace', workspaceId)
   }
 
-  selectWorkspace() {
-
-  }
-
-  createWorkspace() {
-
-  }
-
-  onWorkspaceClick(event: MouseEvent) {
-
-  }
-
-  get workspaceTiles() {
-
-  }
-
-  calcNewTilePosition() {
-
-  }
-
-  getInitialTilePosition() {
-
+  createNewWorkspace() {
+    this.$store.dispatch('createNewWorkspace')
   }
 
   setTileInput() {
