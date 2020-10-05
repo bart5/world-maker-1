@@ -26,9 +26,10 @@ interface Block {
 interface Tile extends Block {
   id: tileId;
   name: string;
-  boxId: string | null;
+  boxId: string;
   inputTile: tileId;
   filter: any;
+  hideConnectors: boolean;
 }
 
 interface TileBox extends Block {
@@ -44,13 +45,16 @@ interface Project {
   boxes: Array<TileBox>;
   staticDataPath: string;
   assetsPath: string;
+  activeWorkspaceId: workspaceId;
   // dataSchema: DataSchema;
+}
+
+interface userSettings {
+  newTileSpawn: 'horizontal' | 'vertical';
 }
 
 interface DataSchema {}
 
 interface UIState {
-  activeTile: tileId;
-  activeWorkspace: workspaceId;
   project: Project;
 }

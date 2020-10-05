@@ -921,6 +921,12 @@ interface Building {
   name: string;
   id: buildingId;
   parentLocation: locationId;
+  /**
+   * In the end it sohuld problably be a range of values.
+   * In general the inteion is to give limits to the amount
+   * of Actors placed in building interior by the generator.
+   */
+  capacity: number;
   interiors: Array<interiorId>;
 }
 

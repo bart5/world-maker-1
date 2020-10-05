@@ -1,9 +1,10 @@
 <template>
   <div class="tile-wrapper">
-    <div class="drag-bar"></div>
+    <div class="header"></div>
     <div class="tile">
       <component :is="TaskEditor"></component>
     </div>
+    <div class="footer"></div>
   </div>
 </template>
 
@@ -20,20 +21,49 @@ import { Prop } from 'vue-property-decorator'
 export default class Tile extends Vue {
   @Prop() id!: string
 
-  get isActive() {
-    // return this.$store.getters.activeTile === this.id
-    return true
+  get self() {
+
   }
 
-  // startDrag() {
-  // }
+  startConnecting() {
+    this.$store.dispatch('startConnecting', { id: this.id })
+  }
 
-  // onDrag() {
+  connect() {
+    this.$store.dispatch('connect', { id: this.id })
+  }
 
-  // }
+  get connectingInProgress() {
 
-  // stopDrag() {
+  }
 
+  get tileDragInProgress() {
+
+  }
+
+  onMouseDown() {
+    if (this.connectingInProgress) {
+      this.connect()
+    } else if (this.tileDragInProgress) {
+      this.stopDrag()
+    }
+  }
+
+  startDrag() {
+    this.$store.dispatch('startTileDrag', { id: this.id })
+  }
+
+  stopDrag() {
+
+  }
+
+  get top() {
+    this.self
+  }
+
+  // onFocus() {
+  //   // set display hierarchy for case of overlap
+  //   this.$store()
   // }
 }
 </script>
@@ -50,9 +80,13 @@ export default class Tile extends Vue {
   flex-flow: column nowrap;
 }
 
-.drag-bar{
+.header{
   height: 8px;
   background: darkviolet;
+}
+
+.footer {
+
 }
 
 .tile {

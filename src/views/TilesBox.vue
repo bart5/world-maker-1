@@ -11,6 +11,13 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class TilesBox extends Vue {
+  get self() {
+
+  }
+
+  onResize() {
+
+  }
 }
 </script>
 

@@ -5,17 +5,36 @@ export interface State {
   staticData: StaticData;
   stateData: {};
   loadingStaticData: boolean;
+  ui: UIState
 }
 
-const stateTemplate: State = {
+const initialState: State = {
   selectedTask: null,
   staticData: {} as StaticData,
   stateData: {},
   loadingStaticData: false,
+  ui: {
+    project: {
+      id: '0',
+      name: 'New project',
+      workspaces: [{
+        id: '0',
+        name: 'New Workspace',
+        tiles: [],
+        boxes: [],
+        order: 0,
+      }],
+      tiles: [],
+      boxes: [],
+      staticDataPath: '',
+      assetsPath: '',
+      activeWorkspaceId: '0',
+    }
+  }
 }
 
 export default createStore({
-  state: stateTemplate,
+  state: initialState,
   getters: {
     selectedTask: (state, getters) => {
       if (!state.selectedTask) return {}
@@ -41,6 +60,18 @@ export default createStore({
     },
     setLoadingStaticData(state, flag: boolean) {
       state.loadingStaticData = flag
+    },
+    setNewTile(state, { workspaceId, boxId, x, y }) {
+      const id = `Tile_${Date.now()}${Math.random()}`
+
+      state.ui.project.tiles.push({
+        id,
+        name: 'New Tile',
+        boxId: boxId || [],
+        inputTile:
+        filter:
+        hideConnectors:
+      })
     }
   },
   actions: {
@@ -62,6 +93,21 @@ export default createStore({
     saveStaticData(state, data: StaticData) {
       window.ipcRenderer.send('saveStaticData', data)
     },
+
+    createNewTile(state, { boxId }: { boxId?: string }) {
+      const id = `Tile_${Date.now()}${Math.random()}`
+
+      const getTileInitialPosition = (): { x: number, y: number } => {
+
+      }
+
+      const position
+
+      this.commit('setNewTile', { boxId, position })
+    },
+    createNewWorkspace(state) {
+
+    }
   },
   modules: {
   },

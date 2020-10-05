@@ -18,7 +18,15 @@ type FormTemplate<T extends {}> = {
     inputType?: InputType;
     readonly: boolean;
     tooltip?: string;
-  } | null // null indicates a value that doesn't have to be presented in the form
+  } | null; // null indicates a value that doesn't have to be presented in the form
+} & {
+  /**
+   * derived field is to allow put any arbitrary transformation
+   * of base data to allow better insight.
+   */
+  derived?: {
+    [k: string]: any
+  }
 }
 
 export const formTemplates: StaticDataTemplate = {
