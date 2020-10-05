@@ -5,8 +5,6 @@ type tileBoxId = string
 interface Workspace {
   id: workspaceId;
   name: string;
-  tiles: Array<tileId>;
-  boxes: Array<tileBoxId>;
   order: number;
 }
 
@@ -26,6 +24,7 @@ interface Block {
 interface Tile extends Block {
   id: tileId;
   name: string;
+  workspaceId: string;
   boxId: string;
   inputTile: tileId;
   filter: any;
@@ -34,7 +33,6 @@ interface Tile extends Block {
 
 interface TileBox extends Block {
   id: tileBoxId;
-  tiles: Array<tileId>;
 }
 
 interface Project {

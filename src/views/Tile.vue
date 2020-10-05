@@ -21,6 +21,8 @@ import { Prop } from 'vue-property-decorator'
 export default class Tile extends Vue {
   @Prop() id!: string
 
+  @Prop() isBox!: boolean
+
   get self() {
 
   }
