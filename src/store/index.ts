@@ -122,26 +122,38 @@ export default createStore({
     },
 
     createNewTile(state, { boxId }: { workspaceId: string, boxId?: string }) {
-      const id = `Tile_${Date.now()}${Math.random()}`
+      const tileId = `Tile_${Date.now()}${Math.random()}`
 
       const getTileInitialPosition = (): { x: number, y: number } => {
-        /* get maximal x */
         /* get minimal y */
-        /* insert past that x and on minimal y */
-        // const workspace: Workspace = state.getters.getActiveWorkspace
+        /* get maximal x */
+        /* insert tile not lower than minimal y and not closer than maximal x */
         const tiles: Tile[] = state.getters.activeWorkspaceTiles
-        const minYmaxX: { minY: number, maxX: number } = () => {
-          const minTileY = tiles.sort((tA, tB) => tA.y - tB.y)
-          const minBoxY = tiles.map(tile => state.getters.boxOfId(tile.boxId)).sort((bA, bB) => bA.y - bB.y)
-          const maxTileX
-          const maxBoxX
-        }
+        const boxes: TileBox[] = tiles.map(tile => state.getters.boxOfId(tile.boxId))
+        const minXminY: { minX: number, minY: number } = (() => {
+          const maxTileX = tiles.sort((tA, tB) => (tB.x + tB.width) - (tA.x + tA.width))[0].x
+          const maxBoxX = boxes.sort((bA, bB) => (bB.x + bB.width) - (bA.x + bA.width))[0].x
+          const minTileY = tiles.sort((tA, tB) => tA.y - tB.y)[0].y
+          const minBoxY = boxes.sort((bA, bB) => bA.y - bB.y)[0].y
+          return {
+            /* minimal allowed X */
+            minX: Math.min(maxTileX, maxBoxX),
+            /* minimal allowed Y */
+            minY: Math.min(minTileY, minBoxY)
+          }
+        })()
 
+        const spaceX = 50
+
+        return {
+          x: minXminY.minX + spaceX,
+          y: minXminY.minY
+        }
       }
 
-      const position
+      const position = getTileInitialPosition()
 
-      this.commit('setNewTile', { workspaceId: state.getters.activeWorkspaceId, boxId, position })
+      this.commit('setNewTile', { workspaceId: state.getters.activeWorkspaceId, tileId, boxId, position })
     },
     createNewWorkspace(state) {
 
