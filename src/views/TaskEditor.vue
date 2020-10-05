@@ -1,34 +1,34 @@
 <template>
   <div class="wrapper">
     <h3>Task editor</h3>
-    <template v-for="fieldName in formFields" :key="fieldName">
+    <!-- <template v-for="fieldName in formFields" :key="fieldName">
       <div>
         <label>{{ fieldName }}</label>
         <input type="text" name="" id="">
       </div>
-    </template>
+    </template> -->
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
-import { Prop } from 'vue-property-decorator';
+// import { Prop } from 'vue-property-decorator';
 
 @Options({
   components: {
   },
 })
 export default class TaskEditor extends Vue {
-  @Prop({ default: null }) selectedTask!: Task | null
+  // @Prop({ default: null }) selectedTask!: Task | null
 
-  @Prop() isNewTask!: boolean
+  // @Prop() isNewTask!: boolean
 
-  get formFields() {
-    if (this.selectedTask) {
-      return Object.keys(this.selectedTask)
-    }
-    return {}
-  }
+  // get formFields() {
+  //   if (this.selectedTask) {
+  //     return Object.keys(this.selectedTask)
+  //   }
+  //   return {}
+  // }
 }
 </script>
 

@@ -1,19 +1,19 @@
 <template>
-  <div id="nav">
-    <!-- <router-link to="/">World Map</router-link> | -->
+  <!-- <div id="nav">
+    <router-link to="/">World Map</router-link> |
     <router-link to="/">Loader</router-link> |
     <router-link to="/quest">Quest</router-link> |
     <router-link to="/about">About</router-link>
-  </div>
+  </div> -->
   <router-view/>
 </template>
 
 <style lang="scss">
 body {
   max-height: 100vh;
-  display: flex;
+  /* display: flex;
   flex-flow: column;
-  align-items: stretch;
+  align-items: stretch; */
   margin: 0;
   box-sizing: border-box;
   max-width: 100vw;
