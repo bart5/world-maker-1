@@ -28,27 +28,48 @@ export default class TileComponent extends Vue {
   dragInProgress = false
 
   get self(): Tile {
-    return this.$store.getters.activeWorkspaceTileById(this.id)
+    return this.$store.getters.tileById(this.id)
   }
 
   startConnecting() {
-    this.$store.dispatch('startConnecting', { id: this.id })
+    this.$store.dispatch('startConnectingTiles', this.id)
   }
 
-  connect() {
-    this.$store.dispatch('connect', { id: this.id })
+  tryConnect() {
+    if (this.connectingInProgress) {
+      this.$store.dispatch('connectToThisTile', this.id)
+      this.$store.dispatch('stopConnectingTiles')
+    }
   }
 
   get connectingInProgress() {
+    return this.$store.getters.connectingInProgress
+  }
 
+  startMousemoveListener(onMouseUp: (...args: []) => void) {
+    window.addEventListener('mousemove', this.onMouseMove)
+    window.addEventListener('mouseup', () => {
+      onMouseUp()
+      this.stopMousemoveListener()
+    })
+  }
+
+  stopMousemoveListener() {
+    window.removeEventListener('mousemove', this.onMouseMove)
   }
 
   startDrag() {
     this.dragInProgress = true
+    this.startMousemoveListener(() => {
+      this.dragInProgress = false
+    })
   }
 
   startResize() {
     this.resizeInProgress = true
+    this.startMousemoveListener(() => {
+      this.resizeInProgress = false
+    })
   }
 
   onMouseMove(e: MouseEvent) {
@@ -72,10 +93,6 @@ export default class TileComponent extends Vue {
 
   dragHandler(e: MouseEvent) {
     this.$store.dispatch('moveTile', { tileId: this.id, delta: this.getMouseMoveDelta(e) })
-  }
-
-  stopDrag() {
-    window.addEventListener('mousemove', this.onMouseMove)
   }
 
   get tileStyle() {

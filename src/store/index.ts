@@ -27,7 +27,9 @@ const initialState: State = {
       staticDataPath: '',
       assetsPath: '',
       activeWorkspaceId: '0',
-    }
+    },
+    connectingInProgress: false,
+    providerTileToConnect: null,
   }
 }
 
@@ -92,7 +94,10 @@ export default createStore({
     boxOfId: (state) => (boxId: string) => state.ui.project.boxes.filter(b => b.id === boxId),
     activeWorkspaceTileById: (state, getters) => (tileId: string) => {
       return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
-    }
+    },
+    tileById: (state) => (tileId: string) => state.ui.project.tiles.filter((tile: Tile) => tile.id === tileId),
+    providerTileToConnect: (state, getters) => getters.tileById(state.ui.providerTileToConnect),
+    connectingInProgress: (state) => state.ui.connectingInProgress,
   },
   mutations: {
     setSelectedTask(state, { questId, taskId }) {
@@ -104,13 +109,13 @@ export default createStore({
     setLoadingStaticData(state, flag: boolean) {
       state.loadingStaticData = flag
     },
-    setNewTile(state, { workspaceId, boxId, tileId, position }) {
+    CREATE_NEW_TILE(state, { workspaceId, boxId, tileId, position }) {
       state.ui.project.tiles.push({
         id: tileId,
         name: 'New Tile',
         boxId: boxId || '',
         workspaceId,
-        inputTile: '',
+        providerTile: null,
         filter: '',
         hideConnectors: false,
         width: 120,
@@ -125,10 +130,10 @@ export default createStore({
     setTileFilter(state) {
 
     },
-    setActiveWorkspace(state, workspaceId: string) {
+    ACTIVATE_WORKSPACE(state, workspaceId: string) {
       state.ui.project.activeWorkspaceId = workspaceId
     },
-    setNewWorkspace(state, workspaceId: string) {
+    CREATE_NEW_WORKSPACE(state, workspaceId: string) {
       const order = state.ui.project.workspaces.length
 
       state.ui.project.workspaces.push({
@@ -146,7 +151,20 @@ export default createStore({
       const tile = state.ui.project.tiles.filter((tile) => tile.id === tileId)[0]
       tile.x = tile.x + delta.x
       tile.y = Math.min(tile.y + delta.y, 0)
-    }
+    },
+    START_CONNECTING_TILES(state, tileId) {
+      state.ui.connectingInProgress = true
+      state.ui.providerTileToConnect = tileId
+    },
+    STOP_CONNECTING_TILES(state) {
+      state.ui.connectingInProgress = false
+      state.ui.providerTileToConnect = null
+    },
+    CONNECT_TO_THIS_TILE(state, { provider, receiver }: { provider: Tile, receiver: Tile }) {
+      state.ui.connectingInProgress = false
+      state.ui.providerTileToConnect = null
+      receiver.providerTile = provider
+    },
   },
   actions: {
     selectTask(state, taskId: string) {
@@ -174,7 +192,7 @@ export default createStore({
       const getTileInitialPosition = (): { x: number, y: number } => {
         /* get minimal y */
         /* get maximal x */
-        /* insert tile not lower than minimal y and not closer than maximal x */
+        /* insert tile not lower than min y and not closer than max x */
         const tiles: Tile[] = state.getters.activeWorkspaceTiles
         const boxes: TileBox[] = tiles.map(tile => state.getters.boxOfId(tile.boxId))
         const minXminY: { minX: number, minY: number } = (() => {
@@ -200,20 +218,31 @@ export default createStore({
 
       const position = getTileInitialPosition()
 
-      this.commit('setNewTile', { workspaceId: state.getters.activeWorkspaceId, tileId, boxId, position })
+      this.commit('CREATE_NEW_TILE', { workspaceId: state.getters.activeWorkspaceId, tileId, boxId, position })
     },
     createNewWorkspace(state) {
       const workspaceId = `workspace_${Date.now()}${Math.random()}`
-      this.commit('setNewWorkspace', workspaceId)
+      this.commit('CREATE_NEW_WORKSPACE', workspaceId)
     },
     activateWorkspace(state, workspaceId: string) {
-      this.commit('setActiveWorkspace', workspaceId)
+      this.commit('ACTIVATE_WORKSPACE', workspaceId)
     },
     resizeTile(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
       this.commit('RESIZE_TILE', { tileId, delta })
     },
     dragTile(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
       this.commit('DRAG_TILE', { tileId, delta })
+    },
+    startConnectingTiles(state, tileId) {
+      this.commit('START_CONNECTING_TILES', tileId)
+    },
+    stopConnectingTiles(state) {
+      this.commit('STOP_CONNECTING_TILES')
+    },
+    connectToThisTile(state, tileId) {
+      const provider = state.getters.providerTileToConnect
+      const receiver = state.getters.tileById(tileId)
+      this.commit('CONNECT_TO_THIS_TILE', { provider, receiver })
     },
   },
   modules: {
