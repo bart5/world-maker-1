@@ -2,8 +2,8 @@ import { createStore } from 'vuex';
 
 export interface State {
   selectedTask: { questId: string; taskId: string } | null;
-  staticData: StaticData,
-  stateData: {},
+  staticData: StaticData;
+  stateData: {};
   loadingStaticData: boolean;
 }
 
@@ -23,9 +23,6 @@ export default createStore({
       return getters.task(questId, taskId)
     },
     task: (state) => (questId: string, taskId: string) => {
-      console.log('retreiving task from static data:', state.staticData)
-      console.log('questId: ', questId)
-      console.log('taskId: ', taskId)
       return state.staticData.tasks[questId][taskId]
     },
     quest: (state) => (questId: string) => {

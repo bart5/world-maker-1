@@ -10,7 +10,7 @@ import { Options, Vue } from 'vue-class-component'
   components: {
   },
 })
-export default class WindowWrapper extends Vue {
+export default class TilesBox extends Vue {
 }
 </script>
 
