@@ -56,14 +56,14 @@ export default createStore({
     staticData: (state) => state.staticData,
     workspaces: (state) => state.ui.project.workspaces,
     activeWorkspaceId: (state) => state.ui.project.activeWorkspaceId,
-    allTilesOfWorkspace: (state) => (workspaceId: string) => state.ui.project.tiles.filter(tile => {
+    allTilesOfWorkspace: (state) => (workspaceId: string) => state.ui.project.tiles.filter((tile) => {
       return tile.workspaceId === workspaceId
     }),
     activeWorkspaceTiles: (state, getters) => getters.allTilesOfWorkspace(getters.activeWorkspaceId),
     activeWorkspaceTileById: (state, getters) => (tileId: string) => {
       return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
     },
-    tileById: (state) => (tileId: string) => state.ui.project.tiles.filter((tile: Tile) => tile.id === tileId),
+    tileById: (state) => (tileId: string) => state.ui.project.tiles.filter((tile: Tile) => tile.id === tileId)[0],
     providerTileToConnect: (state, getters) => getters.tileById(state.ui.providerTileToConnect),
     connectingInProgress: (state) => state.ui.connectingInProgress,
   },
@@ -91,12 +91,12 @@ export default createStore({
         y: position.y,
       })
     },
-    setTileName(state) {
+    // setTileName(state) {
 
-    },
-    setTileFilter(state) {
+    // },
+    // setTileFilter(state) {
 
-    },
+    // },
     ACTIVATE_WORKSPACE(state, workspaceId: string) {
       state.ui.project.activeWorkspaceId = workspaceId
     },
@@ -110,13 +110,13 @@ export default createStore({
       })
     },
     RESIZE_TILE(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
-      const tile = state.ui.project.tiles.filter((tile) => tile.id === tileId)[0]
+      const tile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
       tile.width = Math.max(tile.width + delta.x, minTileSize.width)
       tile.height = Math.max(tile.height + delta.y, minTileSize.height)
     },
     DRAG_TILE(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
-      const tile = state.ui.project.tiles.filter((tile) => tile.id === tileId)[0]
-      tile.x = tile.x + delta.x
+      const tile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
+      tile.x += delta.x
       tile.y = Math.min(tile.y + delta.y, 0)
     },
     START_CONNECTING_TILES(state, tileId) {
@@ -127,10 +127,11 @@ export default createStore({
       state.ui.connectingInProgress = false
       state.ui.providerTileToConnect = null
     },
-    CONNECT_TO_THIS_TILE(state, { provider, receiver }: { provider: Tile, receiver: Tile }) {
+    CONNECT_TO_THIS_TILE(state, { provider, tileId }: { provider: Tile, tileId: string }) {
       state.ui.connectingInProgress = false
       state.ui.providerTileToConnect = null
-      receiver.providerTile = provider
+
+      state.ui.project.tiles.filter((t) => t.id === tileId)[0].providerTile = provider
     },
   },
   actions: {
@@ -153,24 +154,30 @@ export default createStore({
       window.ipcRenderer.send('saveStaticData', data)
     },
 
-    createNewTile(state, { workspaceId }: { workspaceId: string }) {
+    createNewTile(state) {
       const tileId = `tile_${Date.now()}${Math.random()}`
+      const spaceX = 30
+      let spaceY = 0
 
       const getTileInitialPosition = (): { x: number, y: number } => {
         /* Tile will be inserter not lower than min y and not closer to left than max x */
         const tiles: Tile[] = state.getters.activeWorkspaceTiles
         const minXminY: { minX: number, minY: number } = (() => {
-          const maxTileX = tiles.sort((tA, tB) => (tB.x + tB.width) - (tA.x + tA.width))[0].x
-          const minTileY = tiles.sort((tA, tB) => tA.y - tB.y)[0].y
+          if (tiles.length === 0) {
+            spaceY = 30
+            return { minX: 0, minY: 0 }
+          }
+          const maxTileX = tiles.map((t) => t.x + t.width)
+          const maxTileXSorted = maxTileX.sort((tA, tB) => tB - tA)
+          const minTileY = tiles.map((t) => t.y)
+          const minTileYSorted = minTileY.sort((tA, tB) => tA - tB)
           /* minimal allowed X and minimal allowed Y */
-          return { minX: maxTileX, minY: minTileY }
+          return { minX: maxTileXSorted[0], minY: minTileYSorted[0] }
         })()
-
-        const spaceX = 50
 
         return {
           x: minXminY.minX + spaceX,
-          y: minXminY.minY
+          y: minXminY.minY + spaceY
         }
       }
 
@@ -178,7 +185,7 @@ export default createStore({
 
       this.commit('CREATE_NEW_TILE', { workspaceId: state.getters.activeWorkspaceId, tileId, position })
     },
-    createNewWorkspace(state) {
+    createNewWorkspace() {
       const workspaceId = `workspace_${Date.now()}${Math.random()}`
       this.commit('CREATE_NEW_WORKSPACE', workspaceId)
     },
@@ -194,13 +201,13 @@ export default createStore({
     startConnectingTiles(state, tileId) {
       this.commit('START_CONNECTING_TILES', tileId)
     },
-    stopConnectingTiles(state) {
+    stopConnectingTiles() {
       this.commit('STOP_CONNECTING_TILES')
     },
     connectToThisTile(state, tileId) {
       const provider = state.getters.providerTileToConnect
-      const receiver = state.getters.tileById(tileId)
-      this.commit('CONNECT_TO_THIS_TILE', { provider, receiver })
+      // const receiver = state.getters.tileById(tileId)
+      this.commit('CONNECT_TO_THIS_TILE', { provider, tileId })
     },
   },
   modules: {

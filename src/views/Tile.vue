@@ -26,7 +26,9 @@ export default class TileComponent extends Vue {
   dragInProgress = false
 
   get self(): Tile {
-    return this.$store.getters.tileById(this.id)
+    const s = this.$store.getters.tileById(this.id)
+    console.log('self = ', s)
+    return s
   }
 
   startConnecting() {
@@ -96,12 +98,14 @@ export default class TileComponent extends Vue {
   get tileStyle() {
     const { width, height, x, y } = this.self
 
-    return {
+    const style = {
       width: width + 'px',
       height: height + 'px',
       left: x + 'px',
-      right: y + 'px'
+      top: y + 'px'
     }
+    console.log('style: ', style)
+    return style
   }
 
   // onFocus() {

@@ -1,19 +1,20 @@
 <template>
   <div class="frame-wrapper">
     <div class="top-bar">
+      <button @click="createNewTile">Create new tile</button>
     </div>
     <div class="workspace-board">
       <div class="workspace-selector">
       </div>
         <div
-          v-show="showWorkspace(workspace)"
+          v-show="showWorkspace(workspace.id)"
           v-for="workspace in workspaces"
           :key="workspace.id"
           class="workspace"
-          @click="onWorkspaceClick"
         >
+          <!-- @click="onWorkspaceClick" -->
           <TileComponent
-            v-for="tile in allFreeTilesOfWorkspace(workspace.id)"
+            v-for="tile in allTilesOfWorkspace(workspace.id)"
             :key="tile.id"
             :id="tile.id"
           />
@@ -40,8 +41,8 @@ export default class Frame extends Vue {
     return this.$store.getters.activeWorkspaceId === workspaceId
   }
 
-  allFreeTilesOfWorkspace(workspaceId: string): Tile[] {
-    return this.$store.getters.allFreeTilesOfWorkspace(workspaceId)
+  allTilesOfWorkspace(workspaceId: string): Tile[] {
+    return this.$store.getters.allTilesOfWorkspace(workspaceId)
   }
 
   activateWorkspace(workspaceId: string) {
@@ -50,6 +51,10 @@ export default class Frame extends Vue {
 
   createNewWorkspace() {
     this.$store.dispatch('createNewWorkspace')
+  }
+
+  createNewTile() {
+    this.$store.dispatch('createNewTile')
   }
 }
 </script>
