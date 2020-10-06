@@ -4,7 +4,9 @@
     <div class="tile">
       <component :is="TaskEditor"></component>
     </div>
-    <div class="footer"></div>
+    <div class="footer" @mousedown="startResize">
+      <div class="resize-widget"></div>
+    </div>
   </div>
 </template>
 
@@ -128,15 +130,32 @@ export default class TileComponent extends Vue {
 .header{
   height: 8px;
   background: darkviolet;
+
+  &:hover {
+    cursor: pointer;
+  }
 }
 
 .footer {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
   height: 8px;
   background: darkviolet;
+
+  .resize-widget {
+    height: 100%;
+    width: 15px;
+    background-color: red;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
 }
 
 .tile {
   height: 100%;
-  overflow: scroll;
+  overflow: auto;
 }
 </style>

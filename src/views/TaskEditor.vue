@@ -34,6 +34,10 @@ export default class TaskEditor extends Vue {
 
 <style lang="scss">
 .wrapper {
+  * {
+    user-select: none;
+  }
+
   border: 1px solid blue;
 }
 </style>
