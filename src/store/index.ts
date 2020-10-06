@@ -89,6 +89,7 @@ export default createStore({
         height: 180,
         x: position.x,
         y: position.y,
+        zIndex: state.ui.project.tiles.length || 0,
       })
     },
     // setTileName(state) {
@@ -132,6 +133,17 @@ export default createStore({
       state.ui.providerTileToConnect = null
 
       state.ui.project.tiles.filter((t) => t.id === tileId)[0].providerTile = provider
+    },
+    BRING_TILE_FORWARD(state, tileId) {
+      const newFrontTile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
+      // Push other tiles behind
+      // Notice that we only push behind the tiles that were in front
+      state.ui.project.tiles.forEach((t) => {
+        if (t.zIndex > newFrontTile.zIndex) {
+          t.zIndex -= 1
+        }
+      })
+      newFrontTile.zIndex = state.ui.project.tiles.length
     },
   },
   actions: {
@@ -209,6 +221,9 @@ export default createStore({
       // const receiver = state.getters.tileById(tileId)
       this.commit('CONNECT_TO_THIS_TILE', { provider, tileId })
     },
+    bringTileForward(state, tileId) {
+      this.commit('BRING_TILE_FORWARD', tileId)
+    }
   },
   modules: {
   },

@@ -1,6 +1,7 @@
 <template>
   <div class="wrapper">
     <h3>Task editor</h3>
+    <input type="text" name="" id="">
     <!-- <template v-for="fieldName in formFields" :key="fieldName">
       <div>
         <label>{{ fieldName }}</label>

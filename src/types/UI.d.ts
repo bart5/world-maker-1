@@ -24,6 +24,7 @@ interface Tile extends Block {
   providerTile: Tile | null;
   filter: any;
   hideConnectors: boolean;
+  zIndex: number;
 }
 
 interface Project {

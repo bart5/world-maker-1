@@ -1,5 +1,5 @@
 <template>
-  <div class="tile-wrapper" :style="tileStyle">
+  <div class="tile-wrapper" :style="tileStyle" @mousedown="bringTileForward">
     <div class="header" @mousedown="startDrag"></div>
     <div class="tile">
       <component :is="TaskEditor"></component>
@@ -98,14 +98,19 @@ export default class TileComponent extends Vue {
   }
 
   get tileStyle() {
-    const { width, height, x, y } = this.self
+    const { width, height, x, y, zIndex } = this.self
 
     return {
       width: width + 'px',
       height: height + 'px',
       left: x + 'px',
-      top: y + 'px'
+      top: y + 'px',
+      zIndex,
     }
+  }
+
+  bringTileForward() {
+    this.$store.dispatch('bringTileForward', this.id)
   }
 
   // onFocus() {
@@ -125,10 +130,14 @@ export default class TileComponent extends Vue {
   border: 1px solid;
   display: flex;
   flex-flow: column nowrap;
+  background: white;
+  border-radius: 5px;
 }
 
-.header{
-  height: 8px;
+.header {
+  display: flex;
+  justify-content: flex-start;
+  height: 14px;
   background: darkviolet;
 
   &:hover {

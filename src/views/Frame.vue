@@ -56,6 +56,10 @@ export default class Frame extends Vue {
   createNewTile() {
     this.$store.dispatch('createNewTile')
   }
+
+  mounted() {
+    this.createNewTile()
+  }
 }
 </script>
 
@@ -70,6 +74,8 @@ export default class Frame extends Vue {
 }
 
 .top-bar {
+  display: flex;
+  justify-content: flex-start;
   width: 100%;
   height: 24px;
   background-color: darkgray;
