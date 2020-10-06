@@ -117,7 +117,7 @@ export default createStore({
     DRAG_TILE(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
       const tile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
       tile.x += delta.x
-      tile.y = Math.min(tile.y + delta.y, 0)
+      tile.y = Math.max(tile.y + delta.y, 0)
     },
     START_CONNECTING_TILES(state, tileId) {
       state.ui.connectingInProgress = true

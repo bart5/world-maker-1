@@ -1,6 +1,6 @@
 <template>
   <div class="tile-wrapper" :style="tileStyle">
-    <div class="header"></div>
+    <div class="header" @mousedown="startDrag"></div>
     <div class="tile">
       <component :is="TaskEditor"></component>
     </div>
@@ -21,14 +21,14 @@ import { Prop } from 'vue-property-decorator'
 export default class TileComponent extends Vue {
   @Prop() id!: string
 
+  TaskEditor = TaskEditor
+
   resizeInProgress = false
 
   dragInProgress = false
 
   get self(): Tile {
-    const s = this.$store.getters.tileById(this.id)
-    console.log('self = ', s)
-    return s
+    return this.$store.getters.tileById(this.id)
   }
 
   startConnecting() {
@@ -92,20 +92,18 @@ export default class TileComponent extends Vue {
   }
 
   dragHandler(e: MouseEvent) {
-    this.$store.dispatch('moveTile', { tileId: this.id, delta: this.getMouseMoveDelta(e) })
+    this.$store.dispatch('dragTile', { tileId: this.id, delta: this.getMouseMoveDelta(e) })
   }
 
   get tileStyle() {
     const { width, height, x, y } = this.self
 
-    const style = {
+    return {
       width: width + 'px',
       height: height + 'px',
       left: x + 'px',
       top: y + 'px'
     }
-    console.log('style: ', style)
-    return style
   }
 
   // onFocus() {
