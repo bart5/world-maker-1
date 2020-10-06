@@ -169,28 +169,23 @@ export default createStore({
     createNewTile(state) {
       const tileId = `tile_${Date.now()}${Math.random()}`
       const spaceX = 30
-      let spaceY = 0
+      const spaceY = 30
 
       const getTileInitialPosition = (): { x: number, y: number } => {
-        /* Tile will be inserter not lower than min y and not closer to left than max x */
+        /*
+          Tile will be inserter not lower than min y and not closer to left than max x
+        */
         const tiles: Tile[] = state.getters.activeWorkspaceTiles
-        const minXminY: { minX: number, minY: number } = (() => {
+        const minX: number = (() => {
           if (tiles.length === 0) {
-            spaceY = 30
-            return { minX: 0, minY: 0 }
+            return 0
           }
           const maxTileX = tiles.map((t) => t.x + t.width)
           const maxTileXSorted = maxTileX.sort((tA, tB) => tB - tA)
-          const minTileY = tiles.map((t) => t.y)
-          const minTileYSorted = minTileY.sort((tA, tB) => tA - tB)
-          /* minimal allowed X and minimal allowed Y */
-          return { minX: maxTileXSorted[0], minY: minTileYSorted[0] }
+          return maxTileXSorted[0]
         })()
 
-        return {
-          x: minXminY.minX + spaceX,
-          y: minXminY.minY + spaceY
-        }
+        return { x: minX + spaceX, y: spaceY }
       }
 
       const position = getTileInitialPosition()
