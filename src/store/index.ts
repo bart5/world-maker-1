@@ -28,7 +28,7 @@ const initialState: State = {
       activeWorkspaceId: '0',
     },
     connectingInProgress: false,
-    providerTileToConnect: null,
+    inputSourceToConnect: '',
   }
 }
 
@@ -64,7 +64,7 @@ export default createStore({
       return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
     },
     tileById: (state) => (tileId: string) => state.ui.project.tiles.filter((tile: Tile) => tile.id === tileId)[0],
-    providerTileToConnect: (state, getters) => getters.tileById(state.ui.providerTileToConnect),
+    inputSourceToConnect: (state, getters) => getters.tileById(state.ui.inputSourceToConnect),
     connectingInProgress: (state) => state.ui.connectingInProgress,
   },
   mutations: {
@@ -82,7 +82,7 @@ export default createStore({
         id: tileId,
         name: 'New Tile',
         workspaceId,
-        providerTile: null,
+        inputSource: '',
         filter: '',
         hideConnectors: false,
         width: 120,
@@ -122,17 +122,18 @@ export default createStore({
     },
     START_CONNECTING_TILES(state, tileId) {
       state.ui.connectingInProgress = true
-      state.ui.providerTileToConnect = tileId
+      state.ui.inputSourceToConnect = tileId
     },
     STOP_CONNECTING_TILES(state) {
       state.ui.connectingInProgress = false
-      state.ui.providerTileToConnect = null
+      state.ui.inputSourceToConnect = ''
     },
-    CONNECT_TO_THIS_TILE(state, { provider, tileId }: { provider: Tile, tileId: string }) {
+    CONNECT_TO_THIS_TILE(state, tileId) {
       state.ui.connectingInProgress = false
-      state.ui.providerTileToConnect = null
+      const source = state.ui.inputSourceToConnect
+      state.ui.inputSourceToConnect = ''
 
-      state.ui.project.tiles.filter((t) => t.id === tileId)[0].providerTile = provider
+      state.ui.project.tiles.filter((t) => t.id === tileId)[0].inputSource = source
     },
     BRING_TILE_FORWARD(state, tileId) {
       const newFrontTile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
@@ -212,9 +213,8 @@ export default createStore({
       this.commit('STOP_CONNECTING_TILES')
     },
     connectToThisTile(state, tileId) {
-      const provider = state.getters.providerTileToConnect
-      // const receiver = state.getters.tileById(tileId)
-      this.commit('CONNECT_TO_THIS_TILE', { provider, tileId })
+      const inputSource = state.getters.inputSourceToConnect
+      this.commit('CONNECT_TO_THIS_TILE', { inputSource, receiverTileId: tileId })
     },
     bringTileForward(state, tileId) {
       this.commit('BRING_TILE_FORWARD', tileId)

@@ -9,6 +9,8 @@
 </template>
 
 <style lang="scss">
+@import '@/style/global.scss';
+
 body {
   max-height: 100vh;
   /* display: flex;

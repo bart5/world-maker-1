@@ -1,6 +1,10 @@
 <template>
   <div class="tile-wrapper" :style="tileStyle" @mousedown="bringTileForward">
-    <div class="header" @mousedown="startDrag"></div>
+    <div class="header" @mousedown="startDrag">
+      <button>
+        <img src="../assets/connector.svg" alt="">
+      </button>
+    </div>
     <div class="tile">
       <component :is="TaskEditor"></component>
     </div>
@@ -112,11 +116,6 @@ export default class TileComponent extends Vue {
   bringTileForward() {
     this.$store.dispatch('bringTileForward', this.id)
   }
-
-  // onFocus() {
-  //   // set display hierarchy for case of overlap
-  //   this.$store()
-  // }
 }
 </script>
 
@@ -141,7 +140,11 @@ export default class TileComponent extends Vue {
   background: darkviolet;
 
   &:hover {
-    cursor: pointer;
+    cursor: grab;
+  }
+
+  * {
+    max-height: 14px;
   }
 }
 
@@ -158,7 +161,7 @@ export default class TileComponent extends Vue {
     background-color: red;
 
     &:hover {
-      cursor: pointer;
+      cursor: grab;
     }
   }
 }

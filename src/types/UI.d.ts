@@ -21,7 +21,7 @@ interface Tile extends Block {
   id: tileId;
   name: string;
   workspaceId: string;
-  providerTile: Tile | null;
+  inputSource: tileId;
   filter: any;
   hideConnectors: boolean;
   zIndex: number;
@@ -47,5 +47,5 @@ interface DataSchema {}
 interface UIState {
   project: Project;
   connectingInProgress: boolean;
-  providerTileToConnect: tileId | null;
+  inputSourceToConnect: tileId;
 }
