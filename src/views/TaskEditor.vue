@@ -33,7 +33,7 @@ export default class TaskEditor extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .wrapper {
   * {
     user-select: none;

@@ -47,5 +47,5 @@ interface DataSchema {}
 interface UIState {
   project: Project;
   connectingInProgress: boolean;
-  inputSourceToConnect: tileId;
+  inputSourceTileToConnect: tileId;
 }

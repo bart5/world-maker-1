@@ -1,5 +1,5 @@
 <template>
-  <div class="frame-wrapper">
+  <div class="frame-wrapper" @mousedown="stopConnectingTiles">
     <div class="top-bar">
       <button @click="createNewTile">Create new tile</button>
     </div>
@@ -57,13 +57,19 @@ export default class Frame extends Vue {
     this.$store.dispatch('createNewTile')
   }
 
+  stopConnectingTiles() {
+    if (this.$store.getters.connectingInProgress) {
+      this.$store.dispatch('stopConnectingTiles')
+    }
+  }
+
   mounted() {
     this.createNewTile()
   }
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .frame-wrapper {
   width: 100%;
   height: 100%;

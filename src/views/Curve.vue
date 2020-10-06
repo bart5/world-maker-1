@@ -1,30 +1,58 @@
 <template>
   <div class="wrapper">
     <svg :id="svgId">
-      <path :id="curveId" stroke="red" stroke-width="4" stroke-linecap="round" fill="transparent"></path>
+      <path :id="curveId" stroke="red" stroke-width="2" stroke-linecap="round" fill="transparent"></path>
     </svg>
-    <div class="p1" :style="styles.p1" @mousedown="startDrag('p1')"></div>
-    <div class="p2" :style="styles.p2" @mousedown="startDrag('p2')"></div>
+    <!-- <div class="p1" :style="styles.p1" @mousedown="startDrag('p1')"></div>
+    <div class="p2" :style="styles.p2" @mousedown="startDrag('p2')"></div> -->
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component';
-// import { Prop } from 'vue-property-decorator';
+import { Prop, Watch } from 'vue-property-decorator';
 
 @Options({
   components: {
   },
 })
-export default class CurveTest extends Vue {
+export default class Curve extends Vue {
+  @Prop() p1!: {
+    x: number,
+    y: number
+  }
+
+  @Prop() p2!: {
+    x: number,
+    y: number
+  }
+
+  @Watch('p2')
+  dragHandler() {
+    console.log('watcher working')
+    // dragHandler(e: MouseEvent) {
+    // const delta = this.getMouseMoveDelta(e)
+    // if (this.pointDragged) {
+    // this.styles[this.pointDragged].top = Number(this.styles[this.pointDragged].top.replace('px', '')) + delta.y + 'px'
+    // this.styles[this.pointDragged].left = Number(this.styles[this.pointDragged].left.replace('px', '')) + delta.x + 'px'
+    // }
+    if (this.p1p2x > this.p1p2y) {
+      this.horizontalCurve = true
+    } else {
+      this.horizontalCurve = false
+    }
+    this.drawBezierCurve(this.horizontalCurve)
+    this.positionSvg()
+  }
+
   styles = {
     p1: {
-      top: '600px',
-      left: '400px',
+      top: this.p1.x + 'px',
+      left: this.p1.y + 'px',
     },
     p2: {
-      top: '300px',
-      left: '700px',
+      top: this.p2.x + 'px',
+      left: this.p2.y + 'px',
     }
   }
 
@@ -39,36 +67,37 @@ export default class CurveTest extends Vue {
   horizontalCurve = false
 
   mounted() {
+    this.dragInProgress = true
     this.drawBezierCurve(this.horizontalCurve)
     this.positionSvg()
   }
 
-  startMousemoveListener(onMouseUp: (...args: []) => void) {
-    window.addEventListener('mousemove', this.onMouseMove)
-    window.addEventListener('mouseup', () => {
-      onMouseUp()
-      this.stopMousemoveListener()
-    })
-  }
+  // startMousemoveListener(onMouseUp: (...args: []) => void) {
+  //   window.addEventListener('mousemove', this.onMouseMove)
+  //   window.addEventListener('mouseup', () => {
+  //     onMouseUp()
+  //     this.stopMousemoveListener()
+  //   })
+  // }
 
-  stopMousemoveListener() {
-    window.removeEventListener('mousemove', this.onMouseMove)
-  }
+  // stopMousemoveListener() {
+  //   window.removeEventListener('mousemove', this.onMouseMove)
+  // }
 
-  startDrag(pointRef: 'p1' | 'p2') {
-    this.pointDragged = pointRef
+  // startDrag(pointRef: 'p1' | 'p2') {
+  //   this.pointDragged = pointRef
 
-    this.dragInProgress = true
-    this.startMousemoveListener(() => {
-      this.dragInProgress = false
-    })
-  }
+  //   this.dragInProgress = true
+  //   this.startMousemoveListener(() => {
+  //     this.dragInProgress = false
+  //   })
+  // }
 
-  onMouseMove(e: MouseEvent) {
-    if (this.dragInProgress) {
-      this.dragHandler(e)
-    }
-  }
+  // onMouseMove(e: MouseEvent) {
+  //   if (this.dragInProgress) {
+  //     this.dragHandler(e)
+  //   }
+  // }
 
   getMouseMoveDelta(e: MouseEvent) {
     return {
@@ -77,34 +106,19 @@ export default class CurveTest extends Vue {
     }
   }
 
-  dragHandler(e: MouseEvent) {
-    const delta = this.getMouseMoveDelta(e)
-    if (this.pointDragged) {
-      this.styles[this.pointDragged].top = Number(this.styles[this.pointDragged].top.replace('px', '')) + delta.y + 'px'
-      this.styles[this.pointDragged].left = Number(this.styles[this.pointDragged].left.replace('px', '')) + delta.x + 'px'
-      if (this.p1p2x > this.p1p2y) {
-        this.horizontalCurve = true
-      } else {
-        this.horizontalCurve = false
-      }
-      this.drawBezierCurve(this.horizontalCurve)
-      this.positionSvg()
-    }
-  }
+  // get p1() {
+  //   return {
+  //     x: Number(this.styles.p1.left.replace('px', '')) + 8,
+  //     y: Number(this.styles.p1.top.replace('px', '')) + 8
+  //   }
+  // }
 
-  get p1() {
-    return {
-      x: Number(this.styles.p1.left.replace('px', '')) + 8,
-      y: Number(this.styles.p1.top.replace('px', '')) + 8
-    }
-  }
-
-  get p2() {
-    return {
-      x: Number(this.styles.p2.left.replace('px', '')) + 8,
-      y: Number(this.styles.p2.top.replace('px', '')) + 8
-    }
-  }
+  // get p2() {
+  //   return {
+  //     x: Number(this.styles.p2.left.replace('px', '')) + 8,
+  //     y: Number(this.styles.p2.top.replace('px', '')) + 8
+  //   }
+  // }
 
   get p1p2x() {
     return Math.abs(this.p1.x - this.p2.x)
@@ -217,6 +231,5 @@ export default class CurveTest extends Vue {
   left: 0;
   top: 0;
   overflow: visible;
-  // border: 1px solid;
 }
 </style>

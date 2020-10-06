@@ -28,7 +28,7 @@ const initialState: State = {
       activeWorkspaceId: '0',
     },
     connectingInProgress: false,
-    inputSourceToConnect: '',
+    inputSourceTileToConnect: '',
   }
 }
 
@@ -63,8 +63,8 @@ export default createStore({
     activeWorkspaceTileById: (state, getters) => (tileId: string) => {
       return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
     },
-    tileById: (state) => (tileId: string) => state.ui.project.tiles.filter((tile: Tile) => tile.id === tileId)[0],
-    inputSourceToConnect: (state, getters) => getters.tileById(state.ui.inputSourceToConnect),
+    tileById: (state) => (tileId: string) => state.ui.project.tiles.filter((tile: Tile) => tile.id === tileId)?.[0],
+    inputSourceTileToConnect: (state, getters) => getters.tileById(state.ui.inputSourceTileToConnect),
     connectingInProgress: (state) => state.ui.connectingInProgress,
   },
   mutations: {
@@ -122,16 +122,16 @@ export default createStore({
     },
     START_CONNECTING_TILES(state, tileId) {
       state.ui.connectingInProgress = true
-      state.ui.inputSourceToConnect = tileId
+      state.ui.inputSourceTileToConnect = tileId
     },
     STOP_CONNECTING_TILES(state) {
       state.ui.connectingInProgress = false
-      state.ui.inputSourceToConnect = ''
+      state.ui.inputSourceTileToConnect = ''
     },
     CONNECT_TO_THIS_TILE(state, tileId) {
       state.ui.connectingInProgress = false
-      const source = state.ui.inputSourceToConnect
-      state.ui.inputSourceToConnect = ''
+      const source = state.ui.inputSourceTileToConnect
+      state.ui.inputSourceTileToConnect = ''
 
       state.ui.project.tiles.filter((t) => t.id === tileId)[0].inputSource = source
     },
@@ -213,8 +213,13 @@ export default createStore({
       this.commit('STOP_CONNECTING_TILES')
     },
     connectToThisTile(state, tileId) {
-      const inputSource = state.getters.inputSourceToConnect
-      this.commit('CONNECT_TO_THIS_TILE', { inputSource, receiverTileId: tileId })
+      const inputSource = state.getters.inputSourceTileToConnect
+      console.log('trying connect: ', tileId, ' to: ', inputSource)
+      if (inputSource.id === tileId) {
+        this.commit('STOP_CONNECTING_TILES')
+        return
+      }
+      this.commit('CONNECT_TO_THIS_TILE', tileId)
     },
     bringTileForward(state, tileId) {
       this.commit('BRING_TILE_FORWARD', tileId)
