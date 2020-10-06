@@ -6,6 +6,9 @@
       <circle id="cp" class="spot2" cx="0" cy="0" r="4"></circle>
       <path id="curve" d="M0 0" stroke="green" stroke-width="4" stroke-linecap="round" fill="transparent"></path>
     </svg>
+    <svg :id="svgId">
+      <path :id="curveId" stroke="red" stroke-width="4" stroke-linecap="round" fill="transparent"></path>
+    </svg>
     <div class="p1" :style="styles.p1" @mousedown="startDrag('p1')"></div>
     <div class="p2" :style="styles.p2" @mousedown="startDrag('p2')"></div>
     <button type="button" @click="doStuff">Click</button>
@@ -35,6 +38,15 @@ export default class CurveTest extends Vue {
   dragInProgress = false
 
   pointDragged: 'p1' | 'p2' | null = null
+
+  curveId = 'myCurve'
+
+  svgId = 'mySvg'
+
+  mounted() {
+    this.drawCurve()
+    this.positionSvg()
+  }
 
   startMousemoveListener(onMouseUp: (...args: []) => void) {
     window.addEventListener('mousemove', this.onMouseMove)
@@ -75,15 +87,67 @@ export default class CurveTest extends Vue {
     if (this.pointDragged) {
       this.styles[this.pointDragged].top = Number(this.styles[this.pointDragged].top.replace('px', '')) + delta.y + 'px'
       this.styles[this.pointDragged].left = Number(this.styles[this.pointDragged].left.replace('px', '')) + delta.x + 'px'
+      this.drawCurve()
+      this.positionSvg()
     }
   }
 
-  // makeSvg() {
-  //   const svg = document.createElement('svg')
-  //   svg.setAttribute()
+  get p1() {
+    return {
+      x: Number(this.styles.p1.left.replace('px', '')) + 8,
+      y: Number(this.styles.p1.top.replace('px', '')) + 8
+    }
+  }
 
-  //   const curve = `M${p1x} ${p1y} Q${c1x} ${c1y} ${p2x} ${p2y}`;
-  // }
+  get p2() {
+    return {
+      x: Number(this.styles.p2.left.replace('px', '')) + 8,
+      y: Number(this.styles.p2.top.replace('px', '')) + 8
+    }
+  }
+
+  positionSvg() {
+    const svg = document.getElementById(this.svgId) as HTMLElement
+
+    const topLeftPoint = {
+      x: Math.min(this.p1.x, this.p2.x),
+      y: Math.min(this.p1.y, this.p2.y)
+    }
+
+    const width = Math.abs(this.p1.x - this.p2.x)
+    const height = Math.abs(this.p1.y - this.p2.y)
+
+    svg.setAttribute('width', width + 'px')
+    svg.setAttribute('height', height + 'px')
+
+    svg.style.left = topLeftPoint.x + 'px'
+    svg.style.top = topLeftPoint.y + 'px'
+  }
+
+  drawCurve() {
+    const curvePath = document.getElementById(this.curveId) as HTMLElement
+    const p1x = Number(this.styles.p1.left.replace('px', ''))
+    const p1y = Number(this.styles.p1.top.replace('px', ''))
+    const p2x = Number(this.styles.p2.left.replace('px', ''))
+    const p2y = Number(this.styles.p2.top.replace('px', ''))
+
+    // mid-point of line:
+    const mpx = (p2x + p1x) * 0.5;
+    const mpy = (p2y + p1y) * 0.5;
+
+    const offset = 100;
+
+    // angle of perpendicular to line:
+    const theta = Math.atan2(p2y - p1y, p2x - p1x) - Math.PI / 2;
+
+    const c1x = mpx + offset * Math.cos(theta);
+    const c1y = mpy + offset * Math.sin(theta);
+
+    // <path d="M 10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80" stroke="black" fill="transparent"/>
+
+    const curve = `M${p1x} ${p1y} Q${c1x} ${c1y} ${p2x} ${p2y}`;
+    curvePath.setAttribute('d', curve)
+  }
 
   doStuff() {
     var p1x = parseFloat(((document.getElementById('au') as HTMLElement).getAttribute('cx') as string));
@@ -132,10 +196,16 @@ export default class CurveTest extends Vue {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  position: relative;
 
   &:hover {
     cursor: pointer;
   }
+}
+
+#mySvg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 1px solid;
 }
 </style>
