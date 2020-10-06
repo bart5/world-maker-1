@@ -21,8 +21,6 @@ import { Prop } from 'vue-property-decorator'
 export default class TileComponent extends Vue {
   @Prop() id!: string
 
-  @Prop() isBox!: boolean
-
   resizeInProgress = false
 
   dragInProgress = false

@@ -17,17 +17,6 @@
             :key="tile.id"
             :id="tile.id"
           />
-          <TileBox
-            v-for="box in allBoxesOfWorkspace(workspace.id)"
-            :key="box.id"
-            :id="box.id"
-          >
-            <TileComponent
-              v-for="tile in workspaceTilesOfBox(workspace.id, box.id)"
-              :key="tile.id"
-              :id="tile.id"
-            />
-          </TileBox>
         </div>
     </div>
   </div>
@@ -55,32 +44,12 @@ export default class Frame extends Vue {
     return this.$store.getters.allFreeTilesOfWorkspace(workspaceId)
   }
 
-  allBoxedTilesOfWorkspace(workspaceId: string): Tile[] {
-    return this.$store.getters.allBoxedTilesOfWorkspace(workspaceId)
-  }
-
-  allBoxesOfWorkspace(workspaceId: string): Tile[] {
-    return this.$store.getters.allBoxesOfWorkspace(workspaceId)
-  }
-
-  workspaceTilesOfBox(workspaceId: string, boxId: string): { [boxId: string]: Tile[] } {
-    return this.$store.getters.workspaceTilesOfBox(workspaceId, boxId)
-  }
-
   activateWorkspace(workspaceId: string) {
     this.$store.dispatch('activateWorkspace', workspaceId)
   }
 
   createNewWorkspace() {
     this.$store.dispatch('createNewWorkspace')
-  }
-
-  setTileInput() {
-
-  }
-
-  onTileDrag() {
-
   }
 }
 </script>

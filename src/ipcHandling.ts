@@ -58,11 +58,6 @@ function saveFile(path: string, data: {}, event: Electron.IpcMainEvent, callback
 export function setupCommunicaton() {
   console.log('setting up ipc communication')
 
-  ipcMain.on('ipc-test', (event, arg: any) => {
-    console.log(`received arguments: ${arg}`)
-    event.reply('ipc-test-reply', 'pong')
-  })
-
   ipcMain.on('loadStateData', (event) => {
     operationWrapper(event, 'loadStateData', loadFile(stateDataPath, event))
   })

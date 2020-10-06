@@ -1,6 +1,5 @@
 type tileId = string
 type workspaceId = string
-type tileBoxId = string
 
 interface Workspace {
   id: workspaceId;
@@ -12,10 +11,7 @@ interface Block {
   width: number;
   height: number;
   /**
-   * For Tile it's position withing Workspace window
-   * or within TileBox if it resides in one.
-   *
-   * For TileBox it's position withing Workspace window.
+   * For Tile it's position withing Workspace window.
    */
   x: number;
   y: number;
@@ -25,14 +21,9 @@ interface Tile extends Block {
   id: tileId;
   name: string;
   workspaceId: string;
-  boxId: string;
   providerTile: Tile | null;
   filter: any;
   hideConnectors: boolean;
-}
-
-interface TileBox extends Block {
-  id: tileBoxId;
 }
 
 interface Project {
@@ -40,7 +31,6 @@ interface Project {
   name: string;
   workspaces: Array<Workspace>;
   tiles: Array<Tile>;
-  boxes: Array<TileBox>;
   staticDataPath: string;
   assetsPath: string;
   activeWorkspaceId: workspaceId;
