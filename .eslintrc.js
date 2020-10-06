@@ -25,6 +25,8 @@ module.exports = {
     'object-curly-newline': 0,
     'prefer-template': 0,
     'no-param-reassign': 0,
+    'no-var': 0,
+    'vars-on-top': 0,
     // 'arrow-parens': 0,
     "@typescript-eslint/member-delimiter-style": 0,
     "@typescript-eslint/no-use-before-define": 0,

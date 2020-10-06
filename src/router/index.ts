@@ -1,15 +1,21 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 // import ProjectLoader from '../views/ProjectLoader.vue';
 // import Quest from '../views/Quest.vue';
-import Frame from '../views/Frame.vue';
+// // import Frame from '../views/Frame.vue';
+import CurveTest from '../views/CurveTest.vue';
 // import WorldMap from '../views/WorldMap.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    name: 'Frame',
-    component: Frame,
+    name: 'CurveTest',
+    component: CurveTest,
   },
+  // {
+  //   path: '/',
+  //   name: 'Frame',
+  //   component: Frame,
+  // },
   // {
   //   path: '/quest',
   //   name: 'Quest',
