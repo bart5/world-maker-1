@@ -1,17 +1,10 @@
 <template>
   <div class="wrapper">
-    <svg width="240" height="160">
-      <circle id="au" class="spot" cx="200" cy="50" r="4"></circle>
-      <circle id="sl" class="spot" cx="100" cy="100" r="4"></circle>
-      <circle id="cp" class="spot2" cx="0" cy="0" r="4"></circle>
-      <path id="curve" d="M0 0" stroke="green" stroke-width="4" stroke-linecap="round" fill="transparent"></path>
-    </svg>
     <svg :id="svgId">
       <path :id="curveId" stroke="red" stroke-width="4" stroke-linecap="round" fill="transparent"></path>
     </svg>
     <div class="p1" :style="styles.p1" @mousedown="startDrag('p1')"></div>
     <div class="p2" :style="styles.p2" @mousedown="startDrag('p2')"></div>
-    <button type="button" @click="doStuff">Click</button>
   </div>
 </template>
 
@@ -43,9 +36,10 @@ export default class CurveTest extends Vue {
 
   svgId = 'mySvg'
 
+  horizontalCurve = false
+
   mounted() {
-    this.drawCurve()
-    this.drawBezierCurve()
+    this.drawBezierCurve(this.horizontalCurve)
     this.positionSvg()
   }
 
@@ -88,8 +82,12 @@ export default class CurveTest extends Vue {
     if (this.pointDragged) {
       this.styles[this.pointDragged].top = Number(this.styles[this.pointDragged].top.replace('px', '')) + delta.y + 'px'
       this.styles[this.pointDragged].left = Number(this.styles[this.pointDragged].left.replace('px', '')) + delta.x + 'px'
-      this.drawCurve()
-      this.drawBezierCurve()
+      if (this.p1p2x > this.p1p2y) {
+        this.horizontalCurve = true
+      } else {
+        this.horizontalCurve = false
+      }
+      this.drawBezierCurve(this.horizontalCurve)
       this.positionSvg()
     }
   }
@@ -106,6 +104,14 @@ export default class CurveTest extends Vue {
       x: Number(this.styles.p2.left.replace('px', '')) + 8,
       y: Number(this.styles.p2.top.replace('px', '')) + 8
     }
+  }
+
+  get p1p2x() {
+    return Math.abs(this.p1.x - this.p2.x)
+  }
+
+  get p1p2y() {
+    return Math.abs(this.p1.y - this.p2.y)
   }
 
   get svgx() {
@@ -129,32 +135,7 @@ export default class CurveTest extends Vue {
     svg.style.top = this.svgy + 'px'
   }
 
-  drawCurve() {
-    const curvePath = document.getElementById(this.curveId) as HTMLElement
-    const p1x = Number(this.styles.p1.left.replace('px', ''))
-    const p1y = Number(this.styles.p1.top.replace('px', ''))
-    const p2x = Number(this.styles.p2.left.replace('px', ''))
-    const p2y = Number(this.styles.p2.top.replace('px', ''))
-
-    // mid-point of line:
-    const mpx = (p2x + p1x) * 0.5;
-    const mpy = (p2y + p1y) * 0.5;
-
-    const offset = 100;
-
-    // angle of perpendicular to line:
-    const theta = Math.atan2(p2y - p1y, p2x - p1x) - Math.PI / 2;
-
-    const c1x = mpx + offset * Math.cos(theta);
-    const c1y = mpy + offset * Math.sin(theta);
-
-    // <path d="M 10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80" stroke="black" fill="transparent"/>
-
-    const curve = `M${p1x} ${p1y} Q${c1x} ${c1y} ${p2x} ${p2y}`;
-    curvePath.setAttribute('d', curve)
-  }
-
-  drawBezierCurve() {
+  drawBezierCurve(horizontal: boolean) {
     /* This is for left to right data flow */
     const shiftx = this.svgx
     const shifty = this.svgy
@@ -162,13 +143,25 @@ export default class CurveTest extends Vue {
     let localP1
     let localP2
 
-    if (this.p1.x < this.p2.x) {
-      localP1 = this.p1
-      localP2 = this.p2
-    } else {
-      localP1 = this.p2
-      localP2 = this.p1
+    if (horizontal) {
+      if (this.p1.x < this.p2.x) {
+        localP1 = this.p1
+        localP2 = this.p2
+      } else {
+        localP1 = this.p2
+        localP2 = this.p1
+      }
+    } else if (!horizontal) {
+      if (this.p1.y < this.p2.y) {
+        localP1 = this.p2
+        localP2 = this.p1
+      } else {
+        localP1 = this.p1
+        localP2 = this.p2
+      }
     }
+
+    if (!localP1 || !localP2) return
 
     const shapeCoef = 0.5
 
@@ -182,11 +175,11 @@ export default class CurveTest extends Vue {
     var mpx = Math.max(p2x, p1x) * 0.5;
     var mpy = Math.max(p2y, p1y) * 0.5;
 
-    var p1hx = shapeCoef * mpx
-    var p1hy = p1y
+    var p1hx = horizontal ? shapeCoef * mpx : p1x
+    var p1hy = horizontal ? p1y : mpy + shapeCoef * mpy
 
-    var p2hx = mpx + (1 - shapeCoef) * mpx
-    var p2hy = p2y
+    var p2hx = horizontal ? mpx + shapeCoef * mpx : p2x
+    var p2hy = horizontal ? p2y : shapeCoef * mpy
 
     var mph1x = p1hx
     var mph1y = p1hy
@@ -195,37 +188,6 @@ export default class CurveTest extends Vue {
 
     const curve = `M${p1x} ${p1y} C ${p1hx} ${p1hy} ${mph1x} ${mph1y} ${mpx} ${mpy} ${mph2x} ${mph2y} ${p2hx} ${p2hy} ${p2x} ${p2y}`;
     curvePath.setAttribute('d', curve)
-  }
-
-  doStuff() {
-    var p1x = parseFloat(((document.getElementById('au') as HTMLElement).getAttribute('cx') as string));
-    var p1y = parseFloat((document.getElementById('au') as HTMLElement).getAttribute('cy') as string);
-    var p2x = parseFloat((document.getElementById('sl') as HTMLElement).getAttribute('cx') as string);
-    var p2y = parseFloat((document.getElementById('sl') as HTMLElement).getAttribute('cy') as string);
-
-    // mid-point of line:
-    var mpx = (p2x + p1x) * 0.5;
-    var mpy = (p2y + p1y) * 0.5;
-
-    // angle of perpendicular to line:
-    var theta = Math.atan2(p2y - p1y, p2x - p1x) - Math.PI / 2;
-
-    // distance of control point from mid-point of line:
-    var offset = 30;
-
-    // location of control point:
-    var c1x = mpx + offset * Math.cos(theta);
-    var c1y = mpy + offset * Math.sin(theta);
-
-    // show where the control point is:
-    var c1 = document.getElementById('cp') as HTMLElement;
-    c1.setAttribute('cx', String(c1x));
-    c1.setAttribute('cy', String(c1y));
-
-    // construct the command to draw a quadratic curve
-    var curve = 'M' + p1x + ' ' + p1y + ' Q ' + c1x + ' ' + c1y + ' ' + p2x + ' ' + p2y;
-    var curveElement = document.getElementById('curve') as HTMLElement;
-    curveElement.setAttribute('d', curve);
   }
 }
 </script>
