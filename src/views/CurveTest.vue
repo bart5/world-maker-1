@@ -45,6 +45,7 @@ export default class CurveTest extends Vue {
 
   mounted() {
     this.drawCurve()
+    this.drawBezierCurve()
     this.positionSvg()
   }
 
@@ -88,6 +89,7 @@ export default class CurveTest extends Vue {
       this.styles[this.pointDragged].top = Number(this.styles[this.pointDragged].top.replace('px', '')) + delta.y + 'px'
       this.styles[this.pointDragged].left = Number(this.styles[this.pointDragged].left.replace('px', '')) + delta.x + 'px'
       this.drawCurve()
+      this.drawBezierCurve()
       this.positionSvg()
     }
   }
@@ -106,13 +108,16 @@ export default class CurveTest extends Vue {
     }
   }
 
+  get svgx() {
+    return Math.min(this.p1.x, this.p2.x)
+  }
+
+  get svgy() {
+    return Math.min(this.p1.y, this.p2.y)
+  }
+
   positionSvg() {
     const svg = document.getElementById(this.svgId) as HTMLElement
-
-    const topLeftPoint = {
-      x: Math.min(this.p1.x, this.p2.x),
-      y: Math.min(this.p1.y, this.p2.y)
-    }
 
     const width = Math.abs(this.p1.x - this.p2.x)
     const height = Math.abs(this.p1.y - this.p2.y)
@@ -120,8 +125,8 @@ export default class CurveTest extends Vue {
     svg.setAttribute('width', width + 'px')
     svg.setAttribute('height', height + 'px')
 
-    svg.style.left = topLeftPoint.x + 'px'
-    svg.style.top = topLeftPoint.y + 'px'
+    svg.style.left = this.svgx + 'px'
+    svg.style.top = this.svgy + 'px'
   }
 
   drawCurve() {
@@ -146,6 +151,49 @@ export default class CurveTest extends Vue {
     // <path d="M 10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80" stroke="black" fill="transparent"/>
 
     const curve = `M${p1x} ${p1y} Q${c1x} ${c1y} ${p2x} ${p2y}`;
+    curvePath.setAttribute('d', curve)
+  }
+
+  drawBezierCurve() {
+    /* This is for left to right data flow */
+    const shiftx = this.svgx
+    const shifty = this.svgy
+
+    let localP1
+    let localP2
+
+    if (this.p1.x < this.p2.x) {
+      localP1 = this.p1
+      localP2 = this.p2
+    } else {
+      localP1 = this.p2
+      localP2 = this.p1
+    }
+
+    const shapeCoef = 0.5
+
+    const curvePath = document.getElementById(this.curveId) as HTMLElement
+    var p1x = localP1.x - shiftx
+    var p1y = localP1.y - shifty
+
+    var p2x = localP2.x - shiftx
+    var p2y = localP2.y - shifty
+
+    var mpx = Math.max(p2x, p1x) * 0.5;
+    var mpy = Math.max(p2y, p1y) * 0.5;
+
+    var p1hx = shapeCoef * mpx
+    var p1hy = p1y
+
+    var p2hx = mpx + (1 - shapeCoef) * mpx
+    var p2hy = p2y
+
+    var mph1x = p1hx
+    var mph1y = p1hy
+    var mph2x = p2hx
+    var mph2y = p2hy
+
+    const curve = `M${p1x} ${p1y} C ${p1hx} ${p1hy} ${mph1x} ${mph1y} ${mpx} ${mpy} ${mph2x} ${mph2y} ${p2hx} ${p2hy} ${p2x} ${p2y}`;
     curvePath.setAttribute('d', curve)
   }
 
@@ -206,6 +254,7 @@ export default class CurveTest extends Vue {
   position: absolute;
   left: 0;
   top: 0;
-  border: 1px solid;
+  overflow: visible;
+  // border: 1px solid;
 }
 </style>
