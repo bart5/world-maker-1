@@ -10,8 +10,10 @@
     <div class="workspace-selector"></div>
     <div
       class="workspace-board"
+      :class="{ 'dragging-board': draggingBoard }"
       ref="board"
       :style="boardStyle"
+      @mousedown="startBoardMove"
     >
       <div
         class="workspace"
@@ -38,10 +40,10 @@
             :scale="workspaceScale"
             :relativeMousePosition="relativeMousePosition"
             @connecting="(e) => updateRelativeMousePosition(e)"
-            @start-drag="preventScroll = true"
-            @stop-drag="preventScroll = false"
-            @start-resize="preventScroll = true"
-            @stop-resize="preventScroll = false"
+            @start-drag="dragInProgress = true"
+            @stop-drag="dragInProgress = false"
+            @start-resize="resizeInProgress = true"
+            @stop-resize="resizeInProgress = false"
           />
         </template>
       </div>
@@ -66,13 +68,22 @@ export default class Frame extends Vue {
     y: 0,
   }
 
+  customMouseMovement = {
+    x: 0,
+    y: 0,
+  }
+
   workspaceWidth = 5000
 
   workspaceHeight = 5000
 
   workspaceScale = 1
 
-  preventScroll = false
+  dragInProgress = false
+
+  resizeInProgress = false
+
+  draggingBoard = false
 
   get workspaceStyle() {
     const width = this.workspaceWidth
@@ -81,13 +92,12 @@ export default class Frame extends Vue {
       minWidth: width + 'px',
       minHeight: height + 'px',
       transform: `scale(${this.workspaceScale})`,
-      overflow: this.preventScroll ? 'hidden' : 'auto',
     }
   }
 
   get boardStyle() {
     return {
-      overflow: this.preventScroll ? 'hidden' : 'auto',
+      overflow: (this.dragInProgress || this.resizeInProgress) ? 'hidden' : 'auto',
     }
   }
 
@@ -100,6 +110,18 @@ export default class Frame extends Vue {
   // centerOnTiles() {
   //   this.allTilesOfActiveWorkspace.
   // }
+
+  startBoardMove(e: MouseEvent) {
+    if (this.dragInProgress || this.resizeInProgress) return
+    this.draggingBoard = true
+    this.updateRelativeMousePosition(e)
+    window.addEventListener('mouseup', this.stopBoardMove)
+  }
+
+  stopBoardMove() {
+    window.removeEventListener('mousup', this.stopBoardMove)
+    this.draggingBoard = false
+  }
 
   zoomOut() {
     this.workspaceScale -= 0.05
@@ -187,19 +209,28 @@ export default class Frame extends Vue {
   }
 
   get watchMouseMove() {
-    return this.connectingInProgress || this.preventScroll
+    return this.connectingInProgress || this.dragInProgress || this.resizeInProgress || this.draggingBoard
   }
 
   onMousemove(e: MouseEvent) {
     if (!this.watchMouseMove) return
+    if (this.draggingBoard) {
+      this.boardElement.scrollBy(
+        e.movementX < 0 ? -0.95 * e.movementX : -0.9 * e.movementX,
+        e.movementY < 0 ? -0.95 * e.movementY : -0.9 * e.movementY
+      )
+      return
+    }
     this.updateRelativeMousePosition(e)
   }
 
   updateRelativeMousePosition(e: MouseEvent) {
     const workspaceRect = this.workspaceElement.getBoundingClientRect()
+    const newPositionX = (e.clientX - workspaceRect.x) * (1 / this.workspaceScale)
+    const newPositionY = (e.clientY - workspaceRect.y) * (1 / this.workspaceScale)
     this.relativeMousePosition = {
-      x: (e.clientX - workspaceRect.x) * (1 / this.workspaceScale),
-      y: (e.clientY - workspaceRect.y) * (1 / this.workspaceScale)
+      x: newPositionX,
+      y: newPositionY
     }
   }
 
@@ -252,6 +283,10 @@ export default class Frame extends Vue {
   position: relative;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+
+  &.dragging-board:hover {
+    cursor: all-scroll;
+  }
 }
 
 ::-webkit-scrollbar {
