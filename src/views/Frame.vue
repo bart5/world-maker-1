@@ -2,36 +2,37 @@
   <div class="frame-wrapper" @mousedown="stopConnectingTiles">
     <div class="top-bar">
       <button @click="createNewTile">Create new tile</button>
+      <button @click="centerView">center view</button>
     </div>
-    <div class="workspace-board">
-      <div class="workspace-selector">
-      </div>
-        <div
-          v-show="showWorkspace(workspace.id)"
-          v-for="workspace in workspaces"
-          :key="workspace.id"
-          class="workspace"
-          ref="workspace"
-          @mousemove="onMousemove"
-        >
-          <!-- @click="onWorkspaceClick" -->
-          <Curve
-            class="connector-curve new-connector"
-            v-if="connectingInProgress"
-            :p1="getTileCoordinates(selectedInputSourceTile)"
-            :p2="relativeMousePosition"
-          />
+    <div class="workspace-selector"></div>
+    <div class="workspace-board" ref="board">
+      <!-- <div class="board-expander"></div> -->
+      <!-- v-for="workspace in workspaces"
+      :key="workspace.id" -->
+        <!-- v-show="showWorkspace(workspace.id)" -->
+      <div
+        class="workspace"
+        ref="workspace"
+        :style="workspaceStyle"
+        @mousemove="onMousemove"
+      >
+        <Curve
+          class="connector-curve new-connector"
+          v-if="connectingInProgress"
+          :p1="getTileCoordinates(selectedInputSourceTile)"
+          :p2="relativeMousePosition"
+        />
 
-          <template v-for="tile in allTilesOfWorkspace(workspace.id)" :key="tile.id">
-            <Curve
-              v-if="!!tile.inputSource"
-              class="connector-curve"
-              :p1="getTileCoordinates(tile)"
-              :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
-            />
-            <TileComponent :id="tile.id" @connecting="(e) => updateRelativeMousePosition(e)"/>
-          </template>
-        </div>
+        <template v-for="tile in allTilesOfWorkspace" :key="tile.id">
+          <Curve
+            v-if="!!tile.inputSource"
+            class="connector-curve"
+            :p1="getTileCoordinates(tile)"
+            :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
+          />
+          <TileComponent :id="tile.id" @connecting="(e) => updateRelativeMousePosition(e)"/>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -53,6 +54,40 @@ export default class Frame extends Vue {
     y: 0,
   }
 
+  workspaceWidth = 5000
+
+  workspaceHeight = 5000
+
+  get workspaceStyle() {
+    const width = this.workspaceWidth
+    const height = this.workspaceHeight
+    return {
+      minWidth: width + 'px',
+      minHeight: height + 'px',
+    }
+  }
+
+  centerView() {
+    const x = this.workspaceWidth * 0.5 - this.boardElement.offsetWidth * 0.5
+    const y = this.workspaceHeight * 0.5 - this.boardElement.offsetHeight * 0.5
+    this.boardElement.scrollTo(x, y)
+  }
+
+  centerCoordinates(coords: { x: number, y: number }) {
+    return {
+      x: coords.x + (this.workspaceWidth * 0.5),
+      y: coords.y + (this.workspaceHeight * 0.5),
+    }
+  }
+
+  // get workspaceWidth() {
+
+  // }
+
+  // get workspaceHeight() {
+
+  // }
+
   get workspaces(): Workspace[] {
     return this.$store.getters.workspaces
   }
@@ -61,12 +96,20 @@ export default class Frame extends Vue {
     return this.$refs.workspace as HTMLElement
   }
 
+  get boardElement() {
+    return this.$refs.board as HTMLElement
+  }
+
+  get activeWorkspaceId() {
+    return this.$store.getters.getActiveWorkspaceId
+  }
+
   showWorkspace(workspaceId: string) {
     return this.$store.getters.activeWorkspaceId === workspaceId
   }
 
-  allTilesOfWorkspace(workspaceId: string): Tile[] {
-    return this.$store.getters.allTilesOfWorkspace(workspaceId)
+  get allTilesOfWorkspace(): Tile[] {
+    return this.$store.getters.allTilesOfWorkspace(this.activeWorkspaceId)
   }
 
   activateWorkspace(workspaceId: string) {
@@ -78,7 +121,11 @@ export default class Frame extends Vue {
   }
 
   createNewTile() {
-    this.$store.dispatch('createNewTile')
+    if (this.allTilesOfWorkspace.length) {
+      this.$store.dispatch('createNewTile')
+      return
+    }
+    this.$store.dispatch('createNewTile', this.centerCoordinates({ x: 0, y: 0 }))
   }
 
   stopConnectingTiles() {
@@ -125,6 +172,7 @@ export default class Frame extends Vue {
   }
 
   mounted() {
+    this.centerView()
     this.createNewTile()
   }
 }
@@ -153,6 +201,20 @@ export default class Frame extends Vue {
   height: 100%;
   display: flex;
   flex-flow: column;
+  overflow: auto;
+  position: relative;
+}
+
+/* .board-expander {
+  width: 10000px;
+  height: 10000px;
+  position: absolute;
+  left: -5000px;
+  top: -5000px;
+} */
+
+::-webkit-scrollbar {
+  display: none;
 }
 
 .workspace-selector {

@@ -56,6 +56,8 @@ export default createStore({
     staticData: (state) => state.staticData,
     workspaces: (state) => state.ui.project.workspaces,
     activeWorkspaceId: (state) => state.ui.project.activeWorkspaceId,
+    getActiveWorkspace: (state) => state.ui.project.workspaces.filter((ws) => ws.id === state.ui.project.activeWorkspaceId),
+    getActiveWorkspaceId: (state) => state.ui.project.activeWorkspaceId,
     allTilesOfWorkspace: (state) => (workspaceId: string) => state.ui.project.tiles.filter((tile) => {
       return tile.workspaceId === workspaceId
     }),
@@ -178,10 +180,10 @@ export default createStore({
       window.ipcRenderer.send('saveStaticData', data)
     },
 
-    createNewTile(state) {
+    createNewTile(state, positionShift?: { x: number, y: number }) {
       const tileId = `tile_${Date.now()}${Math.random()}`
-      const spaceX = 30
-      const spaceY = 30
+      const spaceX = positionShift?.x || 20
+      const spaceY = positionShift?.y || 0
 
       const getTileInitialPosition = (): { x: number, y: number } => {
         /*
@@ -197,10 +199,13 @@ export default createStore({
           return maxTileXSorted[0]
         })()
 
-        return { x: minX + spaceX, y: spaceY }
+        const averageTileY = tiles.reduce((acc, tile) => acc + (tile.y / tiles.length), 0)
+
+        return { x: minX + spaceX, y: averageTileY + spaceY }
       }
 
       const position = getTileInitialPosition()
+      console.log('new tile position: ', position)
 
       this.commit('CREATE_NEW_TILE', { workspaceId: state.getters.activeWorkspaceId, tileId, position })
     },
