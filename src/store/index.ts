@@ -123,17 +123,15 @@ export default createStore({
         order,
       })
     },
-    RESIZE_TILE(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
+    RESIZE_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
       const tile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
-      tile.width = Math.max(tile.width + delta.x, minTileSize.width)
-      tile.height = Math.max(tile.height + delta.y, minTileSize.height)
+      tile.width = Math.max(newPosition.x - tile.x, minTileSize.width)
+      tile.height = Math.max(newPosition.y - tile.y, minTileSize.height)
     },
-    DRAG_TILE(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
+    DRAG_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
       const tile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
-      tile.x = delta.x
-      tile.y = delta.y
-      // tile.x += delta.x
-      // tile.y = Math.max(tile.y + delta.y, 0)
+      tile.x = newPosition.x - tile.width * 0.5
+      tile.y = newPosition.y
     },
     START_CONNECTING_TILES(state, tileId) {
       state.ui.connectingInProgress = true
@@ -217,11 +215,11 @@ export default createStore({
     activateWorkspace(state, workspaceId: string) {
       this.commit('ACTIVATE_WORKSPACE', workspaceId)
     },
-    resizeTile(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
-      this.commit('RESIZE_TILE', { tileId, delta })
+    resizeTile(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
+      this.commit('RESIZE_TILE', { tileId, newPosition })
     },
-    dragTile(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
-      this.commit('DRAG_TILE', { tileId, delta })
+    dragTile(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
+      this.commit('DRAG_TILE', { tileId, newPosition })
     },
     startConnectingTiles(state, tileId) {
       this.commit('START_CONNECTING_TILES', tileId)

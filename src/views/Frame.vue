@@ -191,7 +191,7 @@ export default class Frame extends Vue {
   }
 
   onMousemove(e: MouseEvent) {
-    // if (!this.watchMouseMove) return
+    if (!this.watchMouseMove) return
     this.updateRelativeMousePosition(e)
   }
 
