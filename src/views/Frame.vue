@@ -205,8 +205,8 @@ export default class Frame extends Vue {
   updateRelativeMousePosition(e: MouseEvent) {
     const workspaceRect = this.workspaceElement.getBoundingClientRect()
     this.relativeMousePosition = {
-      x: e.clientX - workspaceRect.x,
-      y: e.clientY - workspaceRect.y
+      x: (e.clientX - workspaceRect.x) * (1 / this.workspaceScale),
+      y: (e.clientY - workspaceRect.y) * (1 / this.workspaceScale)
     }
   }
 

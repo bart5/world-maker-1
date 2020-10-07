@@ -187,13 +187,13 @@ export default class TileComponent extends Vue {
   left: 0;
   height: 200px;
   width: 100px;
-  border: 1px solid;
+  border: 2px solid;
   background: white;
-  border-radius: 5px;
-  overflow: visible;
+  border-radius: 10px;
+  overflow: hidden;
 
   &.de-emphasize * {
-    opacity: 0.3;
+    opacity: 0.7;
   }
   &.connection-ready:not(.de-emphasize):hover {
     cursor: pointer;
