@@ -2,14 +2,17 @@
   <div class="frame-wrapper" @mousedown="stopConnectingTiles">
     <div class="top-bar">
       <button @click="createNewTile">Create new tile</button>
-      <button @click="centerView">center view</button>
+      <button @click="centerView">Center view</button>
+      <button @click="zoomIn">Zoom in</button>
+      <button @click="resetZoom">Reset zoom</button>
+      <button @click="zoomOut">Zoom out</button>
     </div>
     <div class="workspace-selector"></div>
-    <div class="workspace-board" ref="board">
-      <!-- <div class="board-expander"></div> -->
-      <!-- v-for="workspace in workspaces"
-      :key="workspace.id" -->
-        <!-- v-show="showWorkspace(workspace.id)" -->
+    <div
+      class="workspace-board"
+      ref="board"
+      :style="boardStyle"
+    >
       <div
         class="workspace"
         ref="workspace"
@@ -23,14 +26,21 @@
           :p2="relativeMousePosition"
         />
 
-        <template v-for="tile in allTilesOfWorkspace" :key="tile.id">
+        <template v-for="tile in allTilesOfActiveWorkspace" :key="tile.id">
           <Curve
             v-if="!!tile.inputSource"
             class="connector-curve"
             :p1="getTileCoordinates(tile)"
             :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
           />
-          <TileComponent :id="tile.id" @connecting="(e) => updateRelativeMousePosition(e)"/>
+          <TileComponent
+            :id="tile.id"
+            @connecting="(e) => updateRelativeMousePosition(e)"
+            @start-drag="preventScroll = true"
+            @stop-drag="preventScroll = false"
+            @start-resize="preventScroll = true"
+            @stop-resize="preventScroll = false"
+          />
         </template>
       </div>
     </div>
@@ -58,12 +68,24 @@ export default class Frame extends Vue {
 
   workspaceHeight = 5000
 
+  workspaceScale = 1
+
+  preventScroll = false
+
   get workspaceStyle() {
     const width = this.workspaceWidth
     const height = this.workspaceHeight
     return {
       minWidth: width + 'px',
       minHeight: height + 'px',
+      transform: `scale(${this.workspaceScale})`,
+      overflow: this.preventScroll ? 'hidden' : 'auto',
+    }
+  }
+
+  get boardStyle() {
+    return {
+      overflow: this.preventScroll ? 'hidden' : 'auto',
     }
   }
 
@@ -71,6 +93,22 @@ export default class Frame extends Vue {
     const x = this.workspaceWidth * 0.5 - this.boardElement.offsetWidth * 0.5
     const y = this.workspaceHeight * 0.5 - this.boardElement.offsetHeight * 0.5
     this.boardElement.scrollTo(x, y)
+  }
+
+  // centerOnTiles() {
+  //   this.allTilesOfActiveWorkspace.
+  // }
+
+  zoomOut() {
+    this.workspaceScale -= 0.05
+  }
+
+  zoomIn() {
+    this.workspaceScale += 0.05
+  }
+
+  resetZoom() {
+    this.workspaceScale = 1
   }
 
   centerCoordinates(coords: { x: number, y: number }) {
@@ -108,7 +146,7 @@ export default class Frame extends Vue {
     return this.$store.getters.activeWorkspaceId === workspaceId
   }
 
-  get allTilesOfWorkspace(): Tile[] {
+  get allTilesOfActiveWorkspace(): Tile[] {
     return this.$store.getters.allTilesOfWorkspace(this.activeWorkspaceId)
   }
 
@@ -121,7 +159,7 @@ export default class Frame extends Vue {
   }
 
   createNewTile() {
-    if (this.allTilesOfWorkspace.length) {
+    if (this.allTilesOfActiveWorkspace.length) {
       this.$store.dispatch('createNewTile')
       return
     }
@@ -165,6 +203,13 @@ export default class Frame extends Vue {
 
   updateRelativeMousePosition(e: MouseEvent) {
     const workspaceRect = this.workspaceElement.getBoundingClientRect()
+    if (this.workspaceScale !== 1) {
+      this.relativeMousePosition = {
+        x: e.clientX - workspaceRect.x,
+        y: e.clientY - workspaceRect.y
+      }
+      return
+    }
     this.relativeMousePosition = {
       x: e.clientX - workspaceRect.x,
       y: e.clientY - workspaceRect.y
@@ -186,6 +231,8 @@ export default class Frame extends Vue {
   border: 3px solid purple;
   display: flex;
   flex-flow: column nowrap;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .top-bar {
@@ -203,15 +250,9 @@ export default class Frame extends Vue {
   flex-flow: column;
   overflow: auto;
   position: relative;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
-
-/* .board-expander {
-  width: 10000px;
-  height: 10000px;
-  position: absolute;
-  left: -5000px;
-  top: -5000px;
-} */
 
 ::-webkit-scrollbar {
   display: none;
@@ -224,8 +265,47 @@ export default class Frame extends Vue {
 }
 
 .workspace {
+  --background: #4d4848;
+  --grid: #575151;
+  --grid-dark: #383535;
   position: relative;
   flex-grow: 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background:
+    repeating-linear-gradient(
+      to left,
+      var(--grid-dark) 0px,
+      var(--grid-dark) 2px,
+      transparent 2px,
+      transparent 200px,
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--grid-dark) 0px,
+      var(--grid-dark) 2px,
+      transparent 2px,
+      transparent 200px,
+    ),
+    repeating-linear-gradient(
+      to left,
+      var(--grid) 0px,
+      var(--grid) 2px,
+      transparent 2px,
+      transparent 20px,
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--grid) 0px,
+      var(--grid) 2px,
+      transparent 2px,
+      transparent 20px,
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--background) 0px,
+      var(--background) 1px,
+    ),
 }
 
 .connector-curve {

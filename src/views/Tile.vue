@@ -113,16 +113,20 @@ export default class TileComponent extends Vue {
   startDrag() {
     if (this.connectingInProgress) return
     this.dragInProgress = true
+    this.$emit('start-drag')
     this.startMousemoveListener(() => {
       this.dragInProgress = false
+      this.$emit('stop-drag')
     })
   }
 
   startResize() {
     if (this.connectingInProgress) return
     this.resizeInProgress = true
+    this.$emit('start-resize')
     this.startMousemoveListener(() => {
       this.resizeInProgress = false
+      this.$emit('stop-resize')
     })
   }
 
