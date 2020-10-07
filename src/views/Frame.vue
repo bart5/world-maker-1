@@ -2,7 +2,7 @@
   <div class="frame-wrapper" @mousedown="stopConnectingTiles">
     <div class="top-bar">
       <button @click="createNewTile">Create new tile</button>
-      <button @click="centerView">Center view</button>
+      <button @click="centerOnTiles">Center view</button>
       <button @click="zoomIn">Zoom in</button>
       <button @click="resetZoom">Reset zoom</button>
       <button @click="zoomOut">Zoom out</button>
@@ -101,15 +101,49 @@ export default class Frame extends Vue {
     }
   }
 
-  centerView() {
+  centerOnWorkspaceCenter() {
     const x = this.workspaceWidth * 0.5 - this.boardElement.offsetWidth * 0.5
     const y = this.workspaceHeight * 0.5 - this.boardElement.offsetHeight * 0.5
     this.boardElement.scrollTo(x, y)
   }
 
-  // centerOnTiles() {
-  //   this.allTilesOfActiveWorkspace.
-  // }
+  centerOnTiles() {
+    let maxX = 0
+    let minX = 0
+    let maxY = 0
+    let minY = 0
+    this.allTilesOfActiveWorkspace.forEach((t, i) => {
+      if (i === 0) {
+        maxX = t.x + t.width
+        minX = t.x
+        maxY = t.y + t.height
+        minY = t.y
+      } else {
+        maxX = Math.max(maxX, t.x + t.width)
+        minX = Math.min(minX, t.x)
+        maxY = Math.max(maxY, t.y + t.height)
+        minY = Math.min(minY, t.y)
+      }
+    })
+    const centerX = 0.5 * (minX + maxX)
+    const centerY = 0.5 * (minY + maxY)
+    if (this.workspaceScale >= 1) {
+      this.boardElement.scrollTo(
+        /* Align to center of the viewport */
+        (centerX - (window.innerWidth * 0.5)) + this.workspaceWidth * (1 - this.workspaceScale),
+        (centerY - (window.innerHeight * 0.5)) + this.workspaceHeight * (1 - this.workspaceScale),
+      )
+    } else {
+      this.boardElement.scrollBy(
+        this.workspaceElement.getBoundingClientRect().x,
+        this.workspaceElement.getBoundingClientRect().y,
+      )
+      this.boardElement.scrollBy(
+        centerX * this.workspaceScale - window.innerWidth * 0.5,
+        centerY * this.workspaceScale - window.innerHeight * 0.5,
+      )
+    }
+  }
 
   startBoardMove(e: MouseEvent) {
     if (this.dragInProgress || this.resizeInProgress) return
@@ -133,13 +167,6 @@ export default class Frame extends Vue {
 
   resetZoom() {
     this.workspaceScale = 1
-  }
-
-  centerCoordinates(coords: { x: number, y: number }) {
-    return {
-      x: coords.x + (this.workspaceWidth * 0.5),
-      y: coords.y + (this.workspaceHeight * 0.5),
-    }
   }
 
   get workspaces(): Workspace[] {
@@ -179,7 +206,10 @@ export default class Frame extends Vue {
       this.$store.dispatch('createNewTile')
       return
     }
-    this.$store.dispatch('createNewTile', this.centerCoordinates({ x: 0, y: 0 }))
+    this.$store.dispatch('createNewTile', {
+      x: this.workspaceWidth * 0.5,
+      y: this.workspaceHeight * 0.5
+    })
   }
 
   stopConnectingTiles() {
@@ -250,8 +280,8 @@ export default class Frame extends Vue {
   }
 
   mounted() {
-    this.centerView()
     this.createNewTile()
+    this.centerOnTiles()
     window.addEventListener('keydown', this.keyboardHandler)
   }
 }
