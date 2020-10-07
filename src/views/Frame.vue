@@ -35,6 +35,7 @@
           />
           <TileComponent
             :id="tile.id"
+            :scale="workspaceScale"
             @connecting="(e) => updateRelativeMousePosition(e)"
             @start-drag="preventScroll = true"
             @stop-drag="preventScroll = false"
@@ -203,13 +204,6 @@ export default class Frame extends Vue {
 
   updateRelativeMousePosition(e: MouseEvent) {
     const workspaceRect = this.workspaceElement.getBoundingClientRect()
-    if (this.workspaceScale !== 1) {
-      this.relativeMousePosition = {
-        x: e.clientX - workspaceRect.x,
-        y: e.clientY - workspaceRect.y
-      }
-      return
-    }
     this.relativeMousePosition = {
       x: e.clientX - workspaceRect.x,
       y: e.clientY - workspaceRect.y

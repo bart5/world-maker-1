@@ -38,6 +38,8 @@ import { Prop } from 'vue-property-decorator'
 export default class TileComponent extends Vue {
   @Prop() id!: string
 
+  @Prop() scale!: number
+
   TaskEditor = TaskEditor
 
   resizeInProgress = false
@@ -147,8 +149,8 @@ export default class TileComponent extends Vue {
 
   getMouseMoveDelta(e: MouseEvent) {
     return {
-      x: e.movementX,
-      y: e.movementY
+      x: e.movementX * (1 / this.scale),
+      y: e.movementY * (1 / this.scale)
     }
   }
 
