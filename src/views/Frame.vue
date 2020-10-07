@@ -210,9 +210,25 @@ export default class Frame extends Vue {
     }
   }
 
+  keyboardHandler(e: KeyboardEvent) {
+    if (e.ctrlKey) {
+      switch (e.key) {
+        case '+':
+          this.zoomIn()
+          break;
+        case '-':
+          this.zoomOut()
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
   mounted() {
     this.centerView()
     this.createNewTile()
+    window.addEventListener('keydown', this.keyboardHandler)
   }
 }
 </script>
@@ -238,11 +254,8 @@ export default class Frame extends Vue {
 }
 
 .workspace-board {
-  border: 2px dashed;
   height: 100%;
   display: flex;
-  flex-flow: column;
-  overflow: auto;
   position: relative;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -262,7 +275,7 @@ export default class Frame extends Vue {
   --background: #4d4848;
   --grid: #575151;
   --grid-dark: #383535;
-  position: relative;
+  position: absolute;
   flex-grow: 1;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
