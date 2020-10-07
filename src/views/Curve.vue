@@ -3,8 +3,6 @@
     <svg ref="svg">
       <path ref="path" stroke="red" stroke-width="2" stroke-linecap="round" fill="transparent"></path>
     </svg>
-    <!-- <div class="p1" :style="styles.p1" @mousedown="startDrag('p1')"></div>
-    <div class="p2" :style="styles.p2" @mousedown="startDrag('p2')"></div> -->
   </div>
 </template>
 
@@ -29,12 +27,6 @@ export default class Curve extends Vue {
 
   @Watch('p2')
   dragHandler() {
-    // dragHandler(e: MouseEvent) {
-    // const delta = this.getMouseMoveDelta(e)
-    // if (this.pointDragged) {
-    // this.styles[this.pointDragged].top = Number(this.styles[this.pointDragged].top.replace('px', '')) + delta.y + 'px'
-    // this.styles[this.pointDragged].left = Number(this.styles[this.pointDragged].left.replace('px', '')) + delta.x + 'px'
-    // }
     if (this.p1p2x > this.p1p2y) {
       this.horizontalCurve = true
     } else {
@@ -55,69 +47,12 @@ export default class Curve extends Vue {
     }
   }
 
-  dragInProgress = false
-
-  pointDragged: 'p1' | 'p2' | null = null
-
-  // curveId = 'myCurve'
-
-  // svgId = 'mySvg'
-
   horizontalCurve = false
 
   mounted() {
-    this.dragInProgress = true
     this.drawBezierCurve(this.horizontalCurve)
     this.positionSvg()
   }
-
-  // startMousemoveListener(onMouseUp: (...args: []) => void) {
-  //   window.addEventListener('mousemove', this.onMouseMove)
-  //   window.addEventListener('mouseup', () => {
-  //     onMouseUp()
-  //     this.stopMousemoveListener()
-  //   })
-  // }
-
-  // stopMousemoveListener() {
-  //   window.removeEventListener('mousemove', this.onMouseMove)
-  // }
-
-  // startDrag(pointRef: 'p1' | 'p2') {
-  //   this.pointDragged = pointRef
-
-  //   this.dragInProgress = true
-  //   this.startMousemoveListener(() => {
-  //     this.dragInProgress = false
-  //   })
-  // }
-
-  // onMouseMove(e: MouseEvent) {
-  //   if (this.dragInProgress) {
-  //     this.dragHandler(e)
-  //   }
-  // }
-
-  getMouseMoveDelta(e: MouseEvent) {
-    return {
-      x: e.movementX,
-      y: e.movementY
-    }
-  }
-
-  // get p1() {
-  //   return {
-  //     x: Number(this.styles.p1.left.replace('px', '')) + 8,
-  //     y: Number(this.styles.p1.top.replace('px', '')) + 8
-  //   }
-  // }
-
-  // get p2() {
-  //   return {
-  //     x: Number(this.styles.p2.left.replace('px', '')) + 8,
-  //     y: Number(this.styles.p2.top.replace('px', '')) + 8
-  //   }
-  // }
 
   get p1p2x() {
     return Math.abs(this.p1.x - this.p2.x)
@@ -136,7 +71,6 @@ export default class Curve extends Vue {
   }
 
   positionSvg() {
-    // const svg = document.getElementById(this.svgId) as HTMLElement
     const svg = this.$refs.svg as HTMLElement
 
     const width = Math.abs(this.p1.x - this.p2.x)
@@ -179,7 +113,6 @@ export default class Curve extends Vue {
 
     const shapeCoef = 0.5
 
-    // const curvePath = document.getElementById(this.curveId) as HTMLElement
     const curvePath = this.$refs.path as HTMLElement
 
     var p1x = localP1.x - shiftx
@@ -233,5 +166,6 @@ svg {
   left: 0;
   top: 0;
   overflow: visible;
+  pointer-events: none;
 }
 </style>

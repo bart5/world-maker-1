@@ -6,18 +6,6 @@
     @mousedown="() => { bringTileForward() }"
     :class="{'connection-ready': indicateConnectionReady, 'de-emphasize': deEmphasize}"
   >
-    <!-- <Curve
-      class="curve"
-      v-if="isSelectedInputSource"
-      :p1="offsetByTileOrigin(getTileCenter(self))"
-      :p2="mousePosition"
-    /> -->
-    <!-- <Curve
-      class="curve"
-      v-if="hasConnection || connectingInProgress"
-      :p1="offsetByTileOrigin(getTileCenter(self))"
-      :p2="connectingInProgress ? mousePosition : offsetByTileOrigin(getTileCenter(myInputSourceTile))"
-    /> -->
     <div
       class="inner-wrapper"
       @mousedown="() => { tryConnect() }"
@@ -40,13 +28,11 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import TaskEditor from '@/views/TaskEditor.vue'
-import Curve from '@/views/Curve.vue'
 import { Prop } from 'vue-property-decorator'
 
 @Options({
   components: {
     TaskEditor,
-    Curve
   },
 })
 export default class TileComponent extends Vue {
@@ -58,40 +44,45 @@ export default class TileComponent extends Vue {
 
   dragInProgress = false
 
-  mousePosition = {
-    x: 0,
-    y: 0,
-  }
-
-  get indicateConnectionReady() {
-    return this.connectingInProgress && !this.hasConnection && !this.isSelectedInputSource
-  }
-
-  get deEmphasize() {
-    return this.connectingInProgress && (this.hasConnection || this.isSelectedInputSource)
-  }
-
   get self(): Tile {
     return this.$store.getters.tileOfId(this.id)
   }
 
-  offsetByTileOrigin(point: { x: number, y: number }) {
-    return {
-      x: point.x - this.self.x,
-      y: point.y - this.self.y,
-    }
+  get indicateConnectionReady() {
+    return this.connectingInProgress && !this.hasConnectedInput && !this.isSelectedInputSource
   }
 
-  getTileCenter(tile: Tile): { x: number, y: number } {
-    return {
-      x: tile.x + tile.width * 0.5,
-      y: tile.y + tile.height * 0.5
-    }
+  get deEmphasize() {
+    return this.connectingInProgress && (
+      this.hasConnectedInput
+      /* No cylic connections */
+      || this.isConnectedWithSelectedInputSource
+      || this.isSelectedInputSource
+    )
+  }
+
+  get isConnectedWithSelectedInputSource() {
+    return this.selectedInputSourceTile.inputSource === this.id
+  }
+
+  get hasConnectedInput() {
+    return this.self.inputSource !== ''
+  }
+
+  get selectedInputSourceTile(): Tile {
+    return this.$store.getters.selectedInputSourceTile
+  }
+
+  get isSelectedInputSource() {
+    return this.selectedInputSourceTile.id === this.id
+  }
+
+  get connectingInProgress() {
+    return this.$store.getters.connectingInProgress
   }
 
   startConnecting(e: MouseEvent) {
     if (this.connectingInProgress) return
-    this.saveMousePosition(e)
     this.$store.dispatch('startConnectingTiles', this.id)
     this.startMousemoveListener()
     this.$emit('connecting', e)
@@ -103,26 +94,6 @@ export default class TileComponent extends Vue {
       this.$store.dispatch('stopConnectingTiles')
       this.stopMousemoveListener()
     }
-  }
-
-  get hasConnection() {
-    return this.self.inputSource !== ''
-  }
-
-  get myInputSourceTile(): Tile {
-    return this.$store.getters.tileOfId(this.self.inputSource)
-  }
-
-  get selectedInputSourceTileId() {
-    return this.$store.getters.selectedInputSourceTileId
-  }
-
-  get isSelectedInputSource() {
-    return this.selectedInputSourceTileId === this.id
-  }
-
-  get connectingInProgress() {
-    return this.$store.getters.connectingInProgress
   }
 
   startMousemoveListener(onMouseUp?: (...args: []) => void) {
@@ -160,9 +131,6 @@ export default class TileComponent extends Vue {
       this.resizeHandler(e)
     } else if (this.dragInProgress) {
       this.dragHandler(e)
-    } else if (this.connectingInProgress) {
-      // this.saveMousePosition(e)
-      this.mousePosition = this.getMovedByDelta(this.mousePosition, this.getMouseMoveDelta(e))
     }
   }
 
@@ -171,18 +139,6 @@ export default class TileComponent extends Vue {
       x: p.x + delta.x,
       y: p.y + delta.y,
     }
-  }
-
-  saveMousePosition(e: MouseEvent) {
-    const wrapper = this.$refs.tileWrapper as HTMLElement
-    const wrapperRect = wrapper.getBoundingClientRect()
-    this.mousePosition = this.getMovedByDelta({
-      x: e.clientX,
-      y: e.clientY,
-    }, {
-      x: -wrapperRect.x,
-      y: -wrapperRect.y,
-    })
   }
 
   getMouseMoveDelta(e: MouseEvent) {
@@ -230,7 +186,7 @@ export default class TileComponent extends Vue {
   border-radius: 5px;
   overflow: visible;
 
-  &.de-emphasize *:not(.curve) {
+  &.de-emphasize * {
     opacity: 0.3;
   }
   &.connection-ready:not(.de-emphasize):hover {
@@ -297,11 +253,5 @@ export default class TileComponent extends Vue {
   height: 100%;
   background: white;
   z-index: 1;
-}
-
-.curve {
-  position: absolute;
-  top: 0;
-  left: 0;
 }
 </style>

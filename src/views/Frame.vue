@@ -14,24 +14,23 @@
           ref="workspace"
           @mousemove="onMousemove"
         >
-            <!-- v-if="hasConnection || connectingInProgress" -->
-
           <!-- @click="onWorkspaceClick" -->
+          <Curve
+            class="connector-curve new-connector"
+            v-if="connectingInProgress"
+            :p1="getTileCoordinates(selectedInputSourceTile)"
+            :p2="relativeMousePosition"
+          />
+
           <template v-for="tile in allTilesOfWorkspace(workspace.id)" :key="tile.id">
             <Curve
               v-if="!!tile.inputSource"
-              class="curve"
+              class="connector-curve"
               :p1="getTileCoordinates(tile)"
               :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
             />
             <TileComponent :id="tile.id" @connecting="(e) => updateRelativeMousePosition(e)"/>
           </template>
-          <Curve
-            class="curve"
-            v-if="connectingInProgress"
-            :p1="getTileCoordinates(selectedInputSourceTile)"
-            :p2="relativeMousePosition"
-          />
         </div>
     </div>
   </div>
@@ -167,9 +166,14 @@ export default class Frame extends Vue {
   flex-grow: 1;
 }
 
-.curve {
+.connector-curve {
+  pointer-events: none;
   position: absolute;
   top: 0;
   left: 0;
+
+  &.new-connector {
+    z-index: 9999;
+  }
 }
 </style>
