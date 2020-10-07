@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
-    <svg :id="svgId">
-      <path :id="curveId" stroke="red" stroke-width="2" stroke-linecap="round" fill="transparent"></path>
+    <svg ref="svg">
+      <path ref="path" stroke="red" stroke-width="2" stroke-linecap="round" fill="transparent"></path>
     </svg>
     <!-- <div class="p1" :style="styles.p1" @mousedown="startDrag('p1')"></div>
     <div class="p2" :style="styles.p2" @mousedown="startDrag('p2')"></div> -->
@@ -29,7 +29,6 @@ export default class Curve extends Vue {
 
   @Watch('p2')
   dragHandler() {
-    console.log('watcher working')
     // dragHandler(e: MouseEvent) {
     // const delta = this.getMouseMoveDelta(e)
     // if (this.pointDragged) {
@@ -60,9 +59,9 @@ export default class Curve extends Vue {
 
   pointDragged: 'p1' | 'p2' | null = null
 
-  curveId = 'myCurve'
+  // curveId = 'myCurve'
 
-  svgId = 'mySvg'
+  // svgId = 'mySvg'
 
   horizontalCurve = false
 
@@ -137,7 +136,8 @@ export default class Curve extends Vue {
   }
 
   positionSvg() {
-    const svg = document.getElementById(this.svgId) as HTMLElement
+    // const svg = document.getElementById(this.svgId) as HTMLElement
+    const svg = this.$refs.svg as HTMLElement
 
     const width = Math.abs(this.p1.x - this.p2.x)
     const height = Math.abs(this.p1.y - this.p2.y)
@@ -179,7 +179,9 @@ export default class Curve extends Vue {
 
     const shapeCoef = 0.5
 
-    const curvePath = document.getElementById(this.curveId) as HTMLElement
+    // const curvePath = document.getElementById(this.curveId) as HTMLElement
+    const curvePath = this.$refs.path as HTMLElement
+
     var p1x = localP1.x - shiftx
     var p1y = localP1.y - shifty
 
@@ -206,7 +208,7 @@ export default class Curve extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .wrapper {
   width: 100%;
   height: 100%;
@@ -226,7 +228,7 @@ export default class Curve extends Vue {
   }
 }
 
-#mySvg {
+svg {
   position: absolute;
   left: 0;
   top: 0;

@@ -11,12 +11,26 @@
           v-for="workspace in workspaces"
           :key="workspace.id"
           class="workspace"
+          ref="workspace"
+          @mousemove="onMousemove"
         >
+            <!-- v-if="hasConnection || connectingInProgress" -->
+
           <!-- @click="onWorkspaceClick" -->
-          <TileComponent
-            v-for="tile in allTilesOfWorkspace(workspace.id)"
-            :key="tile.id"
-            :id="tile.id"
+          <template v-for="tile in allTilesOfWorkspace(workspace.id)" :key="tile.id">
+            <Curve
+              v-if="!!tile.inputSource"
+              class="curve"
+              :p1="getTileCoordinates(tile)"
+              :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
+            />
+            <TileComponent :id="tile.id" @connecting="(e) => updateRelativeMousePosition(e)"/>
+          </template>
+          <Curve
+            class="curve"
+            v-if="connectingInProgress"
+            :p1="getTileCoordinates(selectedInputSourceTile)"
+            :p2="relativeMousePosition"
           />
         </div>
     </div>
@@ -26,15 +40,26 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import TileComponent from '@/views/Tile.vue'
+import Curve from '@/views/Curve.vue'
 
 @Options({
   components: {
-    TileComponent
+    TileComponent,
+    Curve
   },
 })
 export default class Frame extends Vue {
+  relativeMousePosition = {
+    x: 0,
+    y: 0,
+  }
+
   get workspaces(): Workspace[] {
     return this.$store.getters.workspaces
+  }
+
+  get workspaceElement() {
+    return this.$refs.workspace as HTMLElement
   }
 
   showWorkspace(workspaceId: string) {
@@ -60,6 +85,43 @@ export default class Frame extends Vue {
   stopConnectingTiles() {
     if (this.$store.getters.connectingInProgress) {
       this.$store.dispatch('stopConnectingTiles')
+    }
+  }
+
+  getWorkspaceConnections(workspaceId: string) {
+    return this.$store.getters.getWorkspaceConnections(workspaceId)
+  }
+
+  getInputSourceTileOfTile(tile: Tile) {
+    return this.$store.getters.getInputSourceTileOfTile(tile)
+  }
+
+  get selectedInputSourceTile() {
+    return this.$store.getters.selectedInputSourceTile
+  }
+
+  getTileCoordinates(tile: Tile) {
+    return { x: tile.x + 0.5 * tile.width, y: tile.y + 0.5 * tile.height }
+  }
+
+  get connectingInProgress() {
+    return this.$store.getters.connectingInProgress
+  }
+
+  get watchMouseMove() {
+    return this.connectingInProgress
+  }
+
+  onMousemove(e: MouseEvent) {
+    if (!this.watchMouseMove) return
+    this.updateRelativeMousePosition(e)
+  }
+
+  updateRelativeMousePosition(e: MouseEvent) {
+    const workspaceRect = this.workspaceElement.getBoundingClientRect()
+    this.relativeMousePosition = {
+      x: e.clientX - workspaceRect.x,
+      y: e.clientY - workspaceRect.y
     }
   }
 
@@ -90,6 +152,8 @@ export default class Frame extends Vue {
 .workspace-board {
   border: 2px dashed;
   height: 100%;
+  display: flex;
+  flex-flow: column;
 }
 
 .workspace-selector {
@@ -100,5 +164,12 @@ export default class Frame extends Vue {
 
 .workspace {
   position: relative;
+  flex-grow: 1;
+}
+
+.curve {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 </style>

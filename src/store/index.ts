@@ -28,7 +28,7 @@ const initialState: State = {
       activeWorkspaceId: '0',
     },
     connectingInProgress: false,
-    inputSourceTileToConnect: '',
+    selectedInputSourceTile: '',
   }
 }
 
@@ -60,12 +60,19 @@ export default createStore({
       return tile.workspaceId === workspaceId
     }),
     activeWorkspaceTiles: (state, getters) => getters.allTilesOfWorkspace(getters.activeWorkspaceId),
-    activeWorkspaceTileById: (state, getters) => (tileId: string) => {
+    activeWorkspaceTileOfId: (state, getters) => (tileId: string) => {
       return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
     },
-    tileById: (state) => (tileId: string) => state.ui.project.tiles.filter((tile: Tile) => tile.id === tileId)?.[0],
-    inputSourceTileToConnect: (state, getters) => getters.tileById(state.ui.inputSourceTileToConnect),
+    tileOfId: (state) => (tileId: string) => state.ui.project.tiles.filter((tile: Tile) => tile.id === tileId)?.[0],
+    selectedInputSourceTileId: (state) => state.ui.selectedInputSourceTile,
+    selectedInputSourceTile: (state, getters) => getters.tileOfId(state.ui.selectedInputSourceTile),
     connectingInProgress: (state) => state.ui.connectingInProgress,
+    getWorkspaceConnections: (state, getters) => (workspaceId: string) => {
+      return (getters.allTilesOfWorkspace(workspaceId) as Tile[]).map((t) => {
+        return t.inputSource ? [t.id, t.inputSource] : null
+      }).filter(Boolean) as Array<tileId[]>
+    },
+    getInputSourceTileOfTile: (state, getters) => (tile: Tile) => getters.tileOfId(tile.inputSource),
   },
   mutations: {
     setSelectedTask(state, { questId, taskId }) {
@@ -90,6 +97,10 @@ export default createStore({
         x: position.x,
         y: position.y,
         zIndex: state.ui.project.tiles.length || 0,
+        output: {
+          allData: null,
+          slectionData: null,
+        }
       })
     },
     // setTileName(state) {
@@ -122,16 +133,16 @@ export default createStore({
     },
     START_CONNECTING_TILES(state, tileId) {
       state.ui.connectingInProgress = true
-      state.ui.inputSourceTileToConnect = tileId
+      state.ui.selectedInputSourceTile = tileId
     },
     STOP_CONNECTING_TILES(state) {
       state.ui.connectingInProgress = false
-      state.ui.inputSourceTileToConnect = ''
+      state.ui.selectedInputSourceTile = ''
     },
     CONNECT_TO_THIS_TILE(state, tileId) {
       state.ui.connectingInProgress = false
-      const source = state.ui.inputSourceTileToConnect
-      state.ui.inputSourceTileToConnect = ''
+      const source = state.ui.selectedInputSourceTile
+      state.ui.selectedInputSourceTile = ''
 
       state.ui.project.tiles.filter((t) => t.id === tileId)[0].inputSource = source
     },
@@ -213,7 +224,7 @@ export default createStore({
       this.commit('STOP_CONNECTING_TILES')
     },
     connectToThisTile(state, tileId) {
-      const inputSource = state.getters.inputSourceTileToConnect
+      const inputSource = state.getters.selectedInputSourceTile
       console.log('trying connect: ', tileId, ' to: ', inputSource)
       if (inputSource.id === tileId) {
         this.commit('STOP_CONNECTING_TILES')

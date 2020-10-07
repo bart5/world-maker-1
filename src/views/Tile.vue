@@ -4,24 +4,34 @@
     ref="tileWrapper"
     :style="tileStyle"
     @mousedown="() => { bringTileForward() }"
+    :class="{'connection-ready': indicateConnectionReady, 'de-emphasize': deEmphasize}"
   >
-    <Curve
+    <!-- <Curve
+      class="curve"
+      v-if="isSelectedInputSource"
+      :p1="offsetByTileOrigin(getTileCenter(self))"
+      :p2="mousePosition"
+    /> -->
+    <!-- <Curve
       class="curve"
       v-if="hasConnection || connectingInProgress"
       :p1="offsetByTileOrigin(getTileCenter(self))"
-      :p2="connectingInProgress ? mousePosition : offsetByTileOrigin(getTileCenter(inputSourceTile))"
-    />
-    <div class="insulator" :class="{ connectable: connectingInProgress }" @mousedown="() => { tryConnect() }">
-      <div class="header" @mousedown="startDrag">
-        <button @click="startConnecting">
+      :p2="connectingInProgress ? mousePosition : offsetByTileOrigin(getTileCenter(myInputSourceTile))"
+    /> -->
+    <div
+      class="inner-wrapper"
+      @mousedown="() => { tryConnect() }"
+    >
+      <div class="header" :class="{'move-ready': !connectingInProgress}" @mousedown="startDrag">
+        <button class="connect-button" @click="startConnecting" :class="{'connect-ready': !connectingInProgress}">
           <img src="../assets/connector.svg" alt="">
         </button>
       </div>
       <div class="tile">
-        <component :is="TaskEditor"></component>
+        <!-- <component :is="TaskEditor"></component> -->
       </div>
       <div class="footer" @mousedown="startResize">
-        <div class="resize-widget"></div>
+        <div class="resize-widget" :class="{'resize-ready': !connectingInProgress}"></div>
       </div>
     </div>
   </div>
@@ -53,8 +63,16 @@ export default class TileComponent extends Vue {
     y: 0,
   }
 
+  get indicateConnectionReady() {
+    return this.connectingInProgress && !this.hasConnection && !this.isSelectedInputSource
+  }
+
+  get deEmphasize() {
+    return this.connectingInProgress && (this.hasConnection || this.isSelectedInputSource)
+  }
+
   get self(): Tile {
-    return this.$store.getters.tileById(this.id)
+    return this.$store.getters.tileOfId(this.id)
   }
 
   offsetByTileOrigin(point: { x: number, y: number }) {
@@ -72,9 +90,11 @@ export default class TileComponent extends Vue {
   }
 
   startConnecting(e: MouseEvent) {
+    if (this.connectingInProgress) return
     this.saveMousePosition(e)
     this.$store.dispatch('startConnectingTiles', this.id)
     this.startMousemoveListener()
+    this.$emit('connecting', e)
   }
 
   tryConnect() {
@@ -89,8 +109,16 @@ export default class TileComponent extends Vue {
     return this.self.inputSource !== ''
   }
 
-  get inputSourceTile() {
-    return this.$store.getters.tileById(this.self.inputSource)
+  get myInputSourceTile(): Tile {
+    return this.$store.getters.tileOfId(this.self.inputSource)
+  }
+
+  get selectedInputSourceTileId() {
+    return this.$store.getters.selectedInputSourceTileId
+  }
+
+  get isSelectedInputSource() {
+    return this.selectedInputSourceTileId === this.id
   }
 
   get connectingInProgress() {
@@ -112,6 +140,7 @@ export default class TileComponent extends Vue {
   }
 
   startDrag() {
+    if (this.connectingInProgress) return
     this.dragInProgress = true
     this.startMousemoveListener(() => {
       this.dragInProgress = false
@@ -119,6 +148,7 @@ export default class TileComponent extends Vue {
   }
 
   startResize() {
+    if (this.connectingInProgress) return
     this.resizeInProgress = true
     this.startMousemoveListener(() => {
       this.resizeInProgress = false
@@ -126,13 +156,11 @@ export default class TileComponent extends Vue {
   }
 
   onMouseMove(e: MouseEvent) {
-    console.log('on mouse move')
     if (this.resizeInProgress) {
       this.resizeHandler(e)
     } else if (this.dragInProgress) {
       this.dragHandler(e)
     } else if (this.connectingInProgress) {
-      console.log('saving mouse position')
       // this.saveMousePosition(e)
       this.mousePosition = this.getMovedByDelta(this.mousePosition, this.getMouseMoveDelta(e))
     }
@@ -198,11 +226,16 @@ export default class TileComponent extends Vue {
   height: 200px;
   width: 100px;
   border: 1px solid;
-  /* display: flex;
-  flex-flow: column nowrap; */
   background: white;
   border-radius: 5px;
   overflow: visible;
+
+  &.de-emphasize *:not(.curve) {
+    opacity: 0.3;
+  }
+  &.connection-ready:not(.de-emphasize):hover {
+    cursor: pointer;
+  }
 }
 
 .header {
@@ -211,12 +244,24 @@ export default class TileComponent extends Vue {
   height: 14px;
   background: darkviolet;
 
-  &:hover {
-    cursor: grab;
+  &.move-ready:hover {
+    cursor: move;
   }
 
   * {
     max-height: 14px;
+  }
+
+  .connect-button:not(.connect-ready) {
+    &:hover {
+      cursor: initial;
+      &:not(:active) {
+        background-color: unset;
+      }
+    }
+    &:active {
+      background-color: unset;
+    }
   }
 }
 
@@ -232,8 +277,8 @@ export default class TileComponent extends Vue {
     width: 15px;
     background-color: red;
 
-    &:hover {
-      cursor: grab;
+    &.resize-ready:hover {
+      cursor: se-resize;
     }
   }
 }
@@ -243,7 +288,7 @@ export default class TileComponent extends Vue {
   overflow: auto;
 }
 
-.insulator {
+.inner-wrapper {
   position: relative;
   display: flex;
   flex-flow: column nowrap;
@@ -252,16 +297,11 @@ export default class TileComponent extends Vue {
   height: 100%;
   background: white;
   z-index: 1;
-
-  &.connectable:hover {
-    cursor: pointer;
-  }
 }
 
 .curve {
   position: absolute;
   top: 0;
   left: 0;
-  /* z-index: -1; */
 }
 </style>

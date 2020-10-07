@@ -25,6 +25,10 @@ interface Tile extends Block {
   filter: any;
   hideConnectors: boolean;
   zIndex: number;
+  output: {
+    allData: any,
+    slectionData: any,
+  }
 }
 
 interface Project {
@@ -47,5 +51,5 @@ interface DataSchema {}
 interface UIState {
   project: Project;
   connectingInProgress: boolean;
-  inputSourceTileToConnect: tileId;
+  selectedInputSourceTile: tileId;
 }
