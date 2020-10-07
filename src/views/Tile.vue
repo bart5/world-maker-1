@@ -203,8 +203,12 @@ export default class TileComponent extends Vue {
 .header {
   display: flex;
   justify-content: flex-start;
-  height: 14px;
-  background: darkviolet;
+  align-items: center;
+  height: 18px;
+  background: black;
+  box-shadow:
+    inset 20px 0 20px 1px rgba(255,255,255,0.25),
+    inset 0px 2px 12px 3px blue;
 
   &.move-ready:hover {
     cursor: move;
@@ -232,7 +236,10 @@ export default class TileComponent extends Vue {
   width: 100%;
   justify-content: flex-end;
   height: 8px;
-  background: darkviolet;
+  background: black;
+  box-shadow:
+    inset 15px 0 10px 1px rgba(255,255,255,0.25),
+    inset 0px -2px 6px 1px blue;
 
   .resize-widget {
     height: 100%;
