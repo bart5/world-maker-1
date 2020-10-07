@@ -36,6 +36,7 @@
           <TileComponent
             :id="tile.id"
             :scale="workspaceScale"
+            :relativeMousePosition="relativeMousePosition"
             @connecting="(e) => updateRelativeMousePosition(e)"
             @start-drag="preventScroll = true"
             @stop-drag="preventScroll = false"
@@ -119,14 +120,6 @@ export default class Frame extends Vue {
     }
   }
 
-  // get workspaceWidth() {
-
-  // }
-
-  // get workspaceHeight() {
-
-  // }
-
   get workspaces(): Workspace[] {
     return this.$store.getters.workspaces
   }
@@ -194,11 +187,11 @@ export default class Frame extends Vue {
   }
 
   get watchMouseMove() {
-    return this.connectingInProgress
+    return this.connectingInProgress || this.preventScroll
   }
 
   onMousemove(e: MouseEvent) {
-    if (!this.watchMouseMove) return
+    // if (!this.watchMouseMove) return
     this.updateRelativeMousePosition(e)
   }
 

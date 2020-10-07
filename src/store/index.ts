@@ -130,8 +130,10 @@ export default createStore({
     },
     DRAG_TILE(state, { tileId, delta }: { tileId: string, delta: { x: number, y: number } }) {
       const tile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
-      tile.x += delta.x
-      tile.y = Math.max(tile.y + delta.y, 0)
+      tile.x = delta.x
+      tile.y = delta.y
+      // tile.x += delta.x
+      // tile.y = Math.max(tile.y + delta.y, 0)
     },
     START_CONNECTING_TILES(state, tileId) {
       state.ui.connectingInProgress = true
@@ -205,7 +207,6 @@ export default createStore({
       }
 
       const position = getTileInitialPosition()
-      console.log('new tile position: ', position)
 
       this.commit('CREATE_NEW_TILE', { workspaceId: state.getters.activeWorkspaceId, tileId, position })
     },

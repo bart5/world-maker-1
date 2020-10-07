@@ -40,6 +40,11 @@ export default class TileComponent extends Vue {
 
   @Prop() scale!: number
 
+  @Prop() relativeMousePosition!: {
+    x: number,
+    y: number,
+  }
+
   TaskEditor = TaskEditor
 
   resizeInProgress = false
@@ -136,7 +141,8 @@ export default class TileComponent extends Vue {
     if (this.resizeInProgress) {
       this.resizeHandler(e)
     } else if (this.dragInProgress) {
-      this.dragHandler(e)
+      this.dragHandler()
+      // this.dragHandler(e)
     }
   }
 
@@ -156,10 +162,12 @@ export default class TileComponent extends Vue {
 
   resizeHandler(e: MouseEvent) {
     this.$store.dispatch('resizeTile', { tileId: this.id, delta: this.getMouseMoveDelta(e) })
+    // this.$store.dispatch('resizeTile', { tileId: this.id, delta: this.getMouseMoveDelta(e) })
   }
 
-  dragHandler(e: MouseEvent) {
-    this.$store.dispatch('dragTile', { tileId: this.id, delta: this.getMouseMoveDelta(e) })
+  dragHandler() {
+    this.$store.dispatch('dragTile', { tileId: this.id, delta: this.relativeMousePosition })
+    // this.$store.dispatch('dragTile', { tileId: this.id, delta: this.getMouseMoveDelta(e) })
   }
 
   get tileStyle() {
