@@ -19,6 +19,7 @@
         :style="boardStyle"
         @mousedown="startBoardMove"
       >
+        <div class="workspace-background" :style="backgroundStyle"></div>
         <div
           class="workspace"
           ref="workspace"
@@ -96,6 +97,15 @@ export default class Frame extends Vue {
       minWidth: width + 'px',
       minHeight: height + 'px',
       transform: `scale(${this.workspaceScale})`,
+    }
+  }
+
+  get backgroundStyle() {
+    const width = this.workspaceWidth
+    const height = this.workspaceHeight
+    return {
+      minWidth: width + 'px',
+      minHeight: height + 'px',
     }
   }
 
@@ -371,6 +381,13 @@ export default class Frame extends Vue {
 }
 
 .workspace {
+  position: absolute;
+  flex-grow: 1;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.workspace-background {
   --background: #4d4848;
   --grid: #575151;
   --grid-dark: #383535;
