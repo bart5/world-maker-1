@@ -10,10 +10,18 @@
     <div v-if="tileDeletionInProgress" class="overlay delete-overlay" @click="tryDelete">
       <div class="text">Delete</div>
     </div>
-    <div class="header" @mousedown="startDrag">
-      <button class="connect-button" @click="startConnecting">
-        <img src="../assets/connector.svg" alt="">
-      </button>
+    <div class="header-wrapper">
+      <div class="header" @mousedown="startDrag">
+        <button class="connect-button" @click="startConnecting">
+          <img src="../assets/connector.svg" alt="">
+        </button>
+        <div class="tile-title">Title</div>
+      </div>
+      <div class="sub-header">
+        <div class="data-view">Data</div>
+        <div class="filter-view">Filters</div>
+        <div class="source-view">Sources</div>
+      </div>
     </div>
     <div class="tile">
       <!-- <component :is="TaskEditor"></component> -->
@@ -247,16 +255,19 @@ export default class TileComponent extends Vue {
   }
 }
 
+.header-wrapper {
+  background: black;
+  box-shadow:
+    inset 20px 0px 60px 2px rgba(255,255,255,0.25),
+    inset 0px 2px 23px 3px blue;
+}
+
 .header {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  min-height: 18px;
-  max-height: 18px;
-  background: black;
-  box-shadow:
-    inset 20px 0 20px 1px rgba(255,255,255,0.25),
-    inset 0px 2px 12px 3px blue;
+  min-height: 20px;
+  max-height: 20px;
 
   &:hover {
     cursor: move;
@@ -264,9 +275,41 @@ export default class TileComponent extends Vue {
 
   .connect-button {
     height: 18px;
+    position: absolute;
 
     img {
       height: 14px;
+    }
+  }
+
+  .tile-title {
+    color: white;
+    text-align: center;
+    flex-grow: 1;
+    user-select: none;
+  }
+}
+
+.sub-header {
+  box-shadow:
+    inset 0 0 3px 0 rgba(255,255,255,0.4),
+    0 0 3px 1px blue;
+  height: 18px;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-evenly;
+  align-items: center;
+  color: white;
+  font-size: 12px;
+
+  * {
+    text-align: center;
+    width: 100%;
+    user-select: none;
+
+    &:hover {
+      background-color: rgba(255,255,255,0.10);
+      cursor: pointer;
     }
   }
 }
