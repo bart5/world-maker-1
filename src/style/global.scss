@@ -6,6 +6,9 @@ button {
   border: none;
   user-select: none;
   transition: background 0.2s;
+  // border: 1px solid;
+  // box-shadow: inset rgba(40,40,40,0.5) 0 0 1px 2px;
+  margin: 1px 1px;
 
   &:focus {
     outline: none;
@@ -26,5 +29,9 @@ button {
 
   img {
     fill: white;
+  }
+
+  &.active {
+    background: lightblue;
   }
 }

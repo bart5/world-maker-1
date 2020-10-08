@@ -6,7 +6,10 @@
     @mousedown="bringTileForward"
     :class="{'valid-connection': indicateValidConnection, 'invalid-connection': indicateInvalidConnection}"
   >
-    <div v-if="connectingInProgress" class="overlay" @mousedown="tryConnect"></div>
+    <div v-if="connectingInProgress" class="overlay connect-overlay" @mousedown="tryConnect"></div>
+    <div v-if="tileDeletionInProgress" class="overlay delete-overlay" @click="tryDelete">
+      <div class="text">Delete</div>
+    </div>
     <div class="header" @mousedown="startDrag">
       <button class="connect-button" @click="startConnecting">
         <img src="../assets/connector.svg" alt="">
@@ -83,6 +86,10 @@ export default class TileComponent extends Vue {
     return this.$store.getters.connectingInProgress
   }
 
+  get tileDeletionInProgress() {
+    return this.$store.getters.tileDeletionInProgress
+  }
+
   startConnecting(e: MouseEvent) {
     if (this.connectingInProgress) return
     this.$store.dispatch('startConnectingTiles', this.id)
@@ -99,6 +106,17 @@ export default class TileComponent extends Vue {
       e.stopPropagation()
       e.preventDefault()
     }
+  }
+
+  tryDelete() {
+    const decision = window.confirm('You are about to permanently delete this tile.')
+    if (decision) {
+      this.deleteTile()
+    }
+  }
+
+  deleteTile() {
+    this.$store.dispatch('deleteTile', this.id)
   }
 
   startMousemoveListener(onMouseUp?: (...args: []) => void) {
@@ -207,6 +225,26 @@ export default class TileComponent extends Vue {
   height: 100%;
   width: 100%;
   z-index: 2;
+}
+
+.delete-overlay {
+  background: rgba(255,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.2s;
+
+  .text {
+    display: block;
+    font-size: 20px;
+    color: black;
+    font-weight: bold;
+  }
+
+  &:hover {
+    cursor: pointer;
+    background: rgba(255,0,0,0.7);
+  }
 }
 
 .header {

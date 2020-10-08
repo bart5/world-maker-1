@@ -28,6 +28,7 @@ const initialState: State = {
       activeWorkspaceId: '0',
     },
     connectingInProgress: false,
+    tileDeletionInProgress: false,
     selectedInputSourceTile: '',
   }
 }
@@ -75,6 +76,7 @@ export default createStore({
       }).filter(Boolean) as Array<tileId[]>
     },
     getInputSourceTileOfTile: (state, getters) => (tile: Tile) => getters.tileOfId(tile.inputSource),
+    tileDeletionInProgress: (state) => state.ui.tileDeletionInProgress
   },
   mutations: {
     setSelectedTask(state, { questId, taskId }) {
@@ -159,6 +161,28 @@ export default createStore({
       })
       newFrontTile.zIndex = state.ui.project.tiles.length
     },
+    START_TILE_DELETION(state) {
+      state.ui.tileDeletionInProgress = true
+    },
+    STOP_TILE_DELETION(state) {
+      state.ui.tileDeletionInProgress = false
+    },
+    DELETE_TILE_OUT_BOUND_CONNECTIONS(state, tileId) {
+      state.ui.project.tiles.forEach((t) => {
+        if (t.inputSource === tileId) {
+          t.inputSource = ''
+        }
+      })
+    },
+    DELETE_TILE_IN_BOUND_CONNECTIONS(state, tileId) {
+      /* As of now tile can have just one inbound connection */
+      state.ui.project.tiles.filter((t) => t.id === tileId)[0].inputSource = ''
+    },
+    DELETE_TILE(state, tileId) {
+      state.ui.project.tiles = [
+        ...state.ui.project.tiles.filter((t) => t.id !== tileId)
+      ]
+    },
   },
   actions: {
     selectTask(state, taskId: string) {
@@ -238,7 +262,17 @@ export default createStore({
     },
     bringTileForward(state, tileId) {
       this.commit('BRING_TILE_FORWARD', tileId)
-    }
+    },
+    startTileDeletion(state) {
+      this.commit('START_TILE_DELETION')
+    },
+    stopTileDeletion(state) {
+      this.commit('STOP_TILE_DELETION')
+    },
+    deleteTile(state, tileId) {
+      this.commit('DELETE_TILE_OUT_BOUND_CONNECTIONS', tileId)
+      this.commit('DELETE_TILE', tileId)
+    },
   },
   modules: {
   },

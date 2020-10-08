@@ -51,5 +51,6 @@ interface DataSchema {}
 interface UIState {
   project: Project;
   connectingInProgress: boolean;
+  tileDeletionInProgress: boolean;
   selectedInputSourceTile: tileId;
 }

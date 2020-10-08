@@ -6,47 +6,54 @@
       <button @click="zoomIn">Zoom in</button>
       <button @click="resetZoom">Reset zoom</button>
       <button @click="zoomOut">Zoom out</button>
+      <button :class="{ 'active': tileDeletionInProgress }" @click="onDeleteMode">Delete Mode</button>
     </div>
-    <div class="workspace-selector"></div>
-    <div
-      class="workspace-board"
-      :class="{ 'dragging-board': draggingBoard }"
-      ref="board"
-      :style="boardStyle"
-      @mousedown="startBoardMove"
-    >
+    <div class="workspace-selector">
+      <div class="workspace-tab"></div>
+    </div>
+    <div class="board-wrapper">
       <div
-        class="workspace"
-        ref="workspace"
-        :style="workspaceStyle"
-        @mousemove="onMousemove"
+        class="workspace-board"
+        :class="{ 'dragging-board': draggingBoard }"
+        ref="board"
+        :style="boardStyle"
+        @mousedown="startBoardMove"
       >
-        <Curve
-          class="connector-curve new-connector"
-          v-if="connectingInProgress"
-          :p1="getTileCoordinates(selectedInputSourceTile)"
-          :p2="relativeMousePosition"
-        />
-
-        <template v-for="tile in allTilesOfActiveWorkspace" :key="tile.id">
+        <div
+          class="workspace"
+          ref="workspace"
+          :style="workspaceStyle"
+          @mousemove="onMousemove"
+        >
           <Curve
-            v-if="!!tile.inputSource"
-            class="connector-curve"
-            :p1="getTileCoordinates(tile)"
-            :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
+            class="connector-curve new-connector"
+            v-if="connectingInProgress"
+            :p1="getTileCoordinates(selectedInputSourceTile)"
+            :p2="relativeMousePosition"
           />
-          <TileComponent
-            :id="tile.id"
-            :scale="workspaceScale"
-            :relativeMousePosition="relativeMousePosition"
-            @connecting="(e) => updateRelativeMousePosition(e)"
-            @start-drag="dragInProgress = true"
-            @stop-drag="dragInProgress = false"
-            @start-resize="resizeInProgress = true"
-            @stop-resize="resizeInProgress = false"
-          />
-        </template>
+
+          <template v-for="tile in allTilesOfActiveWorkspace" :key="tile.id">
+            <Curve
+              v-if="!!tile.inputSource"
+              class="connector-curve"
+              :p1="getTileCoordinates(tile)"
+              :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
+            />
+            <TileComponent
+              :id="tile.id"
+              :scale="workspaceScale"
+              :relativeMousePosition="relativeMousePosition"
+              @connecting="(e) => updateRelativeMousePosition(e)"
+              @start-drag="dragInProgress = true"
+              @stop-drag="dragInProgress = false"
+              @start-resize="resizeInProgress = true"
+              @stop-resize="resizeInProgress = false"
+            />
+          </template>
+        </div>
       </div>
+
+      <div class="status-bar">Status bar</div>
     </div>
   </div>
 </template>
@@ -68,14 +75,9 @@ export default class Frame extends Vue {
     y: 0,
   }
 
-  customMouseMovement = {
-    x: 0,
-    y: 0,
-  }
+  workspaceWidth = 10000
 
-  workspaceWidth = 5000
-
-  workspaceHeight = 5000
+  workspaceHeight = 10000
 
   workspaceScale = 1
 
@@ -84,6 +86,8 @@ export default class Frame extends Vue {
   resizeInProgress = false
 
   draggingBoard = false
+
+  tileDeletionInProgress = false
 
   get workspaceStyle() {
     const width = this.workspaceWidth
@@ -101,6 +105,20 @@ export default class Frame extends Vue {
     }
   }
 
+  onDeleteMode() {
+    if (this.tileDeletionInProgress) {
+      this.tileDeletionInProgress = false
+      this.$store.dispatch('stopTileDeletion')
+    } else {
+      this.tileDeletionInProgress = true
+      this.$store.dispatch('startTileDeletion')
+    }
+  }
+
+  startTileDeletion() {
+    this.$store.dispatch('startTileDeletion')
+  }
+
   centerOnWorkspaceCenter() {
     const x = this.workspaceWidth * 0.5 - this.boardElement.offsetWidth * 0.5
     const y = this.workspaceHeight * 0.5 - this.boardElement.offsetHeight * 0.5
@@ -108,6 +126,11 @@ export default class Frame extends Vue {
   }
 
   centerOnTiles() {
+    if (!this.allTilesOfActiveWorkspace.length) {
+      this.centerOnWorkspaceCenter()
+      return
+    }
+
     let maxX = 0
     let minX = 0
     let maxY = 0
@@ -139,6 +162,7 @@ export default class Frame extends Vue {
         this.workspaceElement.getBoundingClientRect().y,
       )
       this.boardElement.scrollBy(
+        /* Align to center of the viewport */
         centerX * this.workspaceScale - window.innerWidth * 0.5,
         centerY * this.workspaceScale - window.innerHeight * 0.5,
       )
@@ -305,6 +329,23 @@ export default class Frame extends Vue {
   width: 100%;
   height: 24px;
   background-color: darkgray;
+}
+
+.board-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.status-bar {
+  display: none;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 16px;
+  background: red;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 .workspace-board {
