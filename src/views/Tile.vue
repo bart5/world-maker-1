@@ -18,12 +18,21 @@
         <div class="tile-title">Title</div>
       </div>
       <div class="sub-header">
-        <div class="data-view">Data</div>
-        <div class="filter-view">Filters</div>
-        <div class="source-view">Sources</div>
+        <div class="data-view" @click="sectionToShow = dataSection">Data</div>
+        <div class="filters-view" @click="sectionToShow = filtersSection">Filters</div>
+        <div class="sources-view" @click="sectionToShow = sourcesSection">Sources</div>
       </div>
     </div>
     <div class="tile">
+      <div class="section data-section" v-if="sectionToShow === dataSection">
+        Data section
+      </div>
+      <div class="section filters-section" v-else-if="sectionToShow === filtersSection">
+        Filters section
+      </div>
+      <div class="section sources-section" v-else>
+        Sources section
+      </div>
       <!-- <component :is="TaskEditor"></component> -->
     </div>
     <div class="footer" @mousedown="startResize">
@@ -57,6 +66,14 @@ export default class TileComponent extends Vue {
   resizeInProgress = false
 
   dragInProgress = false
+
+  dataSection = 'dataSection'
+
+  filtersSection = 'filtersSection'
+
+  sourcesSection = 'sourcesSection'
+
+  sectionToShow = this.dataSection
 
   get indicateValidConnection() {
     return this.connectingInProgress && this.isValidConnectionCandidate
@@ -189,8 +206,10 @@ export default class TileComponent extends Vue {
     }
   }
 
-  bringTileForward() {
+  bringTileForward(e: MouseEvent) {
     this.$store.dispatch('bringTileForward', this.id)
+    e.stopPropagation()
+    e.preventDefault()
   }
 }
 </script>
