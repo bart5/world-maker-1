@@ -42,7 +42,7 @@ interface Project {
   // dataSchema: DataSchema;
 }
 
-interface userSettings {
+interface UserSettings {
   newTileSpawn: 'horizontal' | 'vertical';
 }
 
@@ -52,5 +52,6 @@ interface UIState {
   project: Project;
   connectingInProgress: boolean;
   tileDeletionInProgress: boolean;
+  workspaceDeletionInProgress: boolean;
   selectedInputSourceTile: tileId;
 }

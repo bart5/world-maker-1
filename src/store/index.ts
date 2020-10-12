@@ -29,6 +29,7 @@ const initialState: State = {
     },
     connectingInProgress: false,
     tileDeletionInProgress: false,
+    workspaceDeletionInProgress: false,
     selectedInputSourceTile: '',
   }
 }
@@ -76,7 +77,8 @@ export default createStore({
       }).filter(Boolean) as Array<tileId[]>
     },
     getInputSourceTileOfTile: (state, getters) => (tile: Tile) => getters.tileOfId(tile.inputSource),
-    tileDeletionInProgress: (state) => state.ui.tileDeletionInProgress
+    tileDeletionInProgress: (state) => state.ui.tileDeletionInProgress,
+    workspaceDeletionInProgress: (state) => state.ui.workspaceDeletionInProgress,
   },
   mutations: {
     setSelectedTask(state, { questId, taskId }) {
@@ -167,6 +169,12 @@ export default createStore({
     STOP_TILE_DELETION(state) {
       state.ui.tileDeletionInProgress = false
     },
+    START_WORKSPACE_DELETION(state) {
+      state.ui.workspaceDeletionInProgress = true
+    },
+    STOP_WORKSPACE_DELETION(state) {
+      state.ui.workspaceDeletionInProgress = false
+    },
     DELETE_TILE_OUT_BOUND_CONNECTIONS(state, tileId) {
       state.ui.project.tiles.forEach((t) => {
         if (t.inputSource === tileId) {
@@ -181,6 +189,14 @@ export default createStore({
     DELETE_TILE(state, tileId) {
       state.ui.project.tiles = [
         ...state.ui.project.tiles.filter((t) => t.id !== tileId)
+      ]
+    },
+    DELETE_WORKSPACE(state, workspaceId) {
+      state.ui.project.workspaces = [
+        ...state.ui.project.workspaces.filter((w) => w.id !== workspaceId)
+      ]
+      state.ui.project.tiles = [
+        ...state.ui.project.tiles.filter((t) => t.workspaceId !== workspaceId)
       ]
     },
   },
@@ -263,15 +279,24 @@ export default createStore({
     bringTileForward(state, tileId) {
       this.commit('BRING_TILE_FORWARD', tileId)
     },
-    startTileDeletion(state) {
+    startTileDeletion() {
       this.commit('START_TILE_DELETION')
     },
-    stopTileDeletion(state) {
+    stopTileDeletion() {
       this.commit('STOP_TILE_DELETION')
     },
     deleteTile(state, tileId) {
       this.commit('DELETE_TILE_OUT_BOUND_CONNECTIONS', tileId)
       this.commit('DELETE_TILE', tileId)
+    },
+    startWorkspaceDeletion() {
+      this.commit('START_WORKSPACE_DELETION')
+    },
+    stopWorkspaceDeletion() {
+      this.commit('START_WORKSPACE_DELETION')
+    },
+    deleteWorkspace(state, workspaceId) {
+      this.commit('DELETE_WORKSPACE', workspaceId)
     },
   },
   modules: {

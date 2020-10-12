@@ -6,16 +6,23 @@
       <button @click="zoomIn">Zoom in</button>
       <button @click="resetZoom">Reset zoom</button>
       <button @click="zoomOut">Zoom out</button>
-      <button :class="{ 'active': tileDeletionInProgress }" @click="onDeleteMode">Delete Mode</button>
+      <button :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
     </div>
     <div class="workspace-selector">
       <div
         v-for="workspace in workspaces"
         :key="workspace.id"
         class="workspace-tab"
-        :class="{ 'active': workspace.id === activeWorkspaceId }"
+        :class="{ 'active': workspace.id === activeWorkspaceId, 'inDeleteMode': deleteModeIsOn }"
         @click="activateWorkspace(workspace.id)"
-      >{{ workspace.name }}</div>
+      >
+        {{ workspace.name }}
+        <button
+          v-if="deleteModeIsOn"
+          class="delete-workspace"
+          @click="tryDeleteWorkspace(workspace)"
+        >x</button>
+      </div>
       <button
         class="workspace-tab workspace-placeholder-tab"
         @click="createNewWorkspace"
@@ -98,7 +105,7 @@ export default class Frame extends Vue {
 
   draggingBoard = false
 
-  tileDeletionInProgress = false
+  deleteModeIsOn = false
 
   get workspaceStyle() {
     const width = this.workspaceWidth
@@ -126,17 +133,23 @@ export default class Frame extends Vue {
   }
 
   onDeleteMode() {
-    if (this.tileDeletionInProgress) {
-      this.tileDeletionInProgress = false
+    if (this.deleteModeIsOn) {
+      this.deleteModeIsOn = false
       this.$store.dispatch('stopTileDeletion')
+      this.$store.dispatch('startWorkspaceDeletion')
     } else {
-      this.tileDeletionInProgress = true
+      this.deleteModeIsOn = true
       this.$store.dispatch('startTileDeletion')
+      this.$store.dispatch('startWorkspaceDeletion')
     }
   }
 
   startTileDeletion() {
     this.$store.dispatch('startTileDeletion')
+  }
+
+  startWorkspaceDeletion() {
+    this.$store.dispatch('startWorkspaceDeletion')
   }
 
   centerOnWorkspaceCenter() {
@@ -243,6 +256,17 @@ export default class Frame extends Vue {
 
   createNewWorkspace() {
     this.$store.dispatch('createNewWorkspace')
+  }
+
+  tryDeleteWorkspace(workspace: Workspace) {
+    const decision = window.confirm(`You are about to permanently delete workspace ${workspace.name}.`)
+    if (decision) {
+      this.deleteWorkspace(workspace.id)
+    }
+  }
+
+  deleteWorkspace(workspaceId: string) {
+    this.$store.dispatch('deleteWorkspace', workspaceId)
   }
 
   createNewTile() {
@@ -422,6 +446,16 @@ export default class Frame extends Vue {
 
     &:hover {
       cursor: pointer;
+    }
+
+    &.inDeleteMode {
+      background-color: rgba(255,0,0,0.35);
+    }
+
+    & button.delete-workspace {
+      border-radius: 50%;
+      font-size: 16px;
+      font-weight: bold;
     }
   }
 
