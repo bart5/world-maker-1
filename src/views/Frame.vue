@@ -388,8 +388,7 @@ export default class Frame extends Vue {
     const tabRect = tab.getBoundingClientRect()
     const grabPosition = e.clientX - tabRect.x
     const start = e.clientX
-    const transitionDistance = tabRect.width
-    const threshold = 25
+    const threshold = 10
 
     const activateWorkspace = () => {
       window.removeEventListener('mousemove', maybeStartDrag)
@@ -452,13 +451,21 @@ export default class Frame extends Vue {
 
   getOnTabDrag(grabPosition: number, tab: HTMLLIElement) {
     return (e: MouseEvent) => {
-      const left = tab.getBoundingClientRect().x - Number(tab.style.left.replace('px', ''))
-      if (this.tabOnTheLeftFromDragged && this.draggedTabPosition < (this.tabOnTheLeftFromDragged.tabRect.x + this.tabOnTheLeftFromDragged.tabRect.width)) {
-        this.swapWorkspacesOrder(this.draggedTabWorkspace, this.tabOnTheLeftFromDragged.workspace)
-      } else if (this.tabOnTheRightFromDragged && this.draggedTabPosition > (this.tabOnTheRightFromDragged.tabRect.x + this.tabOnTheRightFromDragged.tabRect.width)) {
-        this.swapWorkspacesOrder(this.tabOnTheRightFromDragged.workspace, this.draggedTabWorkspace)
-      }
+      const draggedTabRect = tab.getBoundingClientRect()
+      const left = draggedTabRect.x - Number(tab.style.left.replace('px', ''))
       this.draggedTabPosition = (e.clientX - left) - grabPosition
+
+      const adjustOrder = () => {
+        if (this.tabOnTheLeftFromDragged && draggedTabRect.x < (this.tabOnTheLeftFromDragged.tabRect.x + this.tabOnTheLeftFromDragged.tabRect.width * 0.5)) {
+          this.swapWorkspacesOrder(this.draggedTabWorkspace, this.tabOnTheLeftFromDragged.workspace)
+        } else if (this.tabOnTheRightFromDragged && draggedTabRect.x + draggedTabRect.width > (this.tabOnTheRightFromDragged.tabRect.x + this.tabOnTheRightFromDragged.tabRect.width * 0.5)) {
+          this.swapWorkspacesOrder(this.tabOnTheRightFromDragged.workspace, this.draggedTabWorkspace)
+        }
+      }
+
+      window.setTimeout(() => {
+        adjustOrder()
+      })
     }
   }
 
@@ -502,7 +509,9 @@ export default class Frame extends Vue {
   }
 
   mounted() {
-    this.createNewTile()
+    if (!this.allTilesOfActiveWorkspace.length) {
+      this.createNewTile()
+    }
     this.centerOnTiles()
     window.addEventListener('keydown', this.keyboardHandler)
   }
