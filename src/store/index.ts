@@ -58,8 +58,7 @@ export default createStore({
     staticData: (state) => state.staticData,
     workspaces: (state) => state.ui.project.workspaces,
     activeWorkspaceId: (state) => state.ui.project.activeWorkspaceId,
-    getActiveWorkspace: (state) => state.ui.project.workspaces.filter((ws) => ws.id === state.ui.project.activeWorkspaceId),
-    getActiveWorkspaceId: (state) => state.ui.project.activeWorkspaceId,
+    activeWorkspace: (state) => state.ui.project.workspaces.filter((ws) => ws.id === state.ui.project.activeWorkspaceId)[0],
     allTilesOfWorkspace: (state) => (workspaceId: string) => state.ui.project.tiles.filter((tile) => {
       return tile.workspaceId === workspaceId
     }),
@@ -113,7 +112,9 @@ export default createStore({
 
     // },
     ACTIVATE_WORKSPACE(state, workspaceId: string) {
-      state.ui.project.activeWorkspaceId = workspaceId
+      if (workspaceId) {
+        state.ui.project.activeWorkspaceId = workspaceId
+      }
     },
     CREATE_NEW_WORKSPACE(state, workspaceId: string) {
       const order = state.ui.project.workspaces.length

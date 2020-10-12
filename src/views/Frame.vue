@@ -14,13 +14,6 @@
         :key="workspace.id"
       >
         <div
-          v-if="getTabIsDragged(workspace.id)"
-          class="workspace-tab invisible-tab"
-          :style="{ order: (workspace.order - 1) * 10 + 1 }"
-        >
-          <span>{{ workspace.name }}</span>
-        </div>
-        <div
           :ref="`tab_${workspace.id}`"
           class="workspace-tab"
           :class="{
@@ -48,6 +41,15 @@
           >x</button>
         </div>
       </template>
+
+      <div
+        v-if="tabDragInProgress"
+        class="workspace-tab invisible-tab"
+        :style="{ order: (draggedTabWorkspace.order - 1) * 10 + 1 }"
+      >
+        <span>{{ draggedTabWorkspace.name }}</span>
+      </div>
+
       <button
         class="workspace-tab add-new-tab-tab"
         @click="createNewWorkspace"
@@ -281,8 +283,12 @@ export default class Frame extends Vue {
     return this.$refs.workspaceNameInput as HTMLInputElement
   }
 
-  get activeWorkspaceId() {
-    return this.$store.getters.getActiveWorkspaceId
+  get activeWorkspaceId(): string {
+    return this.$store.getters.activeWorkspaceId
+  }
+
+  get activeWorkspace(): Workspace {
+    return this.$store.getters.activeWorkspace
   }
 
   showWorkspace(workspaceId: string) {
@@ -398,6 +404,7 @@ export default class Frame extends Vue {
 
     const maybeStartDrag = (ev: MouseEvent) => {
       if (threshold < Math.abs(start - ev.clientX)) {
+        this.tabDragInProgress = true
         window.removeEventListener('mousemove', maybeStartDrag)
         window.removeEventListener('mouseup', activateWorkspace)
 
@@ -419,13 +426,21 @@ export default class Frame extends Vue {
     window.addEventListener('mouseup', activateWorkspace)
   }
 
+  getPreviousTabWorkspace(workspace: Workspace): Workspace | undefined {
+    return this.workspaces.filter((w) => w.order < workspace.order).sort((w1, w2) => w2.order - w1.order)[0]
+  }
+
+  getNextTabWorkspace(workspace: Workspace): Workspace | undefined {
+    return this.workspaces.filter((w) => w.order > workspace.order).sort((w1, w2) => w1.order - w2.order)[0]
+  }
+
   get draggedTabWorkspace() {
     return this.workspaces.filter((w) => w.id === this.draggedTabWorkspaceId)[0]
   }
 
   get tabOnTheLeftFromDragged() {
     const workspace = this.draggedTabWorkspace
-    const workspaceOnTheLeft = this.workspaces.filter((w) => w.order < workspace.order).sort((w1, w2) => w2.order - w1.order)[0]
+    const workspaceOnTheLeft = this.getPreviousTabWorkspace(workspace)
     if (workspaceOnTheLeft) {
       const tabRect = (this.$refs[`tab_${workspaceOnTheLeft.id}`] as HTMLLIElement).getBoundingClientRect()
       return {
@@ -438,7 +453,7 @@ export default class Frame extends Vue {
 
   get tabOnTheRightFromDragged() {
     const workspace = this.draggedTabWorkspace
-    const workspaceOnTheRight = this.workspaces.filter((w) => w.order > workspace.order).sort((w1, w2) => w1.order - w2.order)[0]
+    const workspaceOnTheRight = this.getNextTabWorkspace(workspace)
     if (workspaceOnTheRight) {
       const tabRect = (this.$refs[`tab_${workspaceOnTheRight.id}`] as HTMLLIElement).getBoundingClientRect()
       return {
@@ -476,7 +491,7 @@ export default class Frame extends Vue {
   }
 
   getTabIsDragged(workspaceId: string) {
-    return workspaceId === this.draggedTabWorkspaceId
+    return this.tabDragInProgress && workspaceId === this.draggedTabWorkspaceId
   }
 
   swapWorkspacesOrder(workspaceToMoveLeft: Workspace, workspaceToMoveRight: Workspace) {
@@ -493,9 +508,42 @@ export default class Frame extends Vue {
     }
   }
 
+  activatePreviousTabWorkspace() {
+    const workspace = this.getPreviousTabWorkspace(this.activeWorkspace)
+    if (workspace) {
+      this.activateWorkspace(workspace.id)
+    }
+  }
+
+  activateNextTabWorkspace() {
+    const workspace = this.getNextTabWorkspace(this.activeWorkspace)
+    if (workspace) {
+      this.activateWorkspace(workspace.id)
+    }
+  }
+
   keyboardHandler(e: KeyboardEvent) {
     if (e.ctrlKey) {
       switch (e.key) {
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+          this.activateWorkspace(
+            this.workspaces.sort((w1, w2) => w1.order - w2.order)[Number(e.key) - 1]?.id || ''
+          )
+          break;
+        case 'PageUp':
+          this.activatePreviousTabWorkspace()
+          break;
+        case 'PageDown':
+          this.activateNextTabWorkspace()
+          break;
         case '+':
           this.zoomIn()
           break;
