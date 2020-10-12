@@ -9,7 +9,17 @@
       <button :class="{ 'active': tileDeletionInProgress }" @click="onDeleteMode">Delete Mode</button>
     </div>
     <div class="workspace-selector">
-      <div class="workspace-tab"></div>
+      <div
+        v-for="workspace in workspaces"
+        :key="workspace.id"
+        class="workspace-tab"
+        :class="{ 'active': workspace.id === activeWorkspaceId }"
+        @click="activateWorkspace(workspace.id)"
+      >{{ workspace.name }}</div>
+      <button
+        class="workspace-tab workspace-placeholder-tab"
+        @click="createNewWorkspace"
+      >+</button>
     </div>
     <div class="board-wrapper">
       <div
@@ -326,7 +336,6 @@ export default class Frame extends Vue {
   width: 100%;
   height: 100%;
   max-height: 100%;
-  border: 3px solid purple;
   display: flex;
   flex-flow: column nowrap;
   backface-visibility: hidden;
@@ -345,6 +354,7 @@ export default class Frame extends Vue {
   width: 100%;
   height: 100%;
   position: relative;
+  border: 2px solid;
 }
 
 .status-bar {
@@ -375,9 +385,51 @@ export default class Frame extends Vue {
 }
 
 .workspace-selector {
-  height: 14px;
-  border: 2px solid darkmagenta;
+  background-color: darkgray;
+  height: 24px;
   width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  padding: 0 4px 0 0;
+
+  .workspace-tab {
+    background: white;
+    border: 1px solid;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom: none;
+    text-align: center;
+    min-width: 30px;
+    padding: 0 5px 0 5px;
+    margin: 6px 2px 0 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: gray;
+    user-select: none;
+
+    &:first-of-type {
+      margin-left: 0;
+    }
+
+    &.active {
+      margin: 2px 2px 0 0;
+      background-color: gray;
+      background-color: lightgray;
+    }
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
+  .workspace-placeholder-tab {
+    padding: 0 5px;
+    font-weight: bold;
+    background-color: gray;
+  }
 }
 
 .workspace {

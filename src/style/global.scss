@@ -1,4 +1,8 @@
-button {
+:root {
+  --color-active: lightblue;
+}
+
+button, .button {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -23,7 +27,7 @@ button {
     cursor: pointer;
 
     &:not(:active) {
-      background-color: rgba(255,255,255,0.2)
+      background-color: rgba(255,255,255,0.2) !important;
     }
   }
 
@@ -32,6 +36,6 @@ button {
   }
 
   &.active {
-    background: lightblue;
+    background: var(--color-active);
   }
 }
