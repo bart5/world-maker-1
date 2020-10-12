@@ -199,6 +199,10 @@ export default createStore({
         ...state.ui.project.tiles.filter((t) => t.workspaceId !== workspaceId)
       ]
     },
+    RENAME_WORKSPACE(state, { workspaceId, newName }) {
+      const workspace = state.ui.project.workspaces.filter((w) => w.id === workspaceId)[0]
+      workspace.name = newName
+    },
   },
   actions: {
     selectTask(state, taskId: string) {
@@ -297,6 +301,9 @@ export default createStore({
     },
     deleteWorkspace(state, workspaceId) {
       this.commit('DELETE_WORKSPACE', workspaceId)
+    },
+    renameWorkspace(state, { workspaceId, newName }) {
+      this.commit('RENAME_WORKSPACE', { workspaceId, newName })
     },
   },
   modules: {

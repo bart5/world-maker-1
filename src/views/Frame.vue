@@ -15,8 +15,17 @@
         class="workspace-tab"
         :class="{ 'active': workspace.id === activeWorkspaceId, 'inDeleteMode': deleteModeIsOn }"
         @click="activateWorkspace(workspace.id)"
+        @dblclick="startRenamingWorkspace(workspace)"
       >
-        {{ workspace.name }}
+        <input
+          v-if="renamingWorkspaceInProgress"
+          ref="workspaceNameInput"
+          type="text"
+          v-model="newWorkspaceName"
+          @blur="stopRenamingWorkspace"
+          @keydown="(e) => e.key === 'Enter' && renameWorkspace(workspace.id)"
+        >
+        <span v-else>{{ workspace.name }}</span>
         <button
           v-if="deleteModeIsOn"
           class="delete-workspace"
@@ -106,6 +115,10 @@ export default class Frame extends Vue {
   draggingBoard = false
 
   deleteModeIsOn = false
+
+  renamingWorkspaceInProgress = false
+
+  newWorkspaceName = ''
 
   get workspaceStyle() {
     const width = this.workspaceWidth
@@ -238,6 +251,10 @@ export default class Frame extends Vue {
     return this.$refs.board as HTMLElement
   }
 
+  getWorkspaceNameInputElement() {
+    return this.$refs.workspaceNameInput as HTMLInputElement
+  }
+
   get activeWorkspaceId() {
     return this.$store.getters.getActiveWorkspaceId
   }
@@ -267,6 +284,24 @@ export default class Frame extends Vue {
 
   deleteWorkspace(workspaceId: string) {
     this.$store.dispatch('deleteWorkspace', workspaceId)
+  }
+
+  async startRenamingWorkspace(workspace: Workspace) {
+    this.renamingWorkspaceInProgress = true
+    this.newWorkspaceName = workspace.name
+    window.setTimeout(() => {
+      this.getWorkspaceNameInputElement().focus()
+    })
+  }
+
+  stopRenamingWorkspace() {
+    this.newWorkspaceName = ''
+    this.renamingWorkspaceInProgress = false
+  }
+
+  renameWorkspace(workspaceId: string) {
+    this.$store.dispatch('renameWorkspace', { workspaceId, newName: this.newWorkspaceName })
+    this.stopRenamingWorkspace()
   }
 
   createNewTile() {
