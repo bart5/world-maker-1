@@ -20,7 +20,7 @@ const initialState: State = {
       workspaces: [{
         id: '0',
         name: 'New Workspace',
-        order: 0,
+        order: 1,
       }],
       tiles: [],
       staticDataPath: '',

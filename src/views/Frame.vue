@@ -28,14 +28,12 @@
             'inDeleteMode': deleteModeIsOn,
             'isDragged': getTabIsDragged(workspace.id),
           }"
-          @click="activateWorkspace(workspace.id)"
           @dblclick="startRenamingWorkspace(workspace)"
-          @mousedown="(e) => debouncedDragStart(e, workspace.id)"
+          @mousedown="(e) => onWorkspaceTabMousedown(e, workspace.id)"
           :style="getTabIsDragged(workspace.id) ? dragTabStyle : { order: workspace.order * 10 }"
         >
-          <!-- @mousedown="(e) => startTabDrag(e, workspace.id)" -->
           <input
-            v-if="renamingWorkspaceInProgress"
+            v-if="workspaceToRename === workspace.id"
             ref="workspaceNameInput"
             type="text"
             v-model="newWorkspaceName"
@@ -134,7 +132,7 @@ export default class Frame extends Vue {
 
   deleteModeIsOn = false
 
-  renamingWorkspaceInProgress = false
+  workspaceToRename = ''
 
   newWorkspaceName = ''
 
@@ -311,7 +309,7 @@ export default class Frame extends Vue {
   }
 
   async startRenamingWorkspace(workspace: Workspace) {
-    this.renamingWorkspaceInProgress = true
+    this.workspaceToRename = workspace.id
     this.newWorkspaceName = workspace.name
     window.setTimeout(() => {
       this.getWorkspaceNameInputElement().focus()
@@ -320,7 +318,7 @@ export default class Frame extends Vue {
 
   stopRenamingWorkspace() {
     this.newWorkspaceName = ''
-    this.renamingWorkspaceInProgress = false
+    this.workspaceToRename = ''
   }
 
   renameWorkspace(workspaceId: string) {
@@ -381,21 +379,22 @@ export default class Frame extends Vue {
     this.updateRelativeMousePosition(e)
   }
 
-  debouncedDragStart(e: MouseEvent, workspaceId: string) {
+  onWorkspaceTabMousedown(e: MouseEvent, workspaceId: string) {
     const tab = this.$refs[`tab_${workspaceId}`] as HTMLLIElement
     const grabPosition = e.clientX - tab.getBoundingClientRect().x
     const start = e.clientX
     const threshold = 25
 
-    const stopDebouncedDrag = () => {
+    const activateWorkspace = () => {
       window.removeEventListener('mousemove', maybeStartDrag)
-      window.removeEventListener('mouseup', stopDebouncedDrag)
+      window.removeEventListener('mouseup', activateWorkspace)
+      this.activateWorkspace(workspaceId)
     }
 
     const maybeStartDrag = (ev: MouseEvent) => {
-      console.log(Math.abs(start - ev.clientX))
       if (threshold < Math.abs(start - ev.clientX)) {
-        stopDebouncedDrag()
+        window.removeEventListener('mousemove', maybeStartDrag)
+        window.removeEventListener('mouseup', activateWorkspace)
 
         const onTabDrag = this.getOnTabDrag(grabPosition, tab)
         window.addEventListener('mousemove', onTabDrag)
@@ -412,12 +411,11 @@ export default class Frame extends Vue {
     }
 
     window.addEventListener('mousemove', maybeStartDrag)
-    window.addEventListener('mouseup', stopDebouncedDrag)
+    window.addEventListener('mouseup', activateWorkspace)
   }
 
   getOnTabDrag(grabPosition: number, tab: HTMLLIElement) {
     return (e: MouseEvent) => {
-      console.log('on mouse move')
       const left = tab.getBoundingClientRect().x - Number(tab.style.left.replace('px', ''))
       this.draggedTabPosition = (e.clientX - left) - grabPosition
     }
