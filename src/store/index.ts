@@ -109,9 +109,6 @@ export default createStore({
         }
       })
     },
-    // setTileName(state) {
-
-    // },
     // setTileFilter(state) {
 
     // },
@@ -134,7 +131,7 @@ export default createStore({
     },
     DRAG_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
       const tile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
-      tile.x = newPosition.x - tile.width * 0.5
+      tile.x = newPosition.x
       tile.y = newPosition.y
     },
     START_CONNECTING_TILES(state, tileId) {

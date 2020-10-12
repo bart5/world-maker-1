@@ -75,6 +75,12 @@ export default class TileComponent extends Vue {
 
   sectionToShow = this.dataSection
 
+  /* It allows to avoid jumpy movement when grabbing tile */
+  grabPosition = {
+    x: 0,
+    y: 0
+  }
+
   get indicateValidConnection() {
     return this.connectingInProgress && this.isValidConnectionCandidate
   }
@@ -113,6 +119,10 @@ export default class TileComponent extends Vue {
 
   get tileDeletionInProgress() {
     return this.$store.getters.tileDeletionInProgress
+  }
+
+  get tileWrapperElement() {
+    return this.$refs.tileWrapper as HTMLElement
   }
 
   startConnecting(e: MouseEvent) {
@@ -158,14 +168,25 @@ export default class TileComponent extends Vue {
     window.removeEventListener('mousemove', this.onMouseMove)
   }
 
-  startDrag() {
+  startDrag(e: MouseEvent) {
     if (this.connectingInProgress) return
     this.dragInProgress = true
+    this.updateGrabRelativePosition(e)
     this.$emit('start-drag')
     this.startMousemoveListener(() => {
       this.dragInProgress = false
       this.$emit('stop-drag')
     })
+  }
+
+  updateGrabRelativePosition(e: MouseEvent) {
+    const tileWrapperRect = this.tileWrapperElement.getBoundingClientRect()
+    const shiftX = (e.clientX - tileWrapperRect.x) * (1 / this.scale)
+    const shiftY = (e.clientY - tileWrapperRect.y) * (1 / this.scale)
+    this.grabPosition = {
+      x: shiftX,
+      y: shiftY
+    }
   }
 
   startResize() {
@@ -191,7 +212,11 @@ export default class TileComponent extends Vue {
   }
 
   dragHandler() {
-    this.$store.dispatch('dragTile', { tileId: this.id, newPosition: this.relativeMousePosition })
+    const newPosition = {
+      x: this.relativeMousePosition.x - this.grabPosition.x,
+      y: this.relativeMousePosition.y - this.grabPosition.y
+    }
+    this.$store.dispatch('dragTile', { tileId: this.id, newPosition })
   }
 
   get tileStyle() {
