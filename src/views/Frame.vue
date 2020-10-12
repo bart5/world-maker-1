@@ -392,7 +392,7 @@ export default class Frame extends Vue {
   onWorkspaceTabMousedown(e: MouseEvent, workspaceId: string) {
     const tab = this.$refs[`tab_${workspaceId}`] as HTMLLIElement
     const tabRect = tab.getBoundingClientRect()
-    const grabPosition = e.clientX - tabRect.x
+    const grabOffset = e.clientX - tabRect.x
     const start = e.clientX
     const threshold = 10
 
@@ -404,13 +404,15 @@ export default class Frame extends Vue {
 
     const maybeStartDrag = (ev: MouseEvent) => {
       if (threshold < Math.abs(start - ev.clientX)) {
-        this.tabDragInProgress = true
         window.removeEventListener('mousemove', maybeStartDrag)
         window.removeEventListener('mouseup', activateWorkspace)
 
-        const onTabDrag = this.getOnTabDrag(grabPosition, tab)
+        const onTabDrag = this.getOnTabDrag(e, grabOffset, tab)
         window.addEventListener('mousemove', onTabDrag)
+
+        this.tabDragInProgress = true
         this.draggedTabWorkspaceId = workspaceId
+
         const stopDrag = () => {
           this.tabDragInProgress = false
           this.draggedTabWorkspaceId = ''
@@ -440,6 +442,7 @@ export default class Frame extends Vue {
 
   get tabOnTheLeftFromDragged() {
     const workspace = this.draggedTabWorkspace
+    if (!workspace) return null
     const workspaceOnTheLeft = this.getPreviousTabWorkspace(workspace)
     if (workspaceOnTheLeft) {
       const tabRect = (this.$refs[`tab_${workspaceOnTheLeft.id}`] as HTMLLIElement).getBoundingClientRect()
@@ -453,6 +456,7 @@ export default class Frame extends Vue {
 
   get tabOnTheRightFromDragged() {
     const workspace = this.draggedTabWorkspace
+    if (!workspace) return null
     const workspaceOnTheRight = this.getNextTabWorkspace(workspace)
     if (workspaceOnTheRight) {
       const tabRect = (this.$refs[`tab_${workspaceOnTheRight.id}`] as HTMLLIElement).getBoundingClientRect()
@@ -464,23 +468,24 @@ export default class Frame extends Vue {
     return null
   }
 
-  getOnTabDrag(grabPosition: number, tab: HTMLLIElement) {
-    return (e: MouseEvent) => {
+  getOnTabDrag(initiatingEvent: MouseEvent, grabOffset: number, tab: HTMLLIElement) {
+    const adjustTabs = (e: MouseEvent) => {
       const draggedTabRect = tab.getBoundingClientRect()
-      const left = draggedTabRect.x - Number(tab.style.left.replace('px', ''))
-      this.draggedTabPosition = (e.clientX - left) - grabPosition
+      this.draggedTabPosition = e.clientX - grabOffset
 
-      const adjustOrder = () => {
+      window.setTimeout(() => {
         if (this.tabOnTheLeftFromDragged && draggedTabRect.x < (this.tabOnTheLeftFromDragged.tabRect.x + this.tabOnTheLeftFromDragged.tabRect.width * 0.5)) {
           this.swapWorkspacesOrder(this.draggedTabWorkspace, this.tabOnTheLeftFromDragged.workspace)
         } else if (this.tabOnTheRightFromDragged && draggedTabRect.x + draggedTabRect.width > (this.tabOnTheRightFromDragged.tabRect.x + this.tabOnTheRightFromDragged.tabRect.width * 0.5)) {
           this.swapWorkspacesOrder(this.tabOnTheRightFromDragged.workspace, this.draggedTabWorkspace)
         }
-      }
-
-      window.setTimeout(() => {
-        adjustOrder()
       })
+    }
+
+    adjustTabs(initiatingEvent)
+
+    return (e: MouseEvent) => {
+      adjustTabs(e)
     }
   }
 
