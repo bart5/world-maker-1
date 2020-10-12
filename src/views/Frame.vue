@@ -273,6 +273,10 @@ export default class Frame extends Vue {
     return this.$refs.board as HTMLElement
   }
 
+  get tabElements() {
+    return this.$refs.tab as Array<HTMLElement>
+  }
+
   getWorkspaceNameInputElement() {
     return this.$refs.workspaceNameInput as HTMLInputElement
   }
@@ -381,8 +385,10 @@ export default class Frame extends Vue {
 
   onWorkspaceTabMousedown(e: MouseEvent, workspaceId: string) {
     const tab = this.$refs[`tab_${workspaceId}`] as HTMLLIElement
-    const grabPosition = e.clientX - tab.getBoundingClientRect().x
+    const tabRect = tab.getBoundingClientRect()
+    const grabPosition = e.clientX - tabRect.x
     const start = e.clientX
+    const transitionDistance = tabRect.width
     const threshold = 25
 
     const activateWorkspace = () => {
@@ -414,9 +420,44 @@ export default class Frame extends Vue {
     window.addEventListener('mouseup', activateWorkspace)
   }
 
+  get draggedTabWorkspace() {
+    return this.workspaces.filter((w) => w.id === this.draggedTabWorkspaceId)[0]
+  }
+
+  get tabOnTheLeftFromDragged() {
+    const workspace = this.draggedTabWorkspace
+    const workspaceOnTheLeft = this.workspaces.filter((w) => w.order < workspace.order).sort((w1, w2) => w2.order - w1.order)[0]
+    if (workspaceOnTheLeft) {
+      const tabRect = (this.$refs[`tab_${workspaceOnTheLeft.id}`] as HTMLLIElement).getBoundingClientRect()
+      return {
+        tabRect,
+        workspace: workspaceOnTheLeft
+      }
+    }
+    return null
+  }
+
+  get tabOnTheRightFromDragged() {
+    const workspace = this.draggedTabWorkspace
+    const workspaceOnTheRight = this.workspaces.filter((w) => w.order > workspace.order).sort((w1, w2) => w1.order - w2.order)[0]
+    if (workspaceOnTheRight) {
+      const tabRect = (this.$refs[`tab_${workspaceOnTheRight.id}`] as HTMLLIElement).getBoundingClientRect()
+      return {
+        tabRect,
+        workspace: workspaceOnTheRight
+      }
+    }
+    return null
+  }
+
   getOnTabDrag(grabPosition: number, tab: HTMLLIElement) {
     return (e: MouseEvent) => {
       const left = tab.getBoundingClientRect().x - Number(tab.style.left.replace('px', ''))
+      if (this.tabOnTheLeftFromDragged && this.draggedTabPosition < (this.tabOnTheLeftFromDragged.tabRect.x + this.tabOnTheLeftFromDragged.tabRect.width)) {
+        this.swapWorkspacesOrder(this.draggedTabWorkspace, this.tabOnTheLeftFromDragged.workspace)
+      } else if (this.tabOnTheRightFromDragged && this.draggedTabPosition > (this.tabOnTheRightFromDragged.tabRect.x + this.tabOnTheRightFromDragged.tabRect.width)) {
+        this.swapWorkspacesOrder(this.tabOnTheRightFromDragged.workspace, this.draggedTabWorkspace)
+      }
       this.draggedTabPosition = (e.clientX - left) - grabPosition
     }
   }
@@ -429,6 +470,10 @@ export default class Frame extends Vue {
 
   getTabIsDragged(workspaceId: string) {
     return workspaceId === this.draggedTabWorkspaceId
+  }
+
+  swapWorkspacesOrder(workspaceToMoveLeft: Workspace, workspaceToMoveRight: Workspace) {
+    this.$store.dispatch('swapWorkspacesOrder', { workspaceToMoveLeft, workspaceToMoveRight })
   }
 
   updateRelativeMousePosition(e: MouseEvent) {
@@ -565,7 +610,9 @@ export default class Frame extends Vue {
 
     &.isDragged {
       position: absolute;
-      top: 0;
+      bottom: 0;
+      margin-top: 0;
+      padding-bottom: 6px;
       z-index: 1000;
     }
 

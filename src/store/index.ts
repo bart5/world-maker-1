@@ -122,7 +122,7 @@ export default createStore({
 
       state.ui.project.workspaces.push({
         id: workspaceId,
-        name: 'New Workspace',
+        name: 'New Workspace' + (state.ui.project.workspaces.length + 1),
         order,
       })
     },
@@ -201,6 +201,12 @@ export default createStore({
     RENAME_WORKSPACE(state, { workspaceId, newName }) {
       const workspace = state.ui.project.workspaces.filter((w) => w.id === workspaceId)[0]
       workspace.name = newName
+    },
+    SWAP_WORKSPACES_ORDER(state, { workspaceToMoveLeft, workspaceToMoveRight }) {
+      const leftPosition = workspaceToMoveRight.order
+      const rightPosition = workspaceToMoveLeft.order
+      workspaceToMoveLeft.order = leftPosition
+      workspaceToMoveRight.order = rightPosition
     },
   },
   actions: {
@@ -303,6 +309,9 @@ export default createStore({
     },
     renameWorkspace(state, { workspaceId, newName }) {
       this.commit('RENAME_WORKSPACE', { workspaceId, newName })
+    },
+    swapWorkspacesOrder(state, { workspaceToMoveLeft, workspaceToMoveRight }) {
+      this.commit('SWAP_WORKSPACES_ORDER', { workspaceToMoveLeft, workspaceToMoveRight })
     },
   },
   modules: {
