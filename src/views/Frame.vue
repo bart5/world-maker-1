@@ -9,31 +9,49 @@
       <button :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
     </div>
     <div class="workspace-selector">
-      <div
+      <template
         v-for="workspace in workspaces"
         :key="workspace.id"
-        class="workspace-tab"
-        :class="{ 'active': workspace.id === activeWorkspaceId, 'inDeleteMode': deleteModeIsOn }"
-        @click="activateWorkspace(workspace.id)"
-        @dblclick="startRenamingWorkspace(workspace)"
       >
-        <input
-          v-if="renamingWorkspaceInProgress"
-          ref="workspaceNameInput"
-          type="text"
-          v-model="newWorkspaceName"
-          @blur="stopRenamingWorkspace"
-          @keydown="(e) => e.key === 'Enter' && renameWorkspace(workspace.id)"
+        <div
+          v-if="getTabIsDragged(workspace.id)"
+          class="workspace-tab invisible-tab"
+          :style="{ order: (workspace.order - 1) * 10 + 1 }"
         >
-        <span v-else>{{ workspace.name }}</span>
-        <button
-          v-if="deleteModeIsOn"
-          class="delete-workspace"
-          @click="tryDeleteWorkspace(workspace)"
-        >x</button>
-      </div>
+          <span>{{ workspace.name }}</span>
+        </div>
+        <div
+          :ref="`tab_${workspace.id}`"
+          class="workspace-tab"
+          :class="{
+            'active': workspace.id === activeWorkspaceId,
+            'inDeleteMode': deleteModeIsOn,
+            'isDragged': getTabIsDragged(workspace.id),
+          }"
+          @click="activateWorkspace(workspace.id)"
+          @dblclick="startRenamingWorkspace(workspace)"
+          @mousedown="(e) => debouncedDragStart(e, workspace.id)"
+          :style="getTabIsDragged(workspace.id) ? dragTabStyle : { order: workspace.order * 10 }"
+        >
+          <!-- @mousedown="(e) => startTabDrag(e, workspace.id)" -->
+          <input
+            v-if="renamingWorkspaceInProgress"
+            ref="workspaceNameInput"
+            type="text"
+            v-model="newWorkspaceName"
+            @blur="stopRenamingWorkspace"
+            @keydown="(e) => e.key === 'Enter' && renameWorkspace(workspace.id)"
+          >
+          <span v-else>{{ workspace.name }}</span>
+          <button
+            v-if="deleteModeIsOn"
+            class="delete-workspace"
+            @click="tryDeleteWorkspace(workspace)"
+          >x</button>
+        </div>
+      </template>
       <button
-        class="workspace-tab workspace-placeholder-tab"
+        class="workspace-tab add-new-tab-tab"
         @click="createNewWorkspace"
       >+</button>
     </div>
@@ -119,6 +137,12 @@ export default class Frame extends Vue {
   renamingWorkspaceInProgress = false
 
   newWorkspaceName = ''
+
+  tabDragInProgress = false
+
+  draggedTabPosition = 0
+
+  draggedTabWorkspaceId = ''
 
   get workspaceStyle() {
     const width = this.workspaceWidth
@@ -357,6 +381,58 @@ export default class Frame extends Vue {
     this.updateRelativeMousePosition(e)
   }
 
+  debouncedDragStart(e: MouseEvent, workspaceId: string) {
+    const tab = this.$refs[`tab_${workspaceId}`] as HTMLLIElement
+    const grabPosition = e.clientX - tab.getBoundingClientRect().x
+    const start = e.clientX
+    const threshold = 25
+
+    const stopDebouncedDrag = () => {
+      window.removeEventListener('mousemove', maybeStartDrag)
+      window.removeEventListener('mouseup', stopDebouncedDrag)
+    }
+
+    const maybeStartDrag = (ev: MouseEvent) => {
+      console.log(Math.abs(start - ev.clientX))
+      if (threshold < Math.abs(start - ev.clientX)) {
+        stopDebouncedDrag()
+
+        const onTabDrag = this.getOnTabDrag(grabPosition, tab)
+        window.addEventListener('mousemove', onTabDrag)
+        this.draggedTabWorkspaceId = workspaceId
+        const stopDrag = () => {
+          this.tabDragInProgress = false
+          this.draggedTabWorkspaceId = ''
+          this.draggedTabPosition = 0
+          window.removeEventListener('mousemove', onTabDrag)
+          window.removeEventListener('mouseup', stopDrag)
+        }
+        window.addEventListener('mouseup', stopDrag)
+      }
+    }
+
+    window.addEventListener('mousemove', maybeStartDrag)
+    window.addEventListener('mouseup', stopDebouncedDrag)
+  }
+
+  getOnTabDrag(grabPosition: number, tab: HTMLLIElement) {
+    return (e: MouseEvent) => {
+      console.log('on mouse move')
+      const left = tab.getBoundingClientRect().x - Number(tab.style.left.replace('px', ''))
+      this.draggedTabPosition = (e.clientX - left) - grabPosition
+    }
+  }
+
+  get dragTabStyle() {
+    return {
+      left: this.draggedTabPosition + 'px'
+    }
+  }
+
+  getTabIsDragged(workspaceId: string) {
+    return workspaceId === this.draggedTabWorkspaceId
+  }
+
   updateRelativeMousePosition(e: MouseEvent) {
     const workspaceRect = this.workspaceElement.getBoundingClientRect()
     const newPositionX = (e.clientX - workspaceRect.x) * (1 / this.workspaceScale)
@@ -451,8 +527,10 @@ export default class Frame extends Vue {
   flex-flow: row nowrap;
   justify-content: flex-start;
   padding: 0 4px 0 0;
+  position: relative;
 
   .workspace-tab {
+    position: relative;
     background: white;
     border: 1px solid;
     border-top-left-radius: 6px;
@@ -487,6 +565,16 @@ export default class Frame extends Vue {
       background-color: rgba(255,0,0,0.35);
     }
 
+    &.isDragged {
+      position: absolute;
+      top: 0;
+      z-index: 1000;
+    }
+
+    &.invisible-tab {
+      visibility: hidden;
+    }
+
     & button.delete-workspace {
       border-radius: 50%;
       font-size: 16px;
@@ -494,7 +582,8 @@ export default class Frame extends Vue {
     }
   }
 
-  .workspace-placeholder-tab {
+  .add-new-tab-tab {
+    order: 99999;
     padding: 0 5px;
     font-weight: bold;
     background-color: gray;

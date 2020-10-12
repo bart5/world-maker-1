@@ -117,6 +117,8 @@ export default createStore({
     },
     CREATE_NEW_WORKSPACE(state, workspaceId: string) {
       const order = state.ui.project.workspaces.length
+        ? state.ui.project.workspaces.sort((w1, w2) => w2.order - w1.order)[0].order + 1
+        : 1
 
       state.ui.project.workspaces.push({
         id: workspaceId,
