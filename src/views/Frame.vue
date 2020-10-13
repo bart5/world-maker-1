@@ -244,7 +244,8 @@ export default class Frame extends Vue {
     const centerY = 0.5 * (minY + maxY)
     if (this.workspaceScale >= 1) {
       this.boardElement.scrollTo(
-        centerX - this.boardElement.clientWidth * 0.5,
+        /* Ah, yes, famous (1 + this.workspaceScale / 100) adjustment formula. Of course. */
+        centerX - this.boardElement.clientWidth * 0.5 * (1 + this.workspaceScale / 100),
         centerY - this.boardElement.clientHeight * 0.5,
       )
     } else {
@@ -342,8 +343,6 @@ export default class Frame extends Vue {
 
   activateWorkspace(workspaceId: string) {
     this.saveCurrentWorkspaceCamera()
-    // window.setTimeout(() => {
-    //   })
     this.$store.dispatch('activateWorkspace', workspaceId)
     this.setWorkspaceCamera()
   }
