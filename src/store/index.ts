@@ -192,12 +192,11 @@ export default createStore({
       ]
     },
     DELETE_WORKSPACE(state, workspaceId) {
-      state.ui.project.workspaces = [
-        ...state.ui.project.workspaces.filter((w) => w.id !== workspaceId)
-      ]
-      state.ui.project.tiles = [
-        ...state.ui.project.tiles.filter((t) => t.workspaceId !== workspaceId)
-      ]
+      state.ui.project.workspaces.splice(
+        state.ui.project.workspaces.findIndex((w) => w.id === workspaceId),
+        1
+      )
+      state.ui.project.tiles = state.ui.project.tiles.filter((t) => t.workspaceId !== workspaceId)
     },
     RENAME_WORKSPACE(state, { workspaceId, newName }) {
       const workspace = state.ui.project.workspaces.filter((w) => w.id === workspaceId)[0]

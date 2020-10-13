@@ -1,11 +1,11 @@
 <template>
   <div class="frame-wrapper" @mousedown="stopConnectingTiles">
     <div class="top-bar">
-      <button @click="createNewTile">Create new tile</button>
-      <button @click="centerOnTiles">Center view</button>
-      <button @click="zoomIn">Zoom in</button>
-      <button @click="resetZoom">Reset zoom</button>
-      <button @click="zoomOut">Zoom out</button>
+      <button :disabled="!activeWorkspace" @click="createNewTile">Create new tile</button>
+      <button :disabled="!activeWorkspace" @click="centerOnTiles">Center view</button>
+      <button :disabled="!activeWorkspace" @click="zoomIn">Zoom in</button>
+      <button :disabled="!activeWorkspace" @click="resetZoom">Reset zoom</button>
+      <button :disabled="!activeWorkspace" @click="zoomOut">Zoom out</button>
       <button :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
     </div>
     <div class="workspace-selector">
@@ -21,23 +21,26 @@
             'inDeleteMode': deleteModeIsOn,
             'isDragged': getTabIsDragged(workspace.id),
           }"
-          @dblclick="startRenamingWorkspace(workspace)"
-          @mousedown="(e) => onWorkspaceTabMousedown(e, workspace.id)"
           :style="getTabIsDragged(workspace.id) ? dragTabStyle : { order: workspace.order * 10 }"
         >
-          <input
-            v-if="workspaceToRename === workspace.id"
-            ref="workspaceNameInput"
-            type="text"
-            v-model="newWorkspaceName"
-            @blur="stopRenamingWorkspace"
-            @keydown="(e) => e.key === 'Enter' && renameWorkspace(workspace.id)"
+          <div
+            @dblclick="startRenamingWorkspace(workspace)"
+            @mousedown="(e) => onWorkspaceTabMousedown(e, workspace.id)"
           >
-          <span v-else>{{ workspace.name }}</span>
+            <input
+              v-if="workspaceToRename === workspace.id"
+              ref="workspaceNameInput"
+              type="text"
+              v-model="newWorkspaceName"
+              @blur="stopRenamingWorkspace"
+              @keydown="(e) => e.key === 'Enter' && renameWorkspace(workspace.id)"
+            >
+            <span v-else>{{ workspace.name }}</span>
+          </div>
           <button
             v-if="deleteModeIsOn"
             class="delete-workspace"
-            @click="tryDeleteWorkspace(workspace)"
+            @click="(e) => tryDeleteWorkspace(e, workspace)"
           >x</button>
         </div>
       </template>
@@ -287,12 +290,8 @@ export default class Frame extends Vue {
     return this.$store.getters.activeWorkspaceId
   }
 
-  get activeWorkspace(): Workspace {
+  get activeWorkspace(): Workspace | undefined {
     return this.$store.getters.activeWorkspace
-  }
-
-  showWorkspace(workspaceId: string) {
-    return this.$store.getters.activeWorkspaceId === workspaceId
   }
 
   get allTilesOfActiveWorkspace(): Tile[] {
@@ -307,7 +306,7 @@ export default class Frame extends Vue {
     this.$store.dispatch('createNewWorkspace')
   }
 
-  tryDeleteWorkspace(workspace: Workspace) {
+  tryDeleteWorkspace(e: MouseEvent, workspace: Workspace) {
     const decision = window.confirm(`You are about to permanently delete workspace ${workspace.name}.`)
     if (decision) {
       this.deleteWorkspace(workspace.id)
@@ -514,6 +513,7 @@ export default class Frame extends Vue {
   }
 
   activatePreviousTabWorkspace() {
+    if (!this.activeWorkspace) return
     const workspace = this.getPreviousTabWorkspace(this.activeWorkspace)
     if (workspace) {
       this.activateWorkspace(workspace.id)
@@ -521,6 +521,7 @@ export default class Frame extends Vue {
   }
 
   activateNextTabWorkspace() {
+    if (!this.activeWorkspace) return
     const workspace = this.getNextTabWorkspace(this.activeWorkspace)
     if (workspace) {
       this.activateWorkspace(workspace.id)
