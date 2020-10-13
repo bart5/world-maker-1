@@ -162,6 +162,10 @@ export default class Frame extends Vue {
 
   draggedTabWorkspaceId = ''
 
+  workspaceCameras: {
+    [workspaceId: string]: Camera
+  } = {}
+
   get workspaceStyle() {
     const width = this.workspaceWidth
     const height = this.workspaceHeight
@@ -240,9 +244,8 @@ export default class Frame extends Vue {
     const centerY = 0.5 * (minY + maxY)
     if (this.workspaceScale >= 1) {
       this.boardElement.scrollTo(
-        /* Align to center of the viewport */
-        (centerX - (window.innerWidth * 0.5)) + this.workspaceWidth * (1 - this.workspaceScale),
-        (centerY - (window.innerHeight * 0.5)) + this.workspaceHeight * (1 - this.workspaceScale),
+        centerX - this.boardElement.clientWidth * 0.5,
+        centerY - this.boardElement.clientHeight * 0.5,
       )
     } else {
       this.boardElement.scrollBy(
@@ -314,11 +317,12 @@ export default class Frame extends Vue {
       lockView: false,
       lockedViewPosition: {},
       lockTiles: false,
+      lastSessionCamera: null
     }
   }
 
   onModulusChange(e: InputEvent) {
-    const newModulus = Number((e.target as HTMLInputElement).value)
+    const newModulus = Number((e.target as HTMLInputElement).value) || 1
     this.setWorkspaceConfig({ modulus: newModulus })
     this.snapTilesToModulus(newModulus)
     this.centerOnTiles()
@@ -329,7 +333,6 @@ export default class Frame extends Vue {
   }
 
   setWorkspaceConfig(newConfig: Partial<WorkspaceConfiguration>) {
-    console.log('dispatching new config: ', newConfig)
     this.$store.dispatch('setWorkspaceConfig', { workspaceId: this.activeWorkspaceId, newConfig })
   }
 
@@ -338,7 +341,11 @@ export default class Frame extends Vue {
   }
 
   activateWorkspace(workspaceId: string) {
+    this.saveCurrentWorkspaceCamera()
+    // window.setTimeout(() => {
+    //   })
     this.$store.dispatch('activateWorkspace', workspaceId)
+    this.setWorkspaceCamera()
   }
 
   createNewWorkspace() {
@@ -607,11 +614,36 @@ export default class Frame extends Vue {
     }
   }
 
+  saveCurrentWorkspaceCamera(workspaceId: string = this.activeWorkspaceId) {
+    const camera = {
+      x: this.boardElement.scrollLeft,
+      y: this.boardElement.scrollTop,
+      scale: this.workspaceScale
+    }
+    this.workspaceCameras[workspaceId] = camera
+  }
+
+  setWorkspaceCamera(workspaceId: string = this.activeWorkspaceId) {
+    const camera = this.workspaceCameras[workspaceId] || this.getLastSessionCamera()
+    if (!camera) {
+      this.centerOnTiles()
+      this.workspaceScale = 1
+      this.saveCurrentWorkspaceCamera(workspaceId)
+    } else {
+      this.boardElement.scrollTo(camera.x, camera.y)
+      this.workspaceScale = camera.scale
+    }
+  }
+
+  getLastSessionCamera(workspaceId?: string) {
+    return this.$store.getters.getLastSessionCamera(workspaceId)
+  }
+
   mounted() {
     if (!this.allTilesOfActiveWorkspace.length) {
       this.createNewTile()
     }
-    this.centerOnTiles()
+    this.setWorkspaceCamera(this.activeWorkspaceId)
     window.addEventListener('keydown', this.keyboardHandler)
   }
 }

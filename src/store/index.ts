@@ -29,6 +29,7 @@ const initialState: State = {
           lockView: false,
           lockedViewPosition: {},
           lockTiles: false,
+          lastSessionCamera: null,
         },
       }],
       tiles: [],
@@ -87,6 +88,15 @@ export default createStore({
     getInputSourceTileOfTile: (state, getters) => (tile: Tile) => getters.tileOfId(tile.inputSource),
     tileDeletionInProgress: (state) => state.ui.tileDeletionInProgress,
     workspaceDeletionInProgress: (state) => state.ui.workspaceDeletionInProgress,
+    getLastSessionCamera: (state, getters) => (workspaceId?: string) => {
+      let workspaceConfig: WorkspaceConfiguration
+      if (workspaceId) {
+        workspaceConfig = (state.ui.project.workspaces.find((w) => w.id === workspaceId) as Workspace).configuration
+      } else {
+        workspaceConfig = getters.activeWorkspace.configuration
+      }
+      return workspaceConfig.lastSessionCamera
+    },
   },
   mutations: {
     setSelectedTask(state, { questId, taskId }) {
@@ -139,6 +149,7 @@ export default createStore({
           lockView: false,
           lockedViewPosition: {},
           lockTiles: false,
+          lastSessionCamera: null,
         },
       })
     },

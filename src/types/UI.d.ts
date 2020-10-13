@@ -16,6 +16,7 @@ interface WorkspaceConfiguration {
   lockView: boolean;
   lockedViewPosition: {};
   lockTiles: boolean;
+  lastSessionCamera: Camera | null;
 }
 
 interface Block {
@@ -70,4 +71,10 @@ interface UIState {
 interface Coords {
   x: number,
   y: number
+}
+
+interface Camera {
+  x: number,
+  y: number,
+  scale: number,
 }
