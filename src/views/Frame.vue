@@ -3,9 +3,9 @@
     <div class="top-bar">
       <button :disabled="!activeWorkspace" @click="createNewTile">Create new tile</button>
       <button :disabled="!activeWorkspace" @click="centerOnTiles">Center view</button>
-      <button :disabled="!activeWorkspace" @click="zoomIn">Zoom in</button>
-      <button :disabled="!activeWorkspace" @click="resetZoom">Reset zoom</button>
-      <button :disabled="!activeWorkspace" @click="zoomOut">Zoom out</button>
+      <button :disabled="!activeWorkspace || disableZoom" @click="zoomIn">Zoom in</button>
+      <button :disabled="!activeWorkspace || disableZoom" @click="resetZoom">Reset zoom</button>
+      <button :disabled="!activeWorkspace || disableZoom" @click="zoomOut">Zoom out</button>
       <button :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
       |
       <div class="widget">
@@ -19,6 +19,11 @@
             :value="workspaceConfig.modulus"
             @input="onModulusChange"
           >
+        </label>
+      </div>
+      <div class="widget">
+        <label>Zoom lock:
+          <input type="checkbox" class="workspace-zoom-lock" :checked="workspaceConfig.lockZoom" @change="onZoomLockChange">
         </label>
       </div>
     </div>
@@ -274,14 +279,17 @@ export default class Frame extends Vue {
   }
 
   zoomOut() {
+    if (this.disableZoom) return
     this.workspaceScale -= 0.05
   }
 
   zoomIn() {
+    if (this.disableZoom) return
     this.workspaceScale += 0.05
   }
 
   resetZoom() {
+    if (this.disableZoom) return
     this.workspaceScale = 1
   }
 
@@ -327,6 +335,15 @@ export default class Frame extends Vue {
     this.setWorkspaceConfig({ modulus: newModulus })
     this.snapTilesToModulus(newModulus)
     this.centerOnTiles()
+  }
+
+  onZoomLockChange(e: InputEvent) {
+    const newValue = (e.target as HTMLInputElement).checked
+    this.setWorkspaceConfig({ lockZoom: newValue })
+  }
+
+  get disableZoom() {
+    return this.workspaceConfig.lockZoom
   }
 
   snapTilesToModulus(modulus: number) {
