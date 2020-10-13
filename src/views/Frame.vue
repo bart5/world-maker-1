@@ -7,6 +7,20 @@
       <button :disabled="!activeWorkspace" @click="resetZoom">Reset zoom</button>
       <button :disabled="!activeWorkspace" @click="zoomOut">Zoom out</button>
       <button :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
+      |
+      <div class="widget">
+        <label>Modulus
+          <input
+            type="number"
+            min="1"
+            step="1"
+            max="50"
+            class="workspace-modulus"
+            :value="workspaceConfig.modulus"
+            @input="(e) => setWorkspaceConfig({ modulus: Number(e.target.value) })"
+          >
+        </label>
+      </div>
     </div>
     <div class="workspace-selector">
       <template
@@ -90,7 +104,7 @@
             <TileComponent
               :id="tile.id"
               :scale="workspaceScale"
-              :relativeMousePosition="relativeMousePosition"
+              :relativeMousePosition="relativeMousePositionModularized"
               @connecting="(e) => updateRelativeMousePosition(e)"
               @start-drag="dragInProgress = true"
               @stop-drag="dragInProgress = false"
@@ -119,6 +133,12 @@ import Curve from '@/views/Curve.vue'
 })
 export default class Frame extends Vue {
   relativeMousePosition = {
+    x: 0,
+    y: 0,
+  }
+
+  /* Adheres to workspace module */
+  relativeMousePositionModularized = {
     x: 0,
     y: 0,
   }
@@ -278,10 +298,6 @@ export default class Frame extends Vue {
     return this.$refs.board as HTMLElement
   }
 
-  get tabElements() {
-    return this.$refs.tab as Array<HTMLElement>
-  }
-
   getWorkspaceNameInputElement() {
     return this.$refs.workspaceNameInput as HTMLInputElement
   }
@@ -292,6 +308,23 @@ export default class Frame extends Vue {
 
   get activeWorkspace(): Workspace | undefined {
     return this.$store.getters.activeWorkspace
+  }
+
+  get workspaceConfig(): WorkspaceConfiguration {
+    return this.activeWorkspace?.configuration || {
+      modulus: 1,
+      fitToContent: false,
+      lockZoom: false,
+      lockedZoom: 1,
+      lockView: false,
+      lockedViewPosition: {},
+      lockTiles: false,
+    }
+  }
+
+  setWorkspaceConfig(newConfig: Partial<WorkspaceConfiguration>) {
+    console.log('dispatching new config: ', newConfig)
+    this.$store.dispatch('setWorkspaceConfig', { workspaceId: this.activeWorkspaceId, newConfig })
   }
 
   get allTilesOfActiveWorkspace(): Tile[] {
@@ -509,6 +542,10 @@ export default class Frame extends Vue {
     this.relativeMousePosition = {
       x: newPositionX,
       y: newPositionY
+    }
+    this.relativeMousePositionModularized = {
+      x: newPositionX - (newPositionX % this.workspaceConfig.modulus),
+      y: newPositionY - (newPositionY % this.workspaceConfig.modulus)
     }
   }
 

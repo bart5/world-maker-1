@@ -21,6 +21,15 @@ const initialState: State = {
         id: '0',
         name: 'New Workspace',
         order: 1,
+        configuration: {
+          modulus: 1,
+          fitToContent: false,
+          lockZoom: false,
+          lockedZoom: 1,
+          lockView: false,
+          lockedViewPosition: {},
+          lockTiles: false,
+        },
       }],
       tiles: [],
       staticDataPath: '',
@@ -108,9 +117,6 @@ export default createStore({
         }
       })
     },
-    // setTileFilter(state) {
-
-    // },
     ACTIVATE_WORKSPACE(state, workspaceId: string) {
       if (workspaceId) {
         state.ui.project.activeWorkspaceId = workspaceId
@@ -125,6 +131,15 @@ export default createStore({
         id: workspaceId,
         name: 'New Workspace' + (state.ui.project.workspaces.length + 1),
         order,
+        configuration: {
+          modulus: 1,
+          fitToContent: false,
+          lockZoom: false,
+          lockedZoom: 1,
+          lockView: false,
+          lockedViewPosition: {},
+          lockTiles: false,
+        },
       })
     },
     RESIZE_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
@@ -207,6 +222,15 @@ export default createStore({
       const rightPosition = workspaceToMoveLeft.order
       workspaceToMoveLeft.order = leftPosition
       workspaceToMoveRight.order = rightPosition
+    },
+    SET_WORKSPACE_CONFIG(state, { workspaceId, newConfig }) {
+      const workspace = state.ui.project.workspaces.find((w) => w.id === workspaceId)
+      if (!workspace) return
+      workspace.configuration = {
+        ...workspace.configuration,
+        ...newConfig
+      }
+      console.log('set workspace config to: ', workspace.configuration)
     },
   },
   actions: {
@@ -312,6 +336,9 @@ export default createStore({
     },
     swapWorkspacesOrder(state, { workspaceToMoveLeft, workspaceToMoveRight }) {
       this.commit('SWAP_WORKSPACES_ORDER', { workspaceToMoveLeft, workspaceToMoveRight })
+    },
+    setWorkspaceConfig(state, { workspaceId, newConfig }) {
+      this.commit('SET_WORKSPACE_CONFIG', { workspaceId, newConfig })
     },
   },
   modules: {

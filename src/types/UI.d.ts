@@ -5,6 +5,17 @@ interface Workspace {
   id: workspaceId;
   name: string;
   order: number;
+  configuration: WorkspaceConfiguration
+}
+
+interface WorkspaceConfiguration {
+  modulus: number;
+  fitToContent: boolean;
+  lockZoom: boolean;
+  lockedZoom: number;
+  lockView: boolean;
+  lockedViewPosition: {};
+  lockTiles: boolean;
 }
 
 interface Block {
