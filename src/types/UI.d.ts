@@ -11,8 +11,8 @@ interface Workspace {
 interface WorkspaceConfiguration {
   modulus: number;
   fitToContent: boolean;
-  lockZoom: boolean;
-  lockedZoom: number;
+  lockScale: boolean;
+  lockedScale: number;
   lockView: boolean;
   lockedViewPosition: {};
   lockTiles: boolean;

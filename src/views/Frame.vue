@@ -16,14 +16,19 @@
             step="1"
             max="50"
             class="workspace-modulus"
-            :value="workspaceConfig.modulus"
+            v-model="workspaceConfig.modulus"
             @input="onModulusChange"
           >
         </label>
       </div>
       <div class="widget">
         <label>Zoom lock:
-          <input type="checkbox" class="workspace-zoom-lock" :checked="workspaceConfig.lockZoom" @change="onZoomLockChange">
+          <input type="checkbox" class="workspace-zoom-lock" v-model="workspaceConfig.lockScale" @change="onZoomLockChange">
+        </label>
+      </div>
+      <div class="widget">
+        <label>Anchor view:
+          <input type="checkbox" class="workspace-view-lock" v-model="workspaceConfig.lockView" @change="onViewLockChange">
         </label>
       </div>
     </div>
@@ -216,13 +221,19 @@ export default class Frame extends Vue {
     this.$store.dispatch('startWorkspaceDeletion')
   }
 
+  setBoardScroll(coords: Coords) {
+    this.boardElement.scrollTo(coords.x, coords.y)
+  }
+
   centerOnWorkspaceCenter() {
     const x = this.workspaceWidth * 0.5 - this.boardElement.offsetWidth * 0.5
     const y = this.workspaceHeight * 0.5 - this.boardElement.offsetHeight * 0.5
-    this.boardElement.scrollTo(x, y)
+    this.setBoardScroll({ x, y })
   }
 
   centerOnTiles() {
+    if (this.workspaceConfig.lockView) return
+
     if (!this.allTilesOfActiveWorkspace.length) {
       this.centerOnWorkspaceCenter()
       return
@@ -318,11 +329,16 @@ export default class Frame extends Vue {
   }
 
   get workspaceConfig(): WorkspaceConfiguration {
-    return this.activeWorkspace?.configuration || {
+    if (this.activeWorkspace) {
+      return {
+        ...this.activeWorkspace.configuration
+      }
+    }
+    return {
       modulus: 1,
       fitToContent: false,
-      lockZoom: false,
-      lockedZoom: 1,
+      lockScale: false,
+      lockedScale: 1,
       lockView: false,
       lockedViewPosition: {},
       lockTiles: false,
@@ -330,20 +346,33 @@ export default class Frame extends Vue {
     }
   }
 
-  onModulusChange(e: InputEvent) {
-    const newModulus = Number((e.target as HTMLInputElement).value) || 1
+  onModulusChange() {
+    const newModulus = this.workspaceConfig.modulus
     this.setWorkspaceConfig({ modulus: newModulus })
     this.snapTilesToModulus(newModulus)
     this.centerOnTiles()
   }
 
-  onZoomLockChange(e: InputEvent) {
-    const newValue = (e.target as HTMLInputElement).checked
-    this.setWorkspaceConfig({ lockZoom: newValue })
+  onZoomLockChange() {
+    const newValue = this.workspaceConfig.lockScale
+    this.setWorkspaceConfig({ lockScale: newValue, lockedScale: this.workspaceScale })
+  }
+
+  onViewLockChange() {
+    const newValue = this.workspaceConfig.lockView
+    const currentViewPosition = {
+      x: this.boardElement.scrollLeft,
+      y: this.boardElement.scrollTop
+    }
+    this.setWorkspaceConfig({ lockView: newValue, lockedViewPosition: currentViewPosition })
   }
 
   get disableZoom() {
-    return this.workspaceConfig.lockZoom
+    return this.workspaceConfig.lockScale
+  }
+
+  get disableViewChange() {
+    return this.workspaceConfig.lockView
   }
 
   snapTilesToModulus(modulus: number) {
@@ -447,6 +476,7 @@ export default class Frame extends Vue {
   onMousemove(e: MouseEvent) {
     if (!this.watchMouseMove) return
     if (this.draggingBoard) {
+      if (this.workspaceConfig.lockView) return
       this.boardElement.scrollBy(
         e.movementX < 0 ? -0.95 * e.movementX : -0.9 * e.movementX,
         e.movementY < 0 ? -0.95 * e.movementY : -0.9 * e.movementY
@@ -646,7 +676,7 @@ export default class Frame extends Vue {
       this.workspaceScale = 1
       this.saveCurrentWorkspaceCamera(workspaceId)
     } else {
-      this.boardElement.scrollTo(camera.x, camera.y)
+      this.setBoardScroll({ x: camera.x, y: camera.y })
       this.workspaceScale = camera.scale
     }
   }
@@ -688,6 +718,10 @@ export default class Frame extends Vue {
     align-items: center;
     font-size: 14px;
     color: black;
+
+    .workspace-modulus {
+      width: 42px;
+    }
   }
 }
 

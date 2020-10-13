@@ -24,8 +24,8 @@ const initialState: State = {
         configuration: {
           modulus: 1,
           fitToContent: false,
-          lockZoom: false,
-          lockedZoom: 1,
+          lockScale: false,
+          lockedScale: 1,
           lockView: false,
           lockedViewPosition: {},
           lockTiles: false,
@@ -144,8 +144,8 @@ export default createStore({
         configuration: {
           modulus: 1,
           fitToContent: false,
-          lockZoom: false,
-          lockedZoom: 1,
+          lockScale: false,
+          lockedScale: 1,
           lockView: false,
           lockedViewPosition: {},
           lockTiles: false,
