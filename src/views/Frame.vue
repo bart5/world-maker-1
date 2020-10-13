@@ -9,7 +9,7 @@
       <button :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
       |
       <div class="widget">
-        <label>Modulus
+        <label>Mod:
           <input
             type="number"
             min="1"
@@ -17,7 +17,7 @@
             max="50"
             class="workspace-modulus"
             :value="workspaceConfig.modulus"
-            @input="(e) => setWorkspaceConfig({ modulus: Number(e.target.value) })"
+            @input="onModulusChange"
           >
         </label>
       </div>
@@ -104,7 +104,8 @@
             <TileComponent
               :id="tile.id"
               :scale="workspaceScale"
-              :relativeMousePosition="relativeMousePositionModularized"
+              :modulus="workspaceConfig.modulus"
+              :relativeMousePosition="relativeMousePosition"
               @connecting="(e) => updateRelativeMousePosition(e)"
               @start-drag="dragInProgress = true"
               @stop-drag="dragInProgress = false"
@@ -133,12 +134,6 @@ import Curve from '@/views/Curve.vue'
 })
 export default class Frame extends Vue {
   relativeMousePosition = {
-    x: 0,
-    y: 0,
-  }
-
-  /* Adheres to workspace module */
-  relativeMousePositionModularized = {
     x: 0,
     y: 0,
   }
@@ -322,6 +317,17 @@ export default class Frame extends Vue {
     }
   }
 
+  onModulusChange(e: InputEvent) {
+    const newModulus = Number((e.target as HTMLInputElement).value)
+    this.setWorkspaceConfig({ modulus: newModulus })
+    this.snapTilesToModulus(newModulus)
+    this.centerOnTiles()
+  }
+
+  snapTilesToModulus(modulus: number) {
+    this.$store.dispatch('snapWorkspaceTilesToModulus', { workspaceId: this.activeWorkspaceId, modulus })
+  }
+
   setWorkspaceConfig(newConfig: Partial<WorkspaceConfiguration>) {
     console.log('dispatching new config: ', newConfig)
     this.$store.dispatch('setWorkspaceConfig', { workspaceId: this.activeWorkspaceId, newConfig })
@@ -370,7 +376,13 @@ export default class Frame extends Vue {
 
   createNewTile() {
     if (this.allTilesOfActiveWorkspace.length) {
-      this.$store.dispatch('createNewTile')
+      const minDistance = 20
+      this.$store.dispatch('createNewTile', {
+        x: this.workspaceConfig.modulus < minDistance
+          ? minDistance + (minDistance % this.workspaceConfig.modulus)
+          : this.workspaceConfig.modulus,
+        y: 0
+      })
       return
     }
     this.$store.dispatch('createNewTile', {
@@ -543,10 +555,6 @@ export default class Frame extends Vue {
       x: newPositionX,
       y: newPositionY
     }
-    this.relativeMousePositionModularized = {
-      x: newPositionX - (newPositionX % this.workspaceConfig.modulus),
-      y: newPositionY - (newPositionY % this.workspaceConfig.modulus)
-    }
   }
 
   activatePreviousTabWorkspace() {
@@ -626,6 +634,13 @@ export default class Frame extends Vue {
   width: 100%;
   height: 24px;
   background-color: darkgray;
+
+  .widget {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: black;
+  }
 }
 
 .board-wrapper {

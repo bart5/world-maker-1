@@ -26,6 +26,8 @@
     <div class="tile">
       <div class="section data-section" v-if="sectionToShow === dataSection">
         Data section
+        {{ self.x }}
+        {{ self.y }}
       </div>
       <div class="section filters-section" v-else-if="sectionToShow === filtersSection">
         Filters section
@@ -55,6 +57,8 @@ export default class TileComponent extends Vue {
   @Prop() id!: string
 
   @Prop() scale!: number
+
+  @Prop() modulus!: number
 
   @Prop() relativeMousePosition!: {
     x: number,
@@ -208,13 +212,21 @@ export default class TileComponent extends Vue {
   }
 
   resizeHandler() {
-    this.$store.dispatch('resizeTile', { tileId: this.id, newPosition: this.relativeMousePosition })
+    const newPositionX = this.relativeMousePosition.x
+    const newPositionY = this.relativeMousePosition.y
+    const newPosition = {
+      x: newPositionX - (newPositionX % this.modulus),
+      y: newPositionY - (newPositionY % this.modulus)
+    }
+    this.$store.dispatch('resizeTile', { tileId: this.id, newPosition })
   }
 
   dragHandler() {
+    const newPositionX = this.relativeMousePosition.x - this.grabPosition.x
+    const newPositionY = this.relativeMousePosition.y - this.grabPosition.y
     const newPosition = {
-      x: this.relativeMousePosition.x - this.grabPosition.x,
-      y: this.relativeMousePosition.y - this.grabPosition.y
+      x: newPositionX - (newPositionX % this.modulus),
+      y: newPositionY - (newPositionY % this.modulus)
     }
     this.$store.dispatch('dragTile', { tileId: this.id, newPosition })
   }

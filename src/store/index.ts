@@ -230,7 +230,21 @@ export default createStore({
         ...workspace.configuration,
         ...newConfig
       }
-      console.log('set workspace config to: ', workspace.configuration)
+    },
+    SNAP_WORKSPACE_TILES_TO_MODULUS(state, { workspaceId, modulus }) {
+      const workspace = state.ui.project.workspaces.find((w) => w.id === workspaceId)
+      if (!workspace) return
+      const alignToModulus = (n: number, mod: number) => {
+        return n - (n % mod)
+      }
+      state.ui.project.tiles.forEach((t) => {
+        if (t.workspaceId === workspaceId) {
+          t.x = alignToModulus(t.x, modulus)
+          t.y = alignToModulus(t.y, modulus)
+          t.width = alignToModulus(t.width, modulus)
+          t.height = alignToModulus(t.height, modulus)
+        }
+      })
     },
   },
   actions: {
@@ -339,6 +353,9 @@ export default createStore({
     },
     setWorkspaceConfig(state, { workspaceId, newConfig }) {
       this.commit('SET_WORKSPACE_CONFIG', { workspaceId, newConfig })
+    },
+    snapWorkspaceTilesToModulus(state, { workspaceId, modulus }) {
+      this.commit('SNAP_WORKSPACE_TILES_TO_MODULUS', { workspaceId, modulus })
     },
   },
   modules: {

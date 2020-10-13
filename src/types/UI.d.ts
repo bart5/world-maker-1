@@ -66,3 +66,8 @@ interface UIState {
   workspaceDeletionInProgress: boolean;
   selectedInputSourceTile: tileId;
 }
+
+interface Coords {
+  x: number,
+  y: number
+}
