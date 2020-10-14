@@ -55,20 +55,20 @@ const minTileSize = {
 export default createStore({
   state: initialState,
   getters: {
-    selectedTask: (state, getters) => {
-      if (!state.selectedTask) return {}
-      const { questId, taskId } = state.selectedTask
-      return getters.task(questId, taskId)
-    },
-    task: (state) => (questId: string, taskId: string) => {
-      return state.staticData.tasks[questId][taskId]
-    },
-    quest: (state) => (questId: string) => {
-      return state.staticData.quests[questId]
-    },
-    allQuests: (state) => state.staticData.quests,
-    loadingStaticData: (state) => state.loadingStaticData,
-    staticData: (state) => state.staticData,
+    // selectedTask: (state, getters) => {
+    //   if (!state.selectedTask) return {}
+    //   const { questId, taskId } = state.selectedTask
+    //   return getters.task(questId, taskId)
+    // },
+    // task: (state) => (questId: string, taskId: string) => {
+    //   return state.staticData.tasks[questId][taskId]
+    // },
+    // quest: (state) => (questId: string) => {
+    //   return state.staticData.quests[questId]
+    // },
+    // allQuests: (state) => state.staticData.quests,
+    // loadingStaticData: (state) => state.loadingStaticData,
+    // staticData: (state) => state.staticData,
     workspaces: (state) => state.project.workspaces,
     activeWorkspaceId: (state) => state.project.activeWorkspaceId,
     activeWorkspace: (state) => state.project.workspaces.filter((ws) => ws.id === state.project.activeWorkspaceId)[0],
@@ -103,15 +103,15 @@ export default createStore({
     showConfigurationModal: (state) => state.ui.showConfigurationModal
   },
   mutations: {
-    setSelectedTask(state, { questId, taskId }) {
-      state.selectedTask = { questId, taskId }
-    },
-    setStaticData(state, data: StaticData) {
-      state.staticData = data;
-    },
-    setLoadingStaticData(state, flag: boolean) {
-      state.loadingStaticData = flag
-    },
+    // setSelectedTask(state, { questId, taskId }) {
+    //   state.selectedTask = { questId, taskId }
+    // },
+    // setStaticData(state, data: StaticData) {
+    //   state.staticData = data;
+    // },
+    // setLoadingStaticData(state, flag: boolean) {
+    //   state.loadingStaticData = flag
+    // },
     CREATE_NEW_TILE(state, { workspaceId, tileId, position }) {
       state.project.tiles.push({
         id: tileId,

@@ -1,12 +1,26 @@
 <template>
-  <!-- <div id="nav">
-    <router-link to="/">World Map</router-link> |
-    <router-link to="/">Loader</router-link> |
-    <router-link to="/quest">Quest</router-link> |
-    <router-link to="/about">About</router-link>
-  </div> -->
-  <router-view/>
+  <Frame/>
+  <ConfigModal/>
+  <ProjectLoader/>
+  <!-- <router-view/> -->
 </template>
+
+<script lang="ts">
+import { Options, Vue } from 'vue-class-component'
+import Frame from '@/views/Frame.vue';
+import ConfigModal from '@/views/ConfigModal.vue';
+import ProjectLoader from '@/views/ProjectLoader.vue';
+
+@Options({
+  components: {
+    Frame,
+    ConfigModal,
+    ProjectLoader
+  },
+})
+export default class App extends Vue {
+}
+</script>
 
 <style lang="scss">
 @import '@/style/global.scss';

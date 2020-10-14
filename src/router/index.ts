@@ -1,39 +1,28 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-// import ProjectLoader from '../views/ProjectLoader.vue';
-// import Quest from '../views/Quest.vue';
 import Frame from '../views/Frame.vue';
-// import CurveTest from '../views/CurveTest.vue';
-// import WorldMap from '../views/WorldMap.vue';
+import ConfigModal from '../views/ConfigModal.vue';
 
 const routes: Array<RouteRecordRaw> = [
-  // {
-  //   path: '/',
-  //   name: 'CurveTest',
-  //   component: CurveTest,
-  // },
   {
     path: '/',
     name: 'Frame',
     component: Frame,
+    children: [
+      {
+        path: ':configuration',
+        name: 'ConfigModal',
+        component: ConfigModal,
+      }
+    ]
   },
   // {
-  //   path: '/quest',
-  //   name: 'Quest',
-  //   component: Quest,
+  //   path: '/about',
+  //   name: 'About',
+  //   // route level code-splitting
+  //   // this generates a separate chunk (about.[hash].js) for this route
+  //   // which is lazy-loaded when the route is visited.
+  //   component: () => import(/* webpackChunkName: "about" */ '../views/About.vue'),
   // },
-  // {
-  //   path: '/',
-  //   name: 'WorldMap',
-  //   component: WorldMap,
-  // },
-  {
-    path: '/about',
-    name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue'),
-  },
 ];
 
 const router = createRouter({

@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-wrapper" v-if="show">
+  <div class="modal-wrapper" v-if="showConfigurationModal">
     <div class="config-modal">
       <div class="input-wrapper">
         <div class="label">Project name</div>
@@ -37,13 +37,14 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class ConfigModal extends Vue {
-  initialProjectConfig: ProjectConfig = {
-    ...this.$store.getters.currentProjectConfig
-  }
+  initialProjectConfig: ProjectConfig | null = null
 
   get isDirty() {
+    if (this.initialProjectConfig === null) {
+      throw Error('Config is null')
+    }
     return (Object.keys(this.projectConfig) as Array<keyof ProjectConfig>).some((k) => {
-      return this.initialProjectConfig[k] !== this.projectConfig[k]
+      return (this.initialProjectConfig as ProjectConfig)[k] !== this.projectConfig[k]
     })
   }
 
@@ -51,6 +52,10 @@ export default class ConfigModal extends Vue {
     return {
       ...this.$store.getters.currentProjectConfig
     }
+  }
+
+  get showConfigurationModal() {
+    return this.$store.getters.showConfigurationModal
   }
 
   saveProjectConfig() {
@@ -66,11 +71,19 @@ export default class ConfigModal extends Vue {
     }
     this.$store.dispatch('closeConfigurationModal')
   }
+
+  mounted() {
+    console.log('modal mounted')
+    this.initialProjectConfig = {
+      ...this.$store.getters.currentProjectConfig
+    }
+  }
 }
 </script>
 
 <style lang="scss">
 .modal-wrapper {
+  z-index: 1000;
   position: fixed;
   width: 100%;
   height: 100%;

@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { ipcMain, WebContents } from 'electron'
 import fs from 'fs'
 
 /* TODO: Figure out later better placemed */
@@ -53,29 +53,35 @@ function saveFile(path: string, data: {}) {
   })
 }
 
-export const emitters = {
+export const emittersFactory = (contents: WebContents) => ({
   onStartNewProject() {
-    ipcMain.emit('startNewProject')
+    contents.send('startNewProject')
   },
   onOpenProject() {
-    ipcMain.emit('openExistingProject')
+    contents.send('openExistingProject')
   },
   onSave() {
-    ipcMain.emit('saveProject')
+    contents.send('saveProject')
   },
   onSaveAs() {
-    ipcMain.emit('saveProjectAs')
+    contents.send('saveProjectAs')
   },
   onConfiguration() {
-    ipcMain.emit('showCurrentProjectConfiguration')
+    console.log('sending show modal signal')
+    contents.send('showCurrentProjectConfiguration')
   },
   onClose() {
-    ipcMain.emit('closeApplication')
+    contents.send('closeApplication')
   },
-}
+})
 
 export default function setupCommunicaton() {
   console.log('setting up ipc communication')
+
+  ipcMain.on('ipcTest', (event) => {
+    console.log('received ipc message')
+    operationWrapper(event, 'ipcTest', new Promise((resolve) => resolve('well done')))
+  })
 
   ipcMain.on('loadStateData', (event) => {
     operationWrapper(event, 'loadStateData', loadFile(stateDataPath))

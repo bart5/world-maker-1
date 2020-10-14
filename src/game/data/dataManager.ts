@@ -38,8 +38,17 @@ function saveProjectStaticData() {
   /*  */
 }
 
+(window as any).ipcTest = () => {
+  window.ipcRenderer.send('ipcTest')
+}
+
 export const initializeDataManager = (vm: Vue) => {
-  vm.$store.dispatch('setStaticData')
+  console.log('Setting IPC listeners')
+  // vm.$store.dispatch('setStaticData')
+
+  window.ipcRenderer.on('ipcTest-reply', (event, data: any, opType: string) => {
+    console.log(`Response to ${opType}, received data: ${data}`)
+  })
 
   window.ipcRenderer.on('loadStaticData-reply', (event, data: StaticData) => {
     console.log('on loadStaticData-reply, received data:, ', data)
@@ -67,7 +76,8 @@ export const initializeDataManager = (vm: Vue) => {
   })
 
   window.ipcRenderer.on('showCurrentProjectConfiguration', () => {
-    vm.$store.dispatch('setStaticData')
+    console.log('received show modal signal')
+    vm.$store.dispatch('openConfigurationModal')
   })
 
   window.ipcRenderer.on('closeApplication', () => {
