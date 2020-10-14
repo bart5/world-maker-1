@@ -54,11 +54,11 @@ function saveFile(path: string, data: {}) {
 }
 
 export const emitters = {
-  onConfiguration() {
-    ipcMain.emit('showCurrentProjectConfiguration')
+  onStartNewProject() {
+    ipcMain.emit('startNewProject')
   },
-  onClose() {
-    ipcMain.emit('closeApplication')
+  onOpenProject() {
+    ipcMain.emit('openExistingProject')
   },
   onSave() {
     ipcMain.emit('saveProject')
@@ -66,11 +66,11 @@ export const emitters = {
   onSaveAs() {
     ipcMain.emit('saveProjectAs')
   },
-  onOpenProject() {
-    ipcMain.emit('openExistingProject')
+  onConfiguration() {
+    ipcMain.emit('showCurrentProjectConfiguration')
   },
-  onStartNewProject() {
-    ipcMain.emit('startNewProject')
+  onClose() {
+    ipcMain.emit('closeApplication')
   },
 }
 

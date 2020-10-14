@@ -2,34 +2,28 @@
   <div class="modal-wrapper" v-if="show">
     <div class="config-modal">
       <div class="input-wrapper">
-        <label>Project name
-          <input type="text" v-model="projectConfig.name">
-        </label>
+        <div class="label">Project name</div>
+        <input type="text" v-model="projectConfig.name">
       </div>
       <div class="input-wrapper">
-        <label>Local save path
-          <input type="text" v-model="projectConfig.localSavePath">
-        </label>
+        <div class="label">Local save path</div>
+        <input type="text" v-model="projectConfig.localSavePath">
       </div>
       <div class="input-wrapper">
-        <label>Remote save path
-          <input type="text" v-model="projectConfig.remoteSavePath">
-        </label>
+        <div class="label">Remote save path</div>
+        <input type="text" v-model="projectConfig.remoteSavePath">
       </div>
       <div class="input-wrapper">
-        <label>Use autosaves
-            <input type="checkbox" v-model="projectConfig.allowAutosave">
-        </label>
+        <div class="label">Use autosaves</div>
+        <input type="checkbox" v-model="projectConfig.allowAutosave">
       </div>
       <div class="input-wrapper">
-        <label>Autosave prefix
-            <input type="text" v-model="projectConfig.autosavePrefix">
-        </label>
+        <div class="label">Autosave prefix</div>
+        <input type="text" v-model="projectConfig.autosavePrefix">
       </div>
       <div class="input-wrapper">
-        <label>Autosave interval
-            <input type="number" v-model="projectConfig.autosaveInterval">
-        </label>
+        <div class="label">Autosave interval</div>
+        <input type="number" v-model="projectConfig.autosaveInterval">
       </div>
     </div>
   </div>
@@ -43,21 +37,34 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class ConfigModal extends Vue {
-  dirty = false
+  initialProjectConfig: ProjectConfig = {
+    ...this.$store.getters.currentProjectConfig
+  }
 
-  projectConfig: ProjectConfig = {
-    name: '',
-    id: '',
-    localSavePath: '',
-    remoteSavePath: '',
-    autosavePrefix: 'auto_',
-    allowAutosave: true,
-    autosaveInterval: 5,
+  get isDirty() {
+    return (Object.keys(this.projectConfig) as Array<keyof ProjectConfig>).some((k) => {
+      return this.initialProjectConfig[k] !== this.projectConfig[k]
+    })
+  }
+
+  get projectConfig(): ProjectConfig {
+    return {
+      ...this.$store.getters.currentProjectConfig
+    }
   }
 
   saveProjectConfig() {
-    if (!this.dirty) return
     this.$store.dispatch('saveProjectConfig', this.projectConfig)
+  }
+
+  closeModal() {
+    if (this.isDirty) {
+      const decision = window.confirm('You have unsaved changes. Close anyway?')
+      if (decision) {
+        this.$store.dispatch('closeConfigurationModal')
+      }
+    }
+    this.$store.dispatch('closeConfigurationModal')
   }
 }
 </script>

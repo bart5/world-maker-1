@@ -41,6 +41,7 @@ const initialState: State = {
     tileDeletionInProgress: false,
     workspaceDeletionInProgress: false,
     selectedInputSourceTile: '',
+    showConfigurationModal: false,
   }
 }
 
@@ -97,6 +98,7 @@ export default createStore({
       }
       return workspaceConfig.lastSessionCamera
     },
+    showConfigurationModal: (state) => state.ui.showConfigurationModal
   },
   mutations: {
     setSelectedTask(state, { questId, taskId }) {
@@ -256,6 +258,12 @@ export default createStore({
           t.height = alignToModulus(t.height, modulus)
         }
       })
+    },
+    OPEN_CONFIGURATION_MODAL(state) {
+      state.ui.showConfigurationModal = true
+    },
+    CLOSE_CONFIGURATION_MODAL(state) {
+      state.ui.showConfigurationModal = false
     },
   },
   actions: {

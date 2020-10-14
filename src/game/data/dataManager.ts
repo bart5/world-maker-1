@@ -49,6 +49,30 @@ export const initializeDataManager = (vm: Vue) => {
   window.ipcRenderer.on('saveStaticData-reply', (event, arg) => {
     console.log('on saveStaticData-reply, result:, ', arg)
   })
+
+  window.ipcRenderer.on('startNewProject', () => {
+    vm.$store.dispatch('setStaticData')
+  })
+
+  window.ipcRenderer.on('openExistingProject', () => {
+    vm.$store.dispatch('setStaticData')
+  })
+
+  window.ipcRenderer.on('saveProject', () => {
+    vm.$store.dispatch('setStaticData')
+  })
+
+  window.ipcRenderer.on('saveProjectAs', () => {
+    vm.$store.dispatch('setStaticData')
+  })
+
+  window.ipcRenderer.on('showCurrentProjectConfiguration', () => {
+    vm.$store.dispatch('setStaticData')
+  })
+
+  window.ipcRenderer.on('closeApplication', () => {
+    vm.$store.dispatch('setStaticData')
+  })
 }
 
 const quests: {
