@@ -1,8 +1,8 @@
-import { app, protocol, BrowserWindow } from 'electron';
+import { app, protocol, BrowserWindow, Menu } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
-import { setupCommunicaton } from './ipcHandling';
 import path from 'path'
+import setupCommunicaton from './ipcHandling';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -29,6 +29,57 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     },
   });
+
+  /*
+    Ask for new project name and file paths
+    Do close current project operation
+      Check for unsaved data and if is any then notify and ask for saving
+    Remove old project as current and display new one with a blank workspace
+  */
+  function onNewProject() {
+  /*  */
+  }
+
+  /*
+    Show modal and ask for project files location
+    Do close current project operation...
+    Remove previous project and load a new one
+  */
+  function onOpenProject() {
+  /*  */
+  }
+
+  function onSave() {
+  /*  */
+  }
+
+  function onSaveAs() {
+  /*  */
+  }
+
+  function onConfiguration() {
+  /*  */
+  }
+
+  function onExit() {
+  /*  */
+  }
+
+  const menu = Menu.buildFromTemplate([
+    {
+      label: 'Menu',
+      submenu: [
+        { label: 'Create New Project', click() { onNewProject() } },
+        { label: 'Open Project', click() { onOpenProject() } },
+        { label: 'Save', click() { onSave() } },
+        { label: 'Save As', click() { onSaveAs() } },
+        { label: 'Configuration', click() { onConfiguration() } },
+        { label: 'Exit', click() { onExit() } }
+      ]
+    }
+  ])
+
+  Menu.setApplicationMenu(menu);
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode

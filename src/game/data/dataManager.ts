@@ -6,6 +6,26 @@ import { Vue } from 'vue-class-component'
  * when it's edited, added or deleted.
  */
 
+function closeCurrentProject() {
+  /*  */
+}
+
+function onApplicationLoad() {
+  /*  */
+}
+
+function loadApplicationData() {
+  /*  */
+}
+
+function loadProjectConfig() {
+  /*  */
+}
+
+function loadProjectData() {
+  /*  */
+}
+
 export const initializeDataManager = (vm: Vue) => {
   vm.$store.dispatch('setStaticData')
 

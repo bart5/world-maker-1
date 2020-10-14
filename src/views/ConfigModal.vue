@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-wrapper">
+  <div class="modal-wrapper" v-if="show">
     <div class="config-modal">
       <div class="input-wrapper">
         <label>Project name

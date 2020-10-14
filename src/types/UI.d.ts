@@ -8,7 +8,7 @@ interface ProjectRef {
   projectConfigPath: string;
 }
 
-interface AppData {
+interface ApplicationData {
   projects: {
     [projectId: string]: ProjectRef
   };
