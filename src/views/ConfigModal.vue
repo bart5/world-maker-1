@@ -1,109 +1,34 @@
 <template>
   <div class="modal-wrapper">
     <div class="config-modal">
-      <hr>
-      <h4>Project name</h4>
       <div class="input-wrapper">
         <label>Project name
-          <input type="text">
-        </label>
-      </div>
-      <hr>
-      <h4>Save paths</h4>
-      <h5>Manual save paths</h5>
-      <h6>Local saves</h6>
-      <div class="input-wrapper">
-        <label>Use single path
-          <input type="checkbox">
+          <input type="text" v-model="projectConfig.name">
         </label>
       </div>
       <div class="input-wrapper">
-        <label>Path
-          <input type="text">
-        </label>
-      </div>
-      <div class="input-group">
-        <div class="input-wrapper">
-          <label>Project config path
-              <input type="text">
-          </label>
-        </div>
-        <div class="input-wrapper">
-          <label>Static Data path
-              <input type="text">
-          </label>
-        </div>
-        <div class="input-wrapper">
-          <label>Static Data mappings
-              <input type="text">
-          </label>
-        </div>
-      </div>
-      <h6>Cloud saves</h6>
-      <div class="input-wrapper">
-        <label>Use single path
-          <input type="checkbox">
+        <label>Local save path
+          <input type="text" v-model="projectConfig.localSavePath">
         </label>
       </div>
       <div class="input-wrapper">
-        <label>Path
-          <input type="text">
-        </label>
-      </div>
-      <div class="input-group">
-        <div class="input-wrapper">
-          <label>Project config path
-              <input type="text">
-          </label>
-        </div>
-        <div class="input-wrapper">
-          <label>Static Data path
-              <input type="text">
-          </label>
-        </div>
-        <div class="input-wrapper">
-          <label>Static Data mappings
-              <input type="text">
-          </label>
-        </div>
-      </div>
-      <h5>Auto save paths</h5>
-      <div class="input-wrapper">
-        <label>Use single path
-          <input type="checkbox">
+        <label>Remote save path
+          <input type="text" v-model="projectConfig.remoteSavePath">
         </label>
       </div>
       <div class="input-wrapper">
-        <label>Path
-          <input type="text">
+        <label>Use autosaves
+            <input type="checkbox" v-model="projectConfig.allowAutosave">
         </label>
       </div>
-      <div class="input-group">
-        <div class="input-wrapper">
-          <label>Project config path
-              <input type="text">
-          </label>
-        </div>
-        <div class="input-wrapper">
-          <label>Static Data path
-              <input type="text">
-          </label>
-        </div>
-        <div class="input-wrapper">
-          <label>Static Data mappings
-              <input type="text">
-          </label>
-        </div>
-      </div>
-      <h4>Autosaves</h4>
       <div class="input-wrapper">
-        <label>Autosaves
-            <input type="checkbox">
+        <label>Autosave prefix
+            <input type="text" v-model="projectConfig.autosavePrefix">
         </label>
       </div>
       <div class="input-wrapper">
         <label>Autosave interval
-            <input type="number">
+            <input type="number" v-model="projectConfig.autosaveInterval">
         </label>
       </div>
     </div>
@@ -118,22 +43,13 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class ConfigModal extends Vue {
-
   dirty = false
 
-  projectConfiguration: ProjectConfig = {
+  projectConfig: ProjectConfig = {
     name: '',
     id: '',
-    savePaths: {
-      localSavePaths: {
-        staticData: '',
-        staticDataMappings: ''
-      },
-      cloudSavePaths: {
-        staticData: '',
-        staticDataMappings: ''
-      }
-    },
+    localSavePath: '',
+    remoteSavePath: '',
     autosavePrefix: 'auto_',
     allowAutosave: true,
     autosaveInterval: 5,
@@ -141,7 +57,7 @@ export default class ConfigModal extends Vue {
 
   saveProjectConfig() {
     if (!this.dirty) return
-    this.$store.dispatch('saveProjectConfig', this.projectConfiguration)
+    this.$store.dispatch('saveProjectConfig', this.projectConfig)
   }
 }
 </script>

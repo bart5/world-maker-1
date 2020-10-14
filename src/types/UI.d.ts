@@ -26,21 +26,11 @@ interface WorkspaceConfiguration {
   lastSessionCamera: Camera | null;
 }
 
-interface SavePaths {
-  localSavePaths: {
-    staticData: string;
-    staticDataMappings: string;
-  },
-  cloudSavePaths: {
-    staticData: string;
-    staticDataMappings: string;
-  }
-}
-
 interface ProjectConfig {
   name: string;
   id: projectId;
-  savePaths: SavePaths,
+  localSavePath: string,
+  remoteSavePath: string,
   allowAutosave: boolean;
   autosaveInterval: number;
   autosavePrefix: string;
