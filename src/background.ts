@@ -2,7 +2,7 @@ import { app, protocol, BrowserWindow, Menu } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import path from 'path'
-import setupCommunicaton from './ipcHandling';
+import setupCommunicaton, { emitters } from './ipcHandling';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -30,51 +30,28 @@ function createWindow() {
     },
   });
 
-  /*
-    Ask for new project name and file paths
-    Do close current project operation
-      Check for unsaved data and if is any then notify and ask for saving
-    Remove old project as current and display new one with a blank workspace
-  */
-  function onNewProject() {
-  /*  */
-  }
-
-  /*
-    Show modal and ask for project files location
-    Do close current project operation...
-    Remove previous project and load a new one
-  */
-  function onOpenProject() {
-  /*  */
-  }
-
-  function onSave() {
-  /*  */
-  }
-
-  function onSaveAs() {
-  /*  */
-  }
-
-  function onConfiguration() {
-  /*  */
-  }
-
-  function onExit() {
-  /*  */
-  }
-
   const menu = Menu.buildFromTemplate([
     {
       label: 'Menu',
       submenu: [
-        { label: 'Create New Project', click() { onNewProject() } },
-        { label: 'Open Project', click() { onOpenProject() } },
-        { label: 'Save', click() { onSave() } },
-        { label: 'Save As', click() { onSaveAs() } },
-        { label: 'Configuration', click() { onConfiguration() } },
-        { label: 'Exit', click() { onExit() } }
+        {
+          label: 'Create New Project',
+          click() { emitters.onStartNewProject() }
+        }, {
+          label: 'Open Project',
+          click() { emitters.onOpenProject() }
+        }, {
+          label: 'Save',
+          click() { emitters.onSave() }
+        }, {
+          label: 'Save As',
+          click() { emitters.onSaveAs() }
+        }, {
+          label: 'Configuration',
+          click() { emitters.onConfiguration() }
+        }, {
+          label: 'Close',
+          click() { emitters.onClose() } }
       ]
     }
   ])

@@ -53,6 +53,27 @@ function saveFile(path: string, data: {}) {
   })
 }
 
+export const emitters = {
+  onConfiguration() {
+    ipcMain.emit('showCurrentProjectConfiguration')
+  },
+  onClose() {
+    ipcMain.emit('closeApplication')
+  },
+  onSave() {
+    ipcMain.emit('saveProject')
+  },
+  onSaveAs() {
+    ipcMain.emit('saveProjectAs')
+  },
+  onOpenProject() {
+    ipcMain.emit('openExistingProject')
+  },
+  onStartNewProject() {
+    ipcMain.emit('startNewProject')
+  },
+}
+
 export default function setupCommunicaton() {
   console.log('setting up ipc communication')
 

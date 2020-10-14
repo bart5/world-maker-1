@@ -26,6 +26,18 @@ function loadProjectData() {
   /*  */
 }
 
+function saveProjectConfig() {
+  /*  */
+}
+
+function saveProjectSpecData() {
+  /*  */
+}
+
+function saveProjectStaticData() {
+  /*  */
+}
+
 export const initializeDataManager = (vm: Vue) => {
   vm.$store.dispatch('setStaticData')
 

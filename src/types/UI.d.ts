@@ -37,9 +37,8 @@ interface ProjectConfig {
 }
 
 interface ProjectData {
-  dataSpec: DataSpec;
   staticData: StaticData;
-  staticDataMappings: ActorMappings;
+  assetMappings: AssetMappings;
   projectView: ProjectView;
 }
 
