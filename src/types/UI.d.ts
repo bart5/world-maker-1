@@ -39,7 +39,7 @@ interface ProjectConfig {
 interface ProjectData {
   staticData: StaticData;
   assetMappings: AssetMappings;
-  projectView: ProjectView;
+  project: Project;
 }
 
 interface Workspace {
@@ -73,7 +73,7 @@ interface Tile extends Block {
   }
 }
 
-interface ProjectView {
+interface Project {
   id: string;
   name: string;
   workspaces: Array<Workspace>;
@@ -83,8 +83,15 @@ interface ProjectView {
   activeWorkspaceId: workspaceId;
 }
 
+interface ApplicationState {
+  // loadingStaticData: boolean;
+  applicationData: ApplicationData | null;
+  project: Project;
+  projectData: ProjectData | null;
+  ui: UIState;
+}
+
 interface UIState {
-  project: ProjectView;
   connectingInProgress: boolean;
   tileDeletionInProgress: boolean;
   workspaceDeletionInProgress: boolean;

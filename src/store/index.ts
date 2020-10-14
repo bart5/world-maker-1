@@ -1,42 +1,44 @@
 import { createStore } from 'vuex';
 
-export interface State {
-  selectedTask: { questId: string; taskId: string } | null;
-  staticData: StaticData;
-  stateData: {};
-  loadingStaticData: boolean;
-  ui: UIState
+const workspaceConfigurationDefaults: WorkspaceConfiguration = {
+  modulus: 1,
+  fitToTiles: false,
+  lockScale: false,
+  lockedScale: 1,
+  lockView: false,
+  lockedViewPosition: {},
+  lockTiles: false,
+  lastSessionCamera: null,
 }
 
-const initialState: State = {
-  selectedTask: null,
-  staticData: {} as StaticData,
-  stateData: {},
-  loadingStaticData: false,
+const workspaceDefaults: Workspace = {
+  id: '0',
+  name: 'New Workspace',
+  order: 1,
+  configuration: {
+    ...workspaceConfigurationDefaults
+  }
+}
+
+const newProjectDefaults: Project = {
+  id: '0',
+  name: 'New project',
+  workspaces: [{
+    ...workspaceDefaults
+  }],
+  tiles: [],
+  staticDataPath: '',
+  assetsPath: '',
+  activeWorkspaceId: '0',
+}
+
+const initialState: ApplicationState = {
+  applicationData: null,
+  projectData: null,
+  project: {
+    ...newProjectDefaults
+  },
   ui: {
-    project: {
-      id: '0',
-      name: 'New project',
-      workspaces: [{
-        id: '0',
-        name: 'New Workspace',
-        order: 1,
-        configuration: {
-          modulus: 1,
-          fitToTiles: false,
-          lockScale: false,
-          lockedScale: 1,
-          lockView: false,
-          lockedViewPosition: {},
-          lockTiles: false,
-          lastSessionCamera: null,
-        },
-      }],
-      tiles: [],
-      staticDataPath: '',
-      assetsPath: '',
-      activeWorkspaceId: '0',
-    },
     connectingInProgress: false,
     tileDeletionInProgress: false,
     workspaceDeletionInProgress: false,
@@ -67,17 +69,17 @@ export default createStore({
     allQuests: (state) => state.staticData.quests,
     loadingStaticData: (state) => state.loadingStaticData,
     staticData: (state) => state.staticData,
-    workspaces: (state) => state.ui.project.workspaces,
-    activeWorkspaceId: (state) => state.ui.project.activeWorkspaceId,
-    activeWorkspace: (state) => state.ui.project.workspaces.filter((ws) => ws.id === state.ui.project.activeWorkspaceId)[0],
-    allTilesOfWorkspace: (state) => (workspaceId: string) => state.ui.project.tiles.filter((tile) => {
+    workspaces: (state) => state.project.workspaces,
+    activeWorkspaceId: (state) => state.project.activeWorkspaceId,
+    activeWorkspace: (state) => state.project.workspaces.filter((ws) => ws.id === state.project.activeWorkspaceId)[0],
+    allTilesOfWorkspace: (state) => (workspaceId: string) => state.project.tiles.filter((tile) => {
       return tile.workspaceId === workspaceId
     }),
     activeWorkspaceTiles: (state, getters) => getters.allTilesOfWorkspace(getters.activeWorkspaceId),
     activeWorkspaceTileOfId: (state, getters) => (tileId: string) => {
       return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
     },
-    tileOfId: (state) => (tileId: string) => state.ui.project.tiles.filter((tile: Tile) => tile.id === tileId)?.[0],
+    tileOfId: (state) => (tileId: string) => state.project.tiles.filter((tile: Tile) => tile.id === tileId)?.[0],
     selectedInputSourceTileId: (state) => state.ui.selectedInputSourceTile,
     selectedInputSourceTile: (state, getters) => getters.tileOfId(state.ui.selectedInputSourceTile),
     connectingInProgress: (state) => state.ui.connectingInProgress,
@@ -92,7 +94,7 @@ export default createStore({
     getLastSessionCamera: (state, getters) => (workspaceId?: string) => {
       let workspaceConfig: WorkspaceConfiguration
       if (workspaceId) {
-        workspaceConfig = (state.ui.project.workspaces.find((w) => w.id === workspaceId) as Workspace).configuration
+        workspaceConfig = (state.project.workspaces.find((w) => w.id === workspaceId) as Workspace).configuration
       } else {
         workspaceConfig = getters.activeWorkspace.configuration
       }
@@ -111,7 +113,7 @@ export default createStore({
       state.loadingStaticData = flag
     },
     CREATE_NEW_TILE(state, { workspaceId, tileId, position }) {
-      state.ui.project.tiles.push({
+      state.project.tiles.push({
         id: tileId,
         name: 'New Tile',
         workspaceId,
@@ -122,7 +124,7 @@ export default createStore({
         height: 180,
         x: position.x,
         y: position.y,
-        zIndex: state.ui.project.tiles.length || 0,
+        zIndex: state.project.tiles.length || 0,
         output: {
           allData: null,
           slectionData: null,
@@ -131,17 +133,17 @@ export default createStore({
     },
     ACTIVATE_WORKSPACE(state, workspaceId: string) {
       if (workspaceId) {
-        state.ui.project.activeWorkspaceId = workspaceId
+        state.project.activeWorkspaceId = workspaceId
       }
     },
     CREATE_NEW_WORKSPACE(state, workspaceId: string) {
-      const order = state.ui.project.workspaces.length
-        ? state.ui.project.workspaces.sort((w1, w2) => w2.order - w1.order)[0].order + 1
+      const order = state.project.workspaces.length
+        ? state.project.workspaces.sort((w1, w2) => w2.order - w1.order)[0].order + 1
         : 1
 
-      state.ui.project.workspaces.push({
+      state.project.workspaces.push({
         id: workspaceId,
-        name: 'New Workspace' + (state.ui.project.workspaces.length + 1),
+        name: 'New Workspace' + (state.project.workspaces.length + 1),
         order,
         configuration: {
           modulus: 1,
@@ -156,12 +158,12 @@ export default createStore({
       })
     },
     RESIZE_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
-      const tile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
+      const tile = state.project.tiles.filter((t) => t.id === tileId)[0]
       tile.width = Math.max(newPosition.x - tile.x, minTileSize.width)
       tile.height = Math.max(newPosition.y - tile.y, minTileSize.height)
     },
     DRAG_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
-      const tile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
+      const tile = state.project.tiles.filter((t) => t.id === tileId)[0]
       tile.x = newPosition.x
       tile.y = newPosition.y
     },
@@ -178,18 +180,18 @@ export default createStore({
       const source = state.ui.selectedInputSourceTile
       state.ui.selectedInputSourceTile = ''
 
-      state.ui.project.tiles.filter((t) => t.id === tileId)[0].inputSource = source
+      state.project.tiles.filter((t) => t.id === tileId)[0].inputSource = source
     },
     BRING_TILE_FORWARD(state, tileId) {
-      const newFrontTile = state.ui.project.tiles.filter((t) => t.id === tileId)[0]
+      const newFrontTile = state.project.tiles.filter((t) => t.id === tileId)[0]
       // Push other tiles behind
       // Notice that we only push behind the tiles that were in front
-      state.ui.project.tiles.forEach((t) => {
+      state.project.tiles.forEach((t) => {
         if (t.zIndex > newFrontTile.zIndex) {
           t.zIndex -= 1
         }
       })
-      newFrontTile.zIndex = state.ui.project.tiles.length
+      newFrontTile.zIndex = state.project.tiles.length
     },
     START_TILE_DELETION(state) {
       state.ui.tileDeletionInProgress = true
@@ -204,7 +206,7 @@ export default createStore({
       state.ui.workspaceDeletionInProgress = false
     },
     DELETE_TILE_OUT_BOUND_CONNECTIONS(state, tileId) {
-      state.ui.project.tiles.forEach((t) => {
+      state.project.tiles.forEach((t) => {
         if (t.inputSource === tileId) {
           t.inputSource = ''
         }
@@ -212,22 +214,22 @@ export default createStore({
     },
     DELETE_TILE_IN_BOUND_CONNECTIONS(state, tileId) {
       /* As of now tile can have just one inbound connection */
-      state.ui.project.tiles.filter((t) => t.id === tileId)[0].inputSource = ''
+      state.project.tiles.filter((t) => t.id === tileId)[0].inputSource = ''
     },
     DELETE_TILE(state, tileId) {
-      state.ui.project.tiles = [
-        ...state.ui.project.tiles.filter((t) => t.id !== tileId)
+      state.project.tiles = [
+        ...state.project.tiles.filter((t) => t.id !== tileId)
       ]
     },
     DELETE_WORKSPACE(state, workspaceId) {
-      state.ui.project.workspaces.splice(
-        state.ui.project.workspaces.findIndex((w) => w.id === workspaceId),
+      state.project.workspaces.splice(
+        state.project.workspaces.findIndex((w) => w.id === workspaceId),
         1
       )
-      state.ui.project.tiles = state.ui.project.tiles.filter((t) => t.workspaceId !== workspaceId)
+      state.project.tiles = state.project.tiles.filter((t) => t.workspaceId !== workspaceId)
     },
     RENAME_WORKSPACE(state, { workspaceId, newName }) {
-      const workspace = state.ui.project.workspaces.filter((w) => w.id === workspaceId)[0]
+      const workspace = state.project.workspaces.filter((w) => w.id === workspaceId)[0]
       workspace.name = newName
     },
     SWAP_WORKSPACES_ORDER(state, { workspaceToMoveLeft, workspaceToMoveRight }) {
@@ -237,7 +239,7 @@ export default createStore({
       workspaceToMoveRight.order = rightPosition
     },
     SET_WORKSPACE_CONFIG(state, { workspaceId, newConfig }) {
-      const workspace = state.ui.project.workspaces.find((w) => w.id === workspaceId)
+      const workspace = state.project.workspaces.find((w) => w.id === workspaceId)
       if (!workspace) return
       workspace.configuration = {
         ...workspace.configuration,
@@ -245,12 +247,12 @@ export default createStore({
       }
     },
     SNAP_WORKSPACE_TILES_TO_MODULUS(state, { workspaceId, modulus }) {
-      const workspace = state.ui.project.workspaces.find((w) => w.id === workspaceId)
+      const workspace = state.project.workspaces.find((w) => w.id === workspaceId)
       if (!workspace) return
       const alignToModulus = (n: number, mod: number) => {
         return n - (n % mod)
       }
-      state.ui.project.tiles.forEach((t) => {
+      state.project.tiles.forEach((t) => {
         if (t.workspaceId === workspaceId) {
           t.x = alignToModulus(t.x, modulus)
           t.y = alignToModulus(t.y, modulus)
@@ -376,6 +378,12 @@ export default createStore({
     snapWorkspaceTilesToModulus(state, { workspaceId, modulus }) {
       this.commit('SNAP_WORKSPACE_TILES_TO_MODULUS', { workspaceId, modulus })
     },
+    openConfigurationModal() {
+      this.commit('OPEN_CONFIGURATION_MODAL')
+    },
+    closeConfigurationModal() {
+      this.commit('CLOSE_CONFIGURATION_MODAL')
+    }
   },
   modules: {
   },
