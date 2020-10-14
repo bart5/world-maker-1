@@ -27,6 +27,8 @@ interface StaticData {
   tasks: TaskStore,
 }
 
+interface ActorMappings {}
+
 interface Task {
   id: taskId;
   name: string;

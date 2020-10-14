@@ -1,22 +1,63 @@
 type tileId = string
 type workspaceId = string
+type projectId = string
 
-interface Workspace {
-  id: workspaceId;
+interface ProjectRef {
   name: string;
-  order: number;
-  configuration: WorkspaceConfiguration
+  id: string;
+  projectConfigPath: string;
+}
+
+interface AppData {
+  projects: {
+    [projectId: string]: ProjectRef
+  };
+  lastProjectId: string;
 }
 
 interface WorkspaceConfiguration {
   modulus: number;
-  fitToContent: boolean;
+  fitToTiles: boolean;
   lockScale: boolean;
   lockedScale: number;
   lockView: boolean;
   lockedViewPosition: {};
   lockTiles: boolean;
   lastSessionCamera: Camera | null;
+}
+
+interface SavePaths {
+  localSavePaths: {
+    staticData: string;
+    staticDataMappings: string;
+  },
+  cloudSavePaths: {
+    staticData: string;
+    staticDataMappings: string;
+  }
+}
+
+interface ProjectConfig {
+  name: string;
+  id: projectId;
+  savePaths: SavePaths,
+  allowAutosave: boolean;
+  autosaveInterval: number;
+  autosavePrefix: string;
+}
+
+interface ProjectData {
+  dataSpec: DataSpec;
+  staticData: StaticData;
+  staticDataMappings: ActorMappings;
+  projectView: ProjectView;
+}
+
+interface Workspace {
+  id: workspaceId;
+  name: string;
+  order: number;
+  configuration: WorkspaceConfiguration
 }
 
 interface Block {
@@ -43,7 +84,7 @@ interface Tile extends Block {
   }
 }
 
-interface Project {
+interface ProjectView {
   id: string;
   name: string;
   workspaces: Array<Workspace>;
@@ -51,17 +92,10 @@ interface Project {
   staticDataPath: string;
   assetsPath: string;
   activeWorkspaceId: workspaceId;
-  // dataSchema: DataSchema;
 }
-
-interface UserSettings {
-  newTileSpawn: 'horizontal' | 'vertical';
-}
-
-interface DataSchema {}
 
 interface UIState {
-  project: Project;
+  project: ProjectView;
   connectingInProgress: boolean;
   tileDeletionInProgress: boolean;
   workspaceDeletionInProgress: boolean;

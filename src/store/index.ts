@@ -23,7 +23,7 @@ const initialState: State = {
         order: 1,
         configuration: {
           modulus: 1,
-          fitToContent: false,
+          fitToTiles: false,
           lockScale: false,
           lockedScale: 1,
           lockView: false,
@@ -143,7 +143,7 @@ export default createStore({
         order,
         configuration: {
           modulus: 1,
-          fitToContent: false,
+          fitToTiles: false,
           lockScale: false,
           lockedScale: 1,
           lockView: false,

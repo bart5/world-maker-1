@@ -31,6 +31,11 @@
           <input type="checkbox" class="workspace-view-lock" v-model="workspaceConfig.lockView" @change="onViewLockChange">
         </label>
       </div>
+      <!-- <div class="widget">
+        <label>Fit to Tiles:
+          <input type="checkbox" class="workspace-view-lock" v-model="workspaceConfig.fitToTiles" @change="onFitToTilesChange">
+        </label>
+      </div> -->
     </div>
     <div class="workspace-selector">
       <template
@@ -336,7 +341,7 @@ export default class Frame extends Vue {
     }
     return {
       modulus: 1,
-      fitToContent: false,
+      fitToTiles: false,
       lockScale: false,
       lockedScale: 1,
       lockView: false,
@@ -365,6 +370,19 @@ export default class Frame extends Vue {
       y: this.boardElement.scrollTop
     }
     this.setWorkspaceConfig({ lockView: newValue, lockedViewPosition: currentViewPosition })
+  }
+
+  // onFitToTilesChange() {
+  //   const newValue = this.workspaceConfig.fitToTiles
+  //   if (newValue) {
+  //     this.fitViewToTiles()
+  //   }
+  //   this.setWorkspaceConfig({ fitToTiles: newValue })
+  // }
+
+  fitViewToTiles() {
+    this.workspaceConfig.lockScale = true
+    this.workspaceConfig.lockView = true
   }
 
   get disableZoom() {
