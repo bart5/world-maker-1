@@ -10,9 +10,9 @@ export const ipc = {
     resolve: (value: unknown) => void,
     reject: (reason?: any) => void
   }},
-  exchange(opType: string, payload?: any) {
+  exchange(opType: OpType, data?: any) {
     const exchangeId = `${opType}_sent:${Date.now()}_hash:${Math.random()}`
-    window.ipcRenderer.send(opType, { payload, exchangeId })
+    this.send(opType, { opType, data, exchangeId })
     return new Promise((resolve, reject) => {
       window.setTimeout(() => {
         delete this.exchangesInProgress.exchangeId
@@ -23,6 +23,9 @@ export const ipc = {
         reject
       }
     })
+  },
+  send(opType: OpType, request: IpcRequest) {
+    window.ipcRenderer.send(opType, request)
   },
   resolveExchange(reply: IpcReply) {
     const { opType, data, exchangeId } = reply
@@ -42,7 +45,9 @@ export const ipc = {
       console.warn(`Received error to unregistered exchange for operation: ${opType}, error data: ${data}`)
     }
   },
-
+  initListener(opType: OpType) {
+    /*  */
+  }
 }
 
 export const initIpcListeners = (vm: Vue) => {

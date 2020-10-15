@@ -1,9 +1,15 @@
-enum OpType {
+type OpType =
   'loadApplicationData'
-}
+  | 'saveApplicationData'
 
 interface IpcReply {
   opType: OpType;
-  data: any;
   exchangeId: string
+  data: any;
+}
+
+interface IpcRequest {
+  opType: OpType;
+  exchangeId: string
+  data?: any,
 }

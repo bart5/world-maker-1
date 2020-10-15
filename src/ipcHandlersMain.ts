@@ -2,30 +2,35 @@ import { ipcMain, WebContents, app } from 'electron'
 import fs from 'fs'
 
 /* TODO: Figure out later better placemed */
-const stateDataSubpath = '/src/game/data/stateData.json'
-const staticDataSubpath = '/src/game/data/staticData.json'
-const cwd = process.cwd()
+// const stateDataSubpath = '/src/game/data/stateData.json'
+// const staticDataSubpath = '/src/game/data/staticData.json'
+// const cwd = process.cwd()
 
-const stateDataPath = cwd + stateDataSubpath
-const staticDataPath = cwd + staticDataSubpath
+// const stateDataPath = cwd + stateDataSubpath
+// const staticDataPath = cwd + staticDataSubpath
 
 const appDataPath = app.getPath('appData') + '/applicationData.json'
 
-function reportError(event: Electron.IpcMainEvent, opType = 'generic', message: string) {
-  event.reply('error', { opType, data: message })
+function reportError(event: Electron.IpcMainEvent, response: IpcReply) {
+  event.reply('error', response)
 }
 
-function returnValue(event: Electron.IpcMainEvent, opType = 'generic', value: any) {
-  event.reply('reply', { opType, data: value })
+function returnValue(event: Electron.IpcMainEvent, response: IpcReply) {
+  event.reply('reply', response)
 }
 
-function operationWrapper(event: Electron.IpcMainEvent, opType: string, handler: Promise<any>) {
+function operationWrapper(event: Electron.IpcMainEvent, opType: OpType, exchangeId: string, handler: Promise<any>) {
+  const getResponse = (data: any): IpcReply => ({
+    opType,
+    exchangeId,
+    data
+  })
   handler
     .catch((reason) => {
-      reportError(event, opType, reason)
+      reportError(event, getResponse(reason))
     })
     .then((data) => {
-      returnValue(event, opType, data)
+      returnValue(event, getResponse(data))
     })
 }
 
@@ -69,7 +74,6 @@ export const emittersFactory = (contents: WebContents) => ({
     contents.send('saveProjectAs')
   },
   onConfiguration() {
-    console.log('sending show modal signal')
     contents.send('showCurrentProjectConfiguration')
   },
   onClose() {
@@ -78,34 +82,24 @@ export const emittersFactory = (contents: WebContents) => ({
 })
 
 export default function setupCommunicaton() {
-  console.log('setting up ipc communication')
+  console.info('Setting up IPC communication.')
 
-  ipcMain.on('ipcTest', (event) => {
-    console.log('received ipc message')
-    operationWrapper(event, 'ipcTest', new Promise((resolve) => resolve('well done')))
-  })
+  const handlers: {[key in OpType]: (data?: any) => Promise<any> } = {
+    loadApplicationData() {
+      return loadFile(appDataPath)
+    },
+    saveApplicationData(data) {
+      return saveFile(appDataPath, data)
+    }
+  }
 
-  ipcMain.on('loadStateData', (event) => {
-    operationWrapper(event, 'loadStateData', loadFile(stateDataPath))
-  })
+  const setupListeners = () => {
+    (Object.keys(handlers) as Array<keyof typeof handlers>).forEach((key) => {
+      ipcMain.on(key, (event, payload: IpcRequest) => {
+        operationWrapper(event, payload.opType, payload.exchangeId, handlers[key](payload))
+      })
+    })
+  }
 
-  ipcMain.on('saveStateData', (event, data: {}) => {
-    operationWrapper(event, 'saveStateData', saveFile(stateDataPath, data))
-  })
-
-  ipcMain.on('loadStaticData', (event) => {
-    operationWrapper(event, 'loadStaticData', loadFile(staticDataPath))
-  })
-
-  ipcMain.on('saveStaticData', (event, data: {}) => {
-    operationWrapper(event, 'saveStaticData', saveFile(staticDataPath, data))
-  })
-
-  ipcMain.on('loadApplicationData', (event, data: { payload: any, exchangeId: string }) => {
-    operationWrapper(event, 'loadApplicationData', exchangeId: data.exchangeId, loadFile(appDataPath))
-  })
-
-  ipcMain.on('saveApplicationData', (event, data: ApplicationData) => {
-    operationWrapper(event, 'saveApplicationData', saveFile(appDataPath, data))
-  })
+  setupListeners()
 }
