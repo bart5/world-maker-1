@@ -39,11 +39,12 @@ function loadFile(path: string) {
     fs.readFile(path, (err, data) => {
       if (err) {
         console.warn(`No file was found under: ${path}`)
-        return resolve({})
+        resolve({})
+      } else {
+        console.log(`Success loading data from file: ${path}`)
+        const parsed = JSON.parse(data.toString())
+        resolve(parsed)
       }
-      console.log(`Success loading data from file: ${path}`)
-      const parsed = JSON.parse(data.toString())
-      resolve(parsed)
     });
   })
 }

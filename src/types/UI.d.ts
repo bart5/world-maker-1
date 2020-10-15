@@ -97,6 +97,7 @@ interface UIState {
   workspaceDeletionInProgress: boolean;
   selectedInputSourceTile: tileId;
   showConfigurationModal: boolean;
+  currentProjectConfig: ProjectConfig;
 }
 
 interface Coords {

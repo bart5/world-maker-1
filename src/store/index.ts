@@ -33,6 +33,15 @@ const newProjectDefaults: Project = {
   activeWorkspaceId: '0',
 }
 
+const newProjectDefaultConfig: ProjectConfig = {
+  name: 'New Awesome Project',
+  id: '',
+  localSavePath: '',
+  remoteSavePath: '',
+  allowAutosave: true,
+  autosaveInterval: 5,
+}
+
 const initialState: ApplicationState = {
   applicationData: null,
   projectData: null,
@@ -45,6 +54,9 @@ const initialState: ApplicationState = {
     workspaceDeletionInProgress: false,
     selectedInputSourceTile: '',
     showConfigurationModal: false,
+    currentProjectConfig: {
+      ...newProjectDefaultConfig
+    }
   }
 }
 
@@ -101,7 +113,8 @@ export default createStore({
       }
       return workspaceConfig.lastSessionCamera
     },
-    showConfigurationModal: (state) => state.ui.showConfigurationModal
+    showConfigurationModal: (state) => state.ui.showConfigurationModal,
+    currentProjectConfig: (state) => state.ui.currentProjectConfig
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
