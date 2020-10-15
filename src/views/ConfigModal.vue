@@ -12,7 +12,7 @@
       </div>
       <div class="input-wrapper">
         <div class="label">Remote save path</div>
-        <input type="text" v-model="projectConfig.remoteSavePath">
+        <input disabled="true" type="text" v-model="projectConfig.remoteSavePath">
       </div>
       <div class="input-wrapper">
         <div class="label">Use autosaves</div>
@@ -22,10 +22,21 @@
         <div class="label">Autosave interval</div>
         <input type="number" v-model="projectConfig.autosaveInterval">
       </div>
-      <div class="modal-buttons">
-        <button @click="saveProjectConfig">Save</button>
-        <button @click="closeModal">Cancel</button>
-      </div>
+      <template v-if="newProjectConfigurationInProgress">
+        <div class="modal-buttons">
+          <button @click="saveProjectConfig" :disabled="!isDirty">Start Work</button>
+          <button @click="openAnotherProject">Open Another Project</button>
+        </div>
+        <span v-if="true">
+          You need a valid project configuration to proceed.
+        </span>
+      </template>
+      <template v-else>
+        <div class="modal-buttons">
+          <button @click="saveProjectConfig" :disabled="!isDirty">Save</button>
+          <button @click="closeModal">Close</button>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -42,6 +53,12 @@ export default class ConfigModal extends Vue {
 
   projectConfig: ProjectConfig | null = null
 
+  pathsAreValid = true;
+
+  get newProjectConfigurationInProgress() {
+    return this.$store.getters.newProjectConfigurationInProgress
+  }
+
   get isDirty() {
     if (this.initialProjectConfig === null || this.projectConfig === null) {
       return Error('Config is null')
@@ -52,12 +69,20 @@ export default class ConfigModal extends Vue {
   }
 
   get showConfigurationModal() {
-    return this.$store.getters.showConfigurationModal
+    return this.$store.getters.activeModal === 'Configuration'
   }
 
   saveProjectConfig() {
     this.$store.dispatch('saveProjectConfig', this.projectConfig)
+    /* Maybe we should wait here to move files to new directories? */
     this.setModalState()
+  }
+
+  validatePaths() {
+    /*
+      We should try here move files to indicated directories.
+      If project is completely new we can just try creating empty placeholders.
+    */
   }
 
   closeModal() {
@@ -65,8 +90,12 @@ export default class ConfigModal extends Vue {
       const decision = window.confirm('You have unsaved changes. Close anyway?')
       if (!decision) return
     }
-    this.$store.dispatch('closeConfigurationModal')
+    this.$store.dispatch('closeModal', 'Configuration')
     this.setModalState()
+  }
+
+  openAnotherProject() {
+    this.$store.dispatch('openModal', 'ProjectSelector')
   }
 
   setModalState() {
@@ -107,6 +136,10 @@ export default class ConfigModal extends Vue {
   max-height: 80%;
   background: lightgray;
   padding: 15px 30px;
+
+  h4 {
+    user-select: none;
+  }
 }
 
 .input-wrapper {

@@ -1,5 +1,5 @@
 <template>
-  <DataLoader/>
+  <AppLoader/>
   <ConfigModal/>
   <Frame/>
   <!-- <router-view/> -->
@@ -9,13 +9,13 @@
 import { Options, Vue } from 'vue-class-component'
 import Frame from '@/views/Frame.vue';
 import ConfigModal from '@/views/ConfigModal.vue';
-import DataLoader from '@/views/DataLoader.vue';
+import AppLoader from '@/views/AppLoader.vue';
 
 @Options({
   components: {
     Frame,
     ConfigModal,
-    DataLoader
+    AppLoader
   },
 })
 export default class App extends Vue {
@@ -27,9 +27,6 @@ export default class App extends Vue {
 
 body {
   max-height: 100vh;
-  /* display: flex;
-  flex-flow: column;
-  align-items: stretch; */
   margin: 0;
   box-sizing: border-box;
   max-width: 100vw;

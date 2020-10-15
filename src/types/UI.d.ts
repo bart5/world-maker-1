@@ -38,7 +38,7 @@ interface ProjectConfig {
 
 interface ProjectData {
   staticData: StaticData;
-  assetMappings: AssetMappings;
+  entitiesBindings: EntitiesBindings;
   project: Project;
 }
 
@@ -96,7 +96,8 @@ interface UIState {
   tileDeletionInProgress: boolean;
   workspaceDeletionInProgress: boolean;
   selectedInputSourceTile: tileId;
-  showConfigurationModal: boolean;
+  // showConfigurationModal: boolean;
+  activeModal: modalTypes;
   currentProjectConfig: ProjectConfig;
 }
 
@@ -110,3 +111,8 @@ interface Camera {
   y: number,
   scale: number,
 }
+
+type modalTypes =
+  'Configuration'
+  | 'ProjectSelector'
+  | null

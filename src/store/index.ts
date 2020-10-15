@@ -53,7 +53,7 @@ const initialState: ApplicationState = {
     tileDeletionInProgress: false,
     workspaceDeletionInProgress: false,
     selectedInputSourceTile: '',
-    showConfigurationModal: false,
+    activeModal: null,
     currentProjectConfig: {
       ...newProjectDefaultConfig
     }
@@ -113,8 +113,9 @@ export default createStore({
       }
       return workspaceConfig.lastSessionCamera
     },
-    showConfigurationModal: (state) => state.ui.showConfigurationModal,
-    currentProjectConfig: (state) => state.ui.currentProjectConfig
+    activeModalType: (state) => state.ui.activeModal,
+    currentProjectConfig: (state) => state.ui.currentProjectConfig,
+    applicationData: (state) => state.applicationData
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
@@ -275,14 +276,11 @@ export default createStore({
         }
       })
     },
-    OPEN_CONFIGURATION_MODAL(state) {
-      state.ui.showConfigurationModal = true
+    OPEN_MODAL(state, modalType: modalTypes) {
+      state.ui.activeModal = modalType
     },
-    CLOSE_CONFIGURATION_MODAL(state) {
-      state.ui.showConfigurationModal = false
-    },
-    SET_APPLICATION_DATA(state, data) {
-      state.applicationData = data
+    CLOSE_MODAL(state) {
+      state.ui.activeModal = null
     },
   },
   actions: {
@@ -395,11 +393,11 @@ export default createStore({
     snapWorkspaceTilesToModulus(state, { workspaceId, modulus }) {
       this.commit('SNAP_WORKSPACE_TILES_TO_MODULUS', { workspaceId, modulus })
     },
-    openConfigurationModal() {
-      this.commit('OPEN_CONFIGURATION_MODAL')
+    openModal(state, modalType: modalTypes) {
+      this.commit('OPEN_MODAL', modalType)
     },
-    closeConfigurationModal() {
-      this.commit('CLOSE_CONFIGURATION_MODAL')
+    closeModal() {
+      this.commit('CLOSE_MODAL')
     },
     asyncLoadApplicationData() {
       return ipc.exchange('loadApplicationData').then((data: ApplicationData) => {
@@ -412,6 +410,19 @@ export default createStore({
     setApplicationData(state, data: ApplicationData) {
       this.commit('SET_APPLICATION_DATA', data)
     },
+    openProject(state, projectId: string) {
+      /*
+        Check if there is some unsaved data:
+          What could it be?
+          - Unsaved Static Data in current project
+          - Unsaved Entities Bindings
+        If there is none then:
+          1. Ask for specific project data
+          2. Show data new project is being loaded and disallow any mutations to current project
+          3. Once data is fetched update UI state with it
+      */
+    },
+
     openProjectsSelectionModal() {
       /* Shows selection of known project and allows open new manually from location of choice */
     },
