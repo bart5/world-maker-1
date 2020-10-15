@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-wrapper" v-if="showConfigurationModal">
+  <div class="modal-wrapper">
     <div class="config-modal">
       <h4>Project configuration</h4>
       <div class="input-wrapper">
@@ -40,16 +40,16 @@
       </div>
       <template v-if="newProjectConfigurationInProgress">
         <div class="modal-buttons">
-          <button @click="saveProjectConfig" :disabled="!isDirty">Start Work</button>
+          <button @click="setupNewProject" :disabled="!isDirty || !formIsValid">Start Work</button>
           <button @click="openAnotherProject">Open Another Project</button>
         </div>
-        <span v-if="true">
+        <span v-if="!formIsValid">
           You need a valid project configuration to proceed.
         </span>
       </template>
       <template v-else>
         <div class="modal-buttons">
-          <button @click="saveProjectConfig" :disabled="!isDirty">Save</button>
+          <button @click="setProjectConfig" :disabled="!isDirty || !formIsValid">Save</button>
           <button @click="closeModal">Close</button>
         </div>
       </template>
@@ -84,8 +84,19 @@ export default class ConfigModal extends Vue {
 
   pathsAreValid = true;
 
+  updatingProjectConfig = false;
+
+  settingUpNewProject = false;
+
   get newProjectConfigurationInProgress() {
     return this.$store.getters.newProjectConfigurationInProgress
+  }
+
+  get formIsValid() {
+    return this.pathValidations.local.valid
+      && !this.pathValidations.local.validating
+      && this.pathValidations.remote.valid
+      && !this.pathValidations.remote.validating
   }
 
   get isDirty() {
@@ -97,14 +108,20 @@ export default class ConfigModal extends Vue {
     })
   }
 
-  get showConfigurationModal() {
-    return this.$store.getters.activeModal === 'Configuration'
+  setupNewProject() {
+    this.settingUpNewProject = true
+    this.$store.dispatch('asyncSetupNewProject', this.projectConfig).then(() => {
+      this.settingUpNewProject = false
+      this.$store.dispatch('closeModal', 'Configuration')
+    })
   }
 
-  saveProjectConfig() {
-    this.$store.dispatch('saveProjectConfig', this.projectConfig)
-    /* Maybe we should wait here to move files to new directories? */
-    this.setModalState()
+  setProjectConfig() {
+    this.updatingProjectConfig = true
+    this.$store.dispatch('asyncSetProjectConfig', this.projectConfig).then(() => {
+      this.updatingProjectConfig = false
+      this.$store.dispatch('closeModal', 'Configuration')
+    })
   }
 
   validatePath(type: 'local' | 'remote', path: string) {
@@ -129,20 +146,12 @@ export default class ConfigModal extends Vue {
     this.pathValidations[type].delayedCallId = id
   }
 
-  setupProjectFiles() {
-    /*
-      We should try here move files to indicated directories.
-      If project is completely new we can just try creating empty placeholders.
-    */
-  }
-
   closeModal() {
     if (this.isDirty) {
       const decision = window.confirm('You have unsaved changes. Close anyway?')
       if (!decision) return
     }
     this.$store.dispatch('closeModal', 'Configuration')
-    this.setModalState()
   }
 
   openAnotherProject() {
@@ -150,16 +159,15 @@ export default class ConfigModal extends Vue {
   }
 
   setModalState() {
-    this.initialProjectConfig = {
-      ...this.$store.getters.currentProjectConfig
-    }
-    this.projectConfig = {
-      ...(this.initialProjectConfig as ProjectConfig)
-    }
+    const baseConfig = this.newProjectConfigurationInProgress
+      ? this.$store.getters.defaultProjectConfig
+      : this.$store.getters.projectConfig
+
+    this.initialProjectConfig = { ...baseConfig }
+    this.projectConfig = { ...(this.initialProjectConfig as ProjectConfig) }
   }
 
   mounted() {
-    console.log('modal mounted')
     this.setModalState()
   }
 }

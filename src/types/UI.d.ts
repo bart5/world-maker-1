@@ -82,6 +82,7 @@ interface Project {
   assetsPath: string;
   activeWorkspaceId: workspaceId;
   config: ProjectConfig;
+  defaultConfig: ProjectConfig;
 }
 
 interface ApplicationState {

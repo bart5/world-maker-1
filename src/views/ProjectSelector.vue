@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-wrapper" v-if="showProjectSelectorModal">
+  <div class="modal-wrapper">
     <div class="config-modal">
       <h4>Select Project</h4>
       <h6>New project</h6>
@@ -32,10 +32,6 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class ProjectSelector extends Vue {
-
-  get showProjectSelectorModal() {
-    return this.$store.getters.activeModal === 'ProjectSelector'
-  }
 
   get applicationData(): ApplicationData {
     return this.$store.getters('applicationData')

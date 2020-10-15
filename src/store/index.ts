@@ -42,6 +42,9 @@ const newProjectDefaults: Project = {
   activeWorkspaceId: '0',
   config: {
     ...newProjectDefaultConfig
+  },
+  defaultConfig: {
+    ...newProjectDefaultConfig
   }
 }
 
@@ -117,9 +120,9 @@ export default createStore({
       return workspaceConfig.lastSessionCamera
     },
     activeModalType: (state) => state.ui.activeModal,
-    currentProjectConfig: (state) => state.project.config,
+    projectConfig: (state) => state.project.config,
+    defaultProjectConfig: (state) => state.project.defaultConfig,
     applicationData: (state) => state.applicationData,
-    allDataSaved: (state) => state.allDataSaved
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {

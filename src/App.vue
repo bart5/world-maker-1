@@ -1,7 +1,7 @@
 <template>
   <AppLoader/>
-  <ConfigModal/>
-  <ProjectSelector/>
+  <ConfigModal v-if="showConfigurationModal"/>
+  <ProjectSelector v-if="showProjectSelectorModal"/>
   <Frame/>
   <!-- <router-view/> -->
 </template>
@@ -22,6 +22,13 @@ import AppLoader from '@/views/AppLoader.vue';
   },
 })
 export default class App extends Vue {
+  get showConfigurationModal() {
+    return this.$store.getters.activeModal === 'Configuration'
+  }
+
+  get showProjectSelectorModal() {
+    return this.$store.getters.activeModal === 'ProjectSelector'
+  }
 }
 </script>
 
