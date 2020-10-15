@@ -1,18 +1,10 @@
 <template>
   <div>
-    <!-- <h1 v-if="isLoadingStaticData">Loading static data...</h1>
-    <template v-else-if="!Object.keys(staticData).length">
-      <h1>No static data! :O </h1>
-    </template>
-    <template v-else>
-      <h1>Static data loaded!</h1>
-      <div>{{ staticData }}</div>
-    </template> -->
   </div>
 </template>
 
 <script lang="ts">
-import { initializeDataManager } from '@/game/data/ipcHandlersRenderer'
+import { ipc } from '@/game/data/ipcHandlersRenderer'
 import { Options, Vue } from 'vue-class-component'
 
 @Options({
@@ -20,21 +12,13 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class DataLoader extends Vue {
-  // get isLoadingStaticData() {
-  //   return this.$store.getters.loadingStaticData
-  // }
-
-  // get staticData() {
-  //   return this.$store.getters.staticData
-  // }
-
-  // loadStaticData() {
-  //   return this.$store.dispatch('loadStaticData')
-  // }
+  loadingApplicationData = true
 
   mounted() {
-    initializeDataManager(this)
-    // this.loadStaticData()
+    ipc.initListeners(this)
+    this.$store.dispatch('asyncLoadApplicationData').then(() => {
+      this.loadingApplicationData = false
+    })
   }
 }
 </script>

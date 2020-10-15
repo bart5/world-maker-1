@@ -29,12 +29,17 @@ export const ipc: Ipc = {
     this.send(opType, { opType, data, exchangeId })
     return new Promise((resolve, reject) => {
       window.setTimeout(() => {
-        delete this.exchangesInProgress.exchangeId
-        reject()
+        if (this.exchangesInProgress.exchangeId) {
+          delete this.exchangesInProgress.exchangeId
+          reject()
+        }
       }, this.exchangeTimeout)
-      this.exchangesInProgress.exchangeId = {
-        resolve,
-        reject
+      this.exchangesInProgress = {
+        ...this.exchangesInProgress,
+        [exchangeId]: {
+          resolve,
+          reject
+        }
       }
     })
   },
@@ -65,6 +70,7 @@ export const ipc: Ipc = {
   getListeners(vm: Vue) {
     return {
       reply(reply) {
+        console.log(`Received reply: ${JSON.stringify(reply)}`)
         ipc.resolveExchange(reply as IpcReply)
       },
       error(reply) {
@@ -83,7 +89,7 @@ export const ipc: Ipc = {
         /*  */
       },
       showCurrentProjectConfiguration() {
-        /*  */
+        vm.$store.dispatch('openConfigurationModal')
       },
       closeApplication() {
         /*  */
@@ -91,6 +97,7 @@ export const ipc: Ipc = {
     }
   },
   initListeners(vm: Vue) {
+    console.info('Initializing IPC listeners.')
     const listeners = this.getListeners(vm);
     (Object.keys(listeners) as Array<menuSignal | operationResponseType>).forEach((k) => {
       return this.initListener(k, listeners[k])

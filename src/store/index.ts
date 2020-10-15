@@ -1,3 +1,4 @@
+import { ipc } from '@/game/data/ipcHandlersRenderer';
 import { createStore } from 'vuex';
 
 const workspaceConfigurationDefaults: WorkspaceConfiguration = {
@@ -387,13 +388,13 @@ export default createStore({
     closeConfigurationModal() {
       this.commit('CLOSE_CONFIGURATION_MODAL')
     },
-    loadApplicationData() {
-      this.commit('START_LOADING_APPLICATION_DATA')
-      this.commit('STOP_LOADING_APPLICATION_DATA')
-      window.ipcRenderer.send('loadApplicationData')
+    asyncLoadApplicationData() {
+      return ipc.exchange('loadApplicationData').then((data: ApplicationData) => {
+        this.commit('SET_APPLICATION_DATA', data)
+      })
     },
-    saveApplicationData() {
-      window.ipcRenderer.send('saveApplicationData')
+    asyncSaveApplicationData() {
+      return ipc.exchange('saveApplicationData')
     },
     setApplicationData(state, data: ApplicationData) {
       this.commit('SET_APPLICATION_DATA', data)
@@ -414,7 +415,7 @@ export default createStore({
       /* load project based on provided data */
       /* Check if current project has unsaved data */
     },
-    saveProjectData(state, isAutosave ) {
+    saveProjectData(state, isAutosave) {
       /* Encode to JSON and send */
       /* Indicate if it's autosave */
     },

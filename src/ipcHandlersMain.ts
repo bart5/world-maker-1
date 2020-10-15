@@ -26,19 +26,20 @@ function operationWrapper(event: Electron.IpcMainEvent, opType: opType, exchange
     data
   })
   handler
-    .catch((reason) => {
-      reportError(event, getResponse(reason))
-    })
     .then((data) => {
       returnValue(event, getResponse(data))
+    })
+    .catch((reason) => {
+      reportError(event, getResponse(reason))
     })
 }
 
 function loadFile(path: string) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     fs.readFile(path, (err, data) => {
       if (err) {
-        reject(new Error(`Error loading file from path: ${path}, \n ${err}`))
+        console.warn(`No file was found under: ${path}`)
+        return resolve({})
       }
       console.log(`Success loading data from file: ${path}`)
       const parsed = JSON.parse(data.toString())
@@ -94,9 +95,11 @@ export default function setupCommunicaton() {
   }
 
   const setupListeners = () => {
-    (Object.keys(handlers) as Array<keyof typeof handlers>).forEach((key) => {
-      ipcMain.on(key, (event, payload: IpcRequest) => {
-        operationWrapper(event, payload.opType, payload.exchangeId, handlers[key](payload))
+    (Object.keys(handlers) as Array<keyof typeof handlers>).forEach((operationType) => {
+      ipcMain.on(operationType, (event, payload: IpcRequest) => {
+        console.log(`On: ${operationType}`)
+        console.log(`Received payload: ${JSON.stringify(payload)}`)
+        operationWrapper(event, payload.opType, payload.exchangeId, handlers[operationType](payload))
       })
     })
   }
