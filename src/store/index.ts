@@ -267,6 +267,9 @@ export default createStore({
     CLOSE_CONFIGURATION_MODAL(state) {
       state.ui.showConfigurationModal = false
     },
+    SET_APPLICATION_DATA(state, data) {
+      state.applicationData = data
+    },
   },
   actions: {
     selectTask(state, taskId: string) {
@@ -383,6 +386,45 @@ export default createStore({
     },
     closeConfigurationModal() {
       this.commit('CLOSE_CONFIGURATION_MODAL')
+    },
+    loadApplicationData() {
+      this.commit('START_LOADING_APPLICATION_DATA')
+      this.commit('STOP_LOADING_APPLICATION_DATA')
+      window.ipcRenderer.send('loadApplicationData')
+    },
+    saveApplicationData() {
+      window.ipcRenderer.send('saveApplicationData')
+    },
+    setApplicationData(state, data: ApplicationData) {
+      this.commit('SET_APPLICATION_DATA', data)
+    },
+    openProjectsSelectionModal() {
+      /* Shows selection of known project and allows open new manually from location of choice */
+    },
+    closeProjectsSelectionModal() {
+      /* Shows selection of known project and allows open new manually from location of choice */
+    },
+    loadProjectFromLocation() {
+      /* Ask for locations to StaticData and AssetMappings */
+    },
+    startNewProject() {
+      /*  */
+    },
+    loadProjectToUI(state, { projectData }) {
+      /* load project based on provided data */
+      /* Check if current project has unsaved data */
+    },
+    saveProjectData(state, isAutosave ) {
+      /* Encode to JSON and send */
+      /* Indicate if it's autosave */
+    },
+    saveApplicationData() {
+      /* Save whenever it changes */
+      /* It changes when project is created  */
+    },
+    beforeApplicationClose() {
+      /* Check for unsaved data */
+      /* Ask if user want's to save changes */
     }
   },
   modules: {

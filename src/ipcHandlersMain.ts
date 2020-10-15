@@ -1,4 +1,4 @@
-import { ipcMain, WebContents } from 'electron'
+import { ipcMain, WebContents, app } from 'electron'
 import fs from 'fs'
 
 /* TODO: Figure out later better placemed */
@@ -9,21 +9,23 @@ const cwd = process.cwd()
 const stateDataPath = cwd + stateDataSubpath
 const staticDataPath = cwd + staticDataSubpath
 
-function reportError(event: Electron.IpcMainEvent, message: string, operationType = 'generic') {
-  event.reply(`${operationType}-error`, message)
+const appDataPath = app.getPath('appData') + '/applicationData.json'
+
+function reportError(event: Electron.IpcMainEvent, opType = 'generic', message: string) {
+  event.reply('error', { opType, data: message })
 }
 
-function returnValue(event: Electron.IpcMainEvent, value: any, operationType = 'generic') {
-  event.reply(`${operationType}-reply`, value)
+function returnValue(event: Electron.IpcMainEvent, opType = 'generic', value: any) {
+  event.reply('reply', { opType, data: value })
 }
 
-function operationWrapper(event: Electron.IpcMainEvent, operationType: string, handler: Promise<any>) {
+function operationWrapper(event: Electron.IpcMainEvent, opType: string, handler: Promise<any>) {
   handler
     .catch((reason) => {
-      reportError(event, reason, operationType)
+      reportError(event, opType, reason)
     })
     .then((data) => {
-      returnValue(event, data, operationType)
+      returnValue(event, opType, data)
     })
 }
 
@@ -97,5 +99,13 @@ export default function setupCommunicaton() {
 
   ipcMain.on('saveStaticData', (event, data: {}) => {
     operationWrapper(event, 'saveStaticData', saveFile(staticDataPath, data))
+  })
+
+  ipcMain.on('loadApplicationData', (event, data: { payload: any, exchangeId: string }) => {
+    operationWrapper(event, 'loadApplicationData', exchangeId: data.exchangeId, loadFile(appDataPath))
+  })
+
+  ipcMain.on('saveApplicationData', (event, data: ApplicationData) => {
+    operationWrapper(event, 'saveApplicationData', saveFile(appDataPath, data))
   })
 }

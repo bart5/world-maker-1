@@ -12,14 +12,14 @@
 </template>
 
 <script lang="ts">
-import { initializeDataManager } from '@/game/data/dataManager'
+import { initializeDataManager } from '@/game/data/ipcHandlersRenderer'
 import { Options, Vue } from 'vue-class-component'
 
 @Options({
   components: {
   },
 })
-export default class ProjectLoader extends Vue {
+export default class DataLoader extends Vue {
   // get isLoadingStaticData() {
   //   return this.$store.getters.loadingStaticData
   // }

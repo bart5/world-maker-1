@@ -32,8 +32,8 @@ interface ProjectConfig {
   localSavePath: string,
   remoteSavePath: string,
   allowAutosave: boolean;
+  /* If there are changes for that long then they will be saved automatically */
   autosaveInterval: number;
-  autosavePrefix: string;
 }
 
 interface ProjectData {

@@ -1,66 +1,61 @@
 import { Vue } from 'vue-class-component'
 
-/**
- * This file manages staticData in context of WorldMaker.
- * It loads game data from staticData and saves it there
- * when it's edited, added or deleted.
- */
-
-function closeCurrentProject() {
-  /*  */
-}
-
-function onApplicationLoad() {
-  /*  */
-}
-
-function loadApplicationData() {
-  /*  */
-}
-
-function loadProjectConfig() {
-  /*  */
-}
-
-function loadProjectData() {
-  /*  */
-}
-
-function saveProjectConfig() {
-  /*  */
-}
-
-function saveProjectSpecData() {
-  /*  */
-}
-
-function saveProjectStaticData() {
-  /*  */
-}
-
 (window as any).ipcTest = () => {
   window.ipcRenderer.send('ipcTest')
 }
 
-export const initializeDataManager = (vm: Vue) => {
-  console.log('Setting IPC listeners')
-  // vm.$store.dispatch('setStaticData')
+export const ipc = {
+  exchangeTimeout: 1000 * 30,
+  exchangesInProgress: {} as {[k: string]: {
+    resolve: (value: unknown) => void,
+    reject: (reason?: any) => void
+  }},
+  exchange(opType: string, payload?: any) {
+    const exchangeId = `${opType}_sent:${Date.now()}_hash:${Math.random()}`
+    window.ipcRenderer.send(opType, { payload, exchangeId })
+    return new Promise((resolve, reject) => {
+      window.setTimeout(() => {
+        delete this.exchangesInProgress.exchangeId
+        reject()
+      }, this.exchangeTimeout)
+      this.exchangesInProgress.exchangeId = {
+        resolve,
+        reject
+      }
+    })
+  },
+  resolveExchange(reply: IpcReply) {
+    const { opType, data, exchangeId } = reply
+    const exchange = this.exchangesInProgress[exchangeId]
+    if (exchange) {
+      exchange.resolve(data)
+    } else {
+      console.warn(`Received reply to unregistered exchange for operation: ${opType}, reply data: ${data}`)
+    }
+  },
+  rejectExchange(reply: IpcReply) {
+    const { opType, data, exchangeId } = reply
+    const exchange = this.exchangesInProgress[exchangeId]
+    if (exchange) {
+      exchange.reject(data)
+    } else {
+      console.warn(`Received error to unregistered exchange for operation: ${opType}, error data: ${data}`)
+    }
+  },
 
-  window.ipcRenderer.on('ipcTest-reply', (event, data: any, opType: string) => {
-    console.log(`Response to ${opType}, received data: ${data}`)
-  })
+}
 
-  window.ipcRenderer.on('loadStaticData-reply', (event, data: StaticData) => {
-    console.log('on loadStaticData-reply, received data:, ', data)
-    vm.$store.dispatch('setStaticData', data)
-  })
+export const initIpcListeners = (vm: Vue) => {
+  window.ipcRenderer.on('reply', (event, reply: IpcReply) => ipc.resolveExchange(reply))
+  window.ipcRenderer.on('error', (event, reply: IpcReply) => ipc.rejectExchange(reply))
 
-  window.ipcRenderer.on('saveStaticData-reply', (event, arg) => {
-    console.log('on saveStaticData-reply, result:, ', arg)
+  window.ipcRenderer.on('showCurrentProjectConfiguration', () => {
+    console.log('received show modal signal')
+    vm.$store.dispatch('openConfigurationModal')
   })
 
   window.ipcRenderer.on('startNewProject', () => {
-    vm.$store.dispatch('setStaticData')
+    vm.$store.dispatch('startNewProject')
   })
 
   window.ipcRenderer.on('openExistingProject', () => {
@@ -73,11 +68,6 @@ export const initializeDataManager = (vm: Vue) => {
 
   window.ipcRenderer.on('saveProjectAs', () => {
     vm.$store.dispatch('setStaticData')
-  })
-
-  window.ipcRenderer.on('showCurrentProjectConfiguration', () => {
-    console.log('received show modal signal')
-    vm.$store.dispatch('openConfigurationModal')
   })
 
   window.ipcRenderer.on('closeApplication', () => {

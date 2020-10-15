@@ -2,7 +2,7 @@ import { app, protocol, BrowserWindow, Menu } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import path from 'path'
-import setupCommunicaton, { emittersFactory } from './ipcHandling';
+import setupCommunicaton, { emittersFactory } from './ipcHandlersMain';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 

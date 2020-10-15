@@ -18,10 +18,6 @@
         <input type="checkbox" v-model="projectConfig.allowAutosave">
       </div>
       <div class="input-wrapper">
-        <div class="label">Autosave prefix</div>
-        <input type="text" v-model="projectConfig.autosavePrefix">
-      </div>
-      <div class="input-wrapper">
         <div class="label">Autosave interval</div>
         <input type="number" v-model="projectConfig.autosaveInterval">
       </div>
