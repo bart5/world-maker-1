@@ -62,6 +62,18 @@ function saveFile(path: string, data: {}) {
   })
 }
 
+function deleteFile(path: string) {
+  return new Promise((resolve, reject) => {
+    fs.unlink(path, (err) => {
+      if (err) {
+        reject(new Error(`Error deleting file in path: ${path}, \n ${err}`))
+      }
+      console.log(`Success deleting file in path: ${path}`)
+      resolve(`File ${path} removed.`)
+    });
+  })
+}
+
 export const emittersFactory = (contents: WebContents) => ({
   onStartNewProject() {
     contents.send('startNewProject')
@@ -92,6 +104,9 @@ export default function setupCommunicaton() {
     },
     saveApplicationData(data) {
       return saveFile(appDataPath, data)
+    },
+    testPath(path) {
+      return saveFile(path, '').then(() => deleteFile(path))
     }
   }
 

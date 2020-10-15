@@ -21,6 +21,15 @@ const workspaceDefaults: Workspace = {
   }
 }
 
+const newProjectDefaultConfig: ProjectConfig = {
+  name: 'New Awesome Project',
+  id: '',
+  localSavePath: '',
+  remoteSavePath: '',
+  allowAutosave: true,
+  autosaveInterval: 5,
+}
+
 const newProjectDefaults: Project = {
   id: '0',
   name: 'New project',
@@ -31,15 +40,9 @@ const newProjectDefaults: Project = {
   staticDataPath: '',
   assetsPath: '',
   activeWorkspaceId: '0',
-}
-
-const newProjectDefaultConfig: ProjectConfig = {
-  name: 'New Awesome Project',
-  id: '',
-  localSavePath: '',
-  remoteSavePath: '',
-  allowAutosave: true,
-  autosaveInterval: 5,
+  config: {
+    ...newProjectDefaultConfig
+  }
 }
 
 const initialState: ApplicationState = {
@@ -48,15 +51,15 @@ const initialState: ApplicationState = {
   project: {
     ...newProjectDefaults
   },
+  projectConfigurationMutated: false,
+  projectStaticDataMutated: false,
+  projectStaticEntityBindings: false,
   ui: {
     connectingInProgress: false,
     tileDeletionInProgress: false,
     workspaceDeletionInProgress: false,
     selectedInputSourceTile: '',
     activeModal: null,
-    currentProjectConfig: {
-      ...newProjectDefaultConfig
-    }
   }
 }
 
@@ -114,8 +117,9 @@ export default createStore({
       return workspaceConfig.lastSessionCamera
     },
     activeModalType: (state) => state.ui.activeModal,
-    currentProjectConfig: (state) => state.ui.currentProjectConfig,
-    applicationData: (state) => state.applicationData
+    currentProjectConfig: (state) => state.project.config,
+    applicationData: (state) => state.applicationData,
+    allDataSaved: (state) => state.allDataSaved
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
@@ -127,6 +131,7 @@ export default createStore({
     // setLoadingStaticData(state, flag: boolean) {
     //   state.loadingStaticData = flag
     // },
+    /* =========== PROJECT CONFIGURATION MUTATIONS =========== */
     CREATE_NEW_TILE(state, { workspaceId, tileId, position }) {
       state.project.tiles.push({
         id: tileId,
@@ -146,10 +151,49 @@ export default createStore({
         }
       })
     },
-    ACTIVATE_WORKSPACE(state, workspaceId: string) {
-      if (workspaceId) {
-        state.project.activeWorkspaceId = workspaceId
-      }
+    RESIZE_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
+      const tile = state.project.tiles.filter((t) => t.id === tileId)[0]
+      tile.width = Math.max(newPosition.x - tile.x, minTileSize.width)
+      tile.height = Math.max(newPosition.y - tile.y, minTileSize.height)
+    },
+    DRAG_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
+      const tile = state.project.tiles.filter((t) => t.id === tileId)[0]
+      tile.x = newPosition.x
+      tile.y = newPosition.y
+    },
+    BRING_TILE_FORWARD(state, tileId) {
+      const newFrontTile = state.project.tiles.filter((t) => t.id === tileId)[0]
+      // Push other tiles behind
+      // Notice that we only push behind the tiles that were in front
+      state.project.tiles.forEach((t) => {
+        if (t.zIndex > newFrontTile.zIndex) {
+          t.zIndex -= 1
+        }
+      })
+      newFrontTile.zIndex = state.project.tiles.length
+    },
+    CONNECT_TO_THIS_TILE(state, tileId) {
+      state.ui.connectingInProgress = false
+      const source = state.ui.selectedInputSourceTile
+      state.ui.selectedInputSourceTile = ''
+
+      state.project.tiles.filter((t) => t.id === tileId)[0].inputSource = source
+    },
+    DELETE_TILE_OUT_BOUND_CONNECTIONS(state, tileId) {
+      state.project.tiles.forEach((t) => {
+        if (t.inputSource === tileId) {
+          t.inputSource = ''
+        }
+      })
+    },
+    DELETE_TILE_IN_BOUND_CONNECTIONS(state, tileId) {
+      /* As of now tile can have just one inbound connection */
+      state.project.tiles.filter((t) => t.id === tileId)[0].inputSource = ''
+    },
+    DELETE_TILE(state, tileId) {
+      state.project.tiles = [
+        ...state.project.tiles.filter((t) => t.id !== tileId)
+      ]
     },
     CREATE_NEW_WORKSPACE(state, workspaceId: string) {
       const order = state.project.workspaces.length
@@ -171,70 +215,6 @@ export default createStore({
           lastSessionCamera: null,
         },
       })
-    },
-    RESIZE_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
-      const tile = state.project.tiles.filter((t) => t.id === tileId)[0]
-      tile.width = Math.max(newPosition.x - tile.x, minTileSize.width)
-      tile.height = Math.max(newPosition.y - tile.y, minTileSize.height)
-    },
-    DRAG_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
-      const tile = state.project.tiles.filter((t) => t.id === tileId)[0]
-      tile.x = newPosition.x
-      tile.y = newPosition.y
-    },
-    START_CONNECTING_TILES(state, tileId) {
-      state.ui.connectingInProgress = true
-      state.ui.selectedInputSourceTile = tileId
-    },
-    STOP_CONNECTING_TILES(state) {
-      state.ui.connectingInProgress = false
-      state.ui.selectedInputSourceTile = ''
-    },
-    CONNECT_TO_THIS_TILE(state, tileId) {
-      state.ui.connectingInProgress = false
-      const source = state.ui.selectedInputSourceTile
-      state.ui.selectedInputSourceTile = ''
-
-      state.project.tiles.filter((t) => t.id === tileId)[0].inputSource = source
-    },
-    BRING_TILE_FORWARD(state, tileId) {
-      const newFrontTile = state.project.tiles.filter((t) => t.id === tileId)[0]
-      // Push other tiles behind
-      // Notice that we only push behind the tiles that were in front
-      state.project.tiles.forEach((t) => {
-        if (t.zIndex > newFrontTile.zIndex) {
-          t.zIndex -= 1
-        }
-      })
-      newFrontTile.zIndex = state.project.tiles.length
-    },
-    START_TILE_DELETION(state) {
-      state.ui.tileDeletionInProgress = true
-    },
-    STOP_TILE_DELETION(state) {
-      state.ui.tileDeletionInProgress = false
-    },
-    START_WORKSPACE_DELETION(state) {
-      state.ui.workspaceDeletionInProgress = true
-    },
-    STOP_WORKSPACE_DELETION(state) {
-      state.ui.workspaceDeletionInProgress = false
-    },
-    DELETE_TILE_OUT_BOUND_CONNECTIONS(state, tileId) {
-      state.project.tiles.forEach((t) => {
-        if (t.inputSource === tileId) {
-          t.inputSource = ''
-        }
-      })
-    },
-    DELETE_TILE_IN_BOUND_CONNECTIONS(state, tileId) {
-      /* As of now tile can have just one inbound connection */
-      state.project.tiles.filter((t) => t.id === tileId)[0].inputSource = ''
-    },
-    DELETE_TILE(state, tileId) {
-      state.project.tiles = [
-        ...state.project.tiles.filter((t) => t.id !== tileId)
-      ]
     },
     DELETE_WORKSPACE(state, workspaceId) {
       state.project.workspaces.splice(
@@ -275,6 +255,34 @@ export default createStore({
           t.height = alignToModulus(t.height, modulus)
         }
       })
+    },
+    /* =========== PROJECT STATIC DATA MUTATIONS =========== */
+    /* =========== PROJECT ENTITY BINDINGS MUTATIONS =========== */
+    /* =========== UI STATE MUTATIONS =========== */
+    ACTIVATE_WORKSPACE(state, workspaceId: string) {
+      if (workspaceId) {
+        state.project.activeWorkspaceId = workspaceId
+      }
+    },
+    START_CONNECTING_TILES(state, tileId) {
+      state.ui.connectingInProgress = true
+      state.ui.selectedInputSourceTile = tileId
+    },
+    STOP_CONNECTING_TILES(state) {
+      state.ui.connectingInProgress = false
+      state.ui.selectedInputSourceTile = ''
+    },
+    START_TILE_DELETION(state) {
+      state.ui.tileDeletionInProgress = true
+    },
+    STOP_TILE_DELETION(state) {
+      state.ui.tileDeletionInProgress = false
+    },
+    START_WORKSPACE_DELETION(state) {
+      state.ui.workspaceDeletionInProgress = true
+    },
+    STOP_WORKSPACE_DELETION(state) {
+      state.ui.workspaceDeletionInProgress = false
     },
     OPEN_MODAL(state, modalType: modalTypes) {
       state.ui.activeModal = modalType
@@ -405,6 +413,7 @@ export default createStore({
       })
     },
     asyncSaveApplicationData() {
+      /* Need to pass some actual data, huh? */
       return ipc.exchange('saveApplicationData')
     },
     setApplicationData(state, data: ApplicationData) {
@@ -421,6 +430,9 @@ export default createStore({
           2. Show data new project is being loaded and disallow any mutations to current project
           3. Once data is fetched update UI state with it
       */
+    },
+    asyncTestPath(state, path: string) {
+      return ipc.exchange('testPath', path)
     },
 
     openProjectsSelectionModal() {

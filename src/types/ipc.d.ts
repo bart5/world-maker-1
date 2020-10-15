@@ -1,6 +1,7 @@
 type opType =
   'loadApplicationData'
   | 'saveApplicationData'
+  | 'testPath'
 
 type operationResponseType = 'reply' | 'error'
 

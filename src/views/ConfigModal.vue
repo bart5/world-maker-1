@@ -8,7 +8,7 @@
       </div>
       <div class="input-wrapper">
         <div class="label">Local save path</div>
-        <input type="text" v-model="projectConfig.localSavePath">
+        <input type="text" v-model="projectConfig.localSavePath" @change="validatePath(projectConfig.localSavePath)">
       </div>
       <div class="input-wrapper">
         <div class="label">Remote save path</div>
@@ -78,7 +78,11 @@ export default class ConfigModal extends Vue {
     this.setModalState()
   }
 
-  validatePaths() {
+  validatePath(path: string) {
+
+  }
+
+  setupProjectFiles() {
     /*
       We should try here move files to indicated directories.
       If project is completely new we can just try creating empty placeholders.

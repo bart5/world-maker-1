@@ -38,7 +38,7 @@ interface ProjectConfig {
 
 interface ProjectData {
   staticData: StaticData;
-  entitiesBindings: EntitiesBindings;
+  entityBindings: EntityBindings;
   project: Project;
 }
 
@@ -81,6 +81,7 @@ interface Project {
   staticDataPath: string;
   assetsPath: string;
   activeWorkspaceId: workspaceId;
+  config: ProjectConfig;
 }
 
 interface ApplicationState {
@@ -88,6 +89,9 @@ interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
   projectData: ProjectData | null;
+  projectConfigurationMutated: boolean;
+  projectStaticDataMutated: boolean;
+  projectStaticEntityBindings: boolean;
   ui: UIState;
 }
 
@@ -96,9 +100,7 @@ interface UIState {
   tileDeletionInProgress: boolean;
   workspaceDeletionInProgress: boolean;
   selectedInputSourceTile: tileId;
-  // showConfigurationModal: boolean;
   activeModal: modalTypes;
-  currentProjectConfig: ProjectConfig;
 }
 
 interface Coords {
