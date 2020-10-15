@@ -422,35 +422,25 @@ export default createStore({
     setApplicationData(state, data: ApplicationData) {
       this.commit('SET_APPLICATION_DATA', data)
     },
-    openProject(state, projectId: string) {
-      /*
-        Check if there is some unsaved data:
-          What could it be?
-          - Unsaved Static Data in current project
-          - Unsaved Entities Bindings
-        If there is none then:
-          1. Ask for specific project data
-          2. Show data new project is being loaded and disallow any mutations to current project
-          3. Once data is fetched update UI state with it
-      */
+    async openProject(state, payload: { config?: ProjectConfig, projectId?: string, path?: string}) {
+      this.commit('START_OPENING_PROJECT')
+      if (state.getters.isUnsavedData) {
+        await state.dispatch('saveProjectData')
+      }
+      let data
+      if (payload.path) {
+        data = await state.dispatch('loadProjectData', { path: payload.path })
+      } else {
+        const config = payload.config || state.getters.projectConfigFromId(payload.projectId)
+        data = await state.dispatch('loadProjectData', { config })
+      }
+      await state.dispatch('loadProjectToUI', data)
+      this.commit('STOP_OPENING_PROJECT')
     },
-    asyncTestPath(state, path: string) {
-      return ipc.exchange('testPath', path)
-    },
-
-    openProjectsSelectionModal() {
-      /* Shows selection of known project and allows open new manually from location of choice */
-    },
-    closeProjectsSelectionModal() {
-      /* Shows selection of known project and allows open new manually from location of choice */
-    },
-    loadProjectFromLocation() {
+    loadProjectData() {
       /* Ask for locations to StaticData and AssetMappings */
     },
-    startNewProject() {
-      /*  */
-    },
-    loadProjectToUI(state, { projectData }) {
+    loadProjectToUI(state, data) {
       /* load project based on provided data */
       /* Check if current project has unsaved data */
     },
@@ -458,14 +448,13 @@ export default createStore({
       /* Encode to JSON and send */
       /* Indicate if it's autosave */
     },
-    saveApplicationData() {
-      /* Save whenever it changes */
-      /* It changes when project is created  */
-    },
     beforeApplicationClose() {
       /* Check for unsaved data */
       /* Ask if user want's to save changes */
-    }
+    },
+    asyncTestPath(state, path: string) {
+      return ipc.exchange('testPath', path)
+    },
   },
   modules: {
   },

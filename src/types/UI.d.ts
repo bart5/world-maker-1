@@ -2,15 +2,9 @@ type tileId = string
 type workspaceId = string
 type projectId = string
 
-interface ProjectRef {
-  name: string;
-  id: string;
-  projectConfigPath: string;
-}
-
 interface ApplicationData {
   projects: {
-    [projectId: string]: ProjectRef
+    [projectId: string]: ProjectConfig
   };
   lastProjectId: string;
 }

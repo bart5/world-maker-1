@@ -15,10 +15,10 @@
       <hr>
       <h6>Known projects</h6>
       <template
-        v-for="projectRef in applicationData.projects"
-        :key="projectRef.id"
+        v-for="projectConfig in applicationData.projects"
+        :key="projectConfig.id"
       >
-        <button class="project-button" @click="openProject(projectRef.id)">{{ projectRef.name }}</button>
+        <button class="project-button" @click="openProject(projectConfig)">{{ projectConfig.name }}</button>
       </template>
     </div>
   </div>
@@ -32,7 +32,6 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class ProjectSelector extends Vue {
-
   get applicationData(): ApplicationData {
     return this.$store.getters('applicationData')
   }
