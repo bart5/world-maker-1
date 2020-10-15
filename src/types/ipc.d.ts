@@ -1,15 +1,25 @@
-type OpType =
+type opType =
   'loadApplicationData'
   | 'saveApplicationData'
 
+type operationResponseType = 'reply' | 'error'
+
+type menuSignal =
+  'startNewProject'
+  | 'openExistingProject'
+  | 'saveProject'
+  | 'saveProjectAs'
+  | 'showCurrentProjectConfiguration'
+  | 'closeApplication'
+
 interface IpcReply {
-  opType: OpType;
+  opType: opType;
   exchangeId: string
   data: any;
 }
 
 interface IpcRequest {
-  opType: OpType;
+  opType: opType;
   exchangeId: string
   data?: any,
 }

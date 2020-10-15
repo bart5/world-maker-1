@@ -19,7 +19,7 @@ function returnValue(event: Electron.IpcMainEvent, response: IpcReply) {
   event.reply('reply', response)
 }
 
-function operationWrapper(event: Electron.IpcMainEvent, opType: OpType, exchangeId: string, handler: Promise<any>) {
+function operationWrapper(event: Electron.IpcMainEvent, opType: opType, exchangeId: string, handler: Promise<any>) {
   const getResponse = (data: any): IpcReply => ({
     opType,
     exchangeId,
@@ -84,7 +84,7 @@ export const emittersFactory = (contents: WebContents) => ({
 export default function setupCommunicaton() {
   console.info('Setting up IPC communication.')
 
-  const handlers: {[key in OpType]: (data?: any) => Promise<any> } = {
+  const handlers: {[key in opType]: (data?: any) => Promise<any> } = {
     loadApplicationData() {
       return loadFile(appDataPath)
     },

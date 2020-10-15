@@ -4,13 +4,27 @@ import { Vue } from 'vue-class-component'
   window.ipcRenderer.send('ipcTest')
 }
 
-export const ipc = {
-  exchangeTimeout: 1000 * 30,
-  exchangesInProgress: {} as {[k: string]: {
+interface Ipc {
+  vm: Vue;
+  exchangeTimeout: number;
+  exchangesInProgress: {[k: string]: {
     resolve: (value: unknown) => void,
     reject: (reason?: any) => void
-  }},
-  exchange(opType: OpType, data?: any) {
+  }};
+  exchange: (opType: opType, data?: any) => Promise<any>;
+  send: (opType: opType, request: IpcRequest) => void;
+  resolveExchange: (reply: IpcReply) => void;
+  rejectExchange: (reply: IpcReply) => void;
+  initListener: (eventType: menuSignal | operationResponseType, handler: (reply?: IpcReply) => void) => void;
+  getListeners: (vm: Vue) => Record<menuSignal | operationResponseType, (reply?: IpcReply) => void>;
+  initListeners: (vm: Vue) => void
+}
+
+export const ipc: Ipc = {
+  vm: {} as Vue,
+  exchangeTimeout: 1000 * 30,
+  exchangesInProgress: {},
+  exchange(opType, data) {
     const exchangeId = `${opType}_sent:${Date.now()}_hash:${Math.random()}`
     this.send(opType, { opType, data, exchangeId })
     return new Promise((resolve, reject) => {
@@ -24,7 +38,7 @@ export const ipc = {
       }
     })
   },
-  send(opType: OpType, request: IpcRequest) {
+  send(opType, request) {
     window.ipcRenderer.send(opType, request)
   },
   resolveExchange(reply: IpcReply) {
@@ -45,39 +59,43 @@ export const ipc = {
       console.warn(`Received error to unregistered exchange for operation: ${opType}, error data: ${data}`)
     }
   },
-  initListener(opType: OpType) {
-    /*  */
+  initListener(eventType, handler) {
+    window.ipcRenderer.on(eventType, (event, reply?: IpcReply) => handler(reply))
+  },
+  getListeners(vm: Vue) {
+    return {
+      reply(reply) {
+        ipc.resolveExchange(reply as IpcReply)
+      },
+      error(reply) {
+        ipc.rejectExchange(reply as IpcReply)
+      },
+      startNewProject() {
+        vm.$store.dispatch('startNewProject')
+      },
+      openExistingProject() {
+        /*  */
+      },
+      saveProject() {
+        /*  */
+      },
+      saveProjectAs() {
+        /*  */
+      },
+      showCurrentProjectConfiguration() {
+        /*  */
+      },
+      closeApplication() {
+        /*  */
+      },
+    }
+  },
+  initListeners(vm: Vue) {
+    const listeners = this.getListeners(vm);
+    (Object.keys(listeners) as Array<menuSignal | operationResponseType>).forEach((k) => {
+      return this.initListener(k, listeners[k])
+    })
   }
-}
-
-export const initIpcListeners = (vm: Vue) => {
-  window.ipcRenderer.on('reply', (event, reply: IpcReply) => ipc.resolveExchange(reply))
-  window.ipcRenderer.on('error', (event, reply: IpcReply) => ipc.rejectExchange(reply))
-
-  window.ipcRenderer.on('showCurrentProjectConfiguration', () => {
-    console.log('received show modal signal')
-    vm.$store.dispatch('openConfigurationModal')
-  })
-
-  window.ipcRenderer.on('startNewProject', () => {
-    vm.$store.dispatch('startNewProject')
-  })
-
-  window.ipcRenderer.on('openExistingProject', () => {
-    vm.$store.dispatch('setStaticData')
-  })
-
-  window.ipcRenderer.on('saveProject', () => {
-    vm.$store.dispatch('setStaticData')
-  })
-
-  window.ipcRenderer.on('saveProjectAs', () => {
-    vm.$store.dispatch('setStaticData')
-  })
-
-  window.ipcRenderer.on('closeApplication', () => {
-    vm.$store.dispatch('setStaticData')
-  })
 }
 
 const quests: {
