@@ -8,11 +8,27 @@
       </div>
       <div class="input-wrapper">
         <div class="label">Local save path</div>
-        <input type="text" v-model="projectConfig.localSavePath" @change="validatePath(projectConfig.localSavePath)">
+        <input
+          :class="{
+            'validating': pathValidations.local.validating,
+            'invalid': !pathValidations.local.valid
+          }"
+          type="text"
+          v-model="projectConfig.localSavePath"
+          @change="validatePath('local', projectConfig.localSavePath)"
+        >
       </div>
       <div class="input-wrapper">
         <div class="label">Remote save path</div>
-        <input disabled="true" type="text" v-model="projectConfig.remoteSavePath">
+        <input
+          :class="{
+            'validating': pathValidations.remote.validating,
+            'invalid': !pathValidations.remote.valid
+          }"
+          disabled="true"
+          type="text"
+          v-model="projectConfig.remoteSavePath"
+        >
       </div>
       <div class="input-wrapper">
         <div class="label">Use autosaves</div>
@@ -53,6 +69,19 @@ export default class ConfigModal extends Vue {
 
   projectConfig: ProjectConfig | null = null
 
+  pathValidations = {
+    local: {
+      valid: true,
+      validating: false,
+      delayedCallId: 0,
+    },
+    remote: {
+      valid: true,
+      validating: false,
+      delayedCallId: 0,
+    },
+  }
+
   pathsAreValid = true;
 
   get newProjectConfigurationInProgress() {
@@ -78,8 +107,26 @@ export default class ConfigModal extends Vue {
     this.setModalState()
   }
 
-  validatePath(path: string) {
+  validatePath(type: 'local' | 'remote', path: string) {
+    if (this.pathValidations[type].validating) {
+      window.clearTimeout(this.pathValidations[type].delayedCallId)
+    }
 
+    this.pathValidations[type].validating = true
+
+    const id = window.setTimeout(() => {
+      if (this.pathValidations[type].delayedCallId === id) {
+        this.$store.dispatch('testPath', path).then(() => {
+          this.pathValidations[type].valid = true
+        }).catch(() => {
+          this.pathValidations[type].valid = false
+        }).finally(() => {
+          this.pathValidations[type].validating = false
+        })
+      }
+    }, 500)
+
+    this.pathValidations[type].delayedCallId = id
   }
 
   setupProjectFiles() {
@@ -165,6 +212,28 @@ export default class ConfigModal extends Vue {
 
     &[type='checkbox']:hover {
       cursor: pointer;
+    }
+
+    .invalid {
+      background: rgba(255,0,0,0.2);
+    }
+
+    &.validating {
+      position: relative;
+
+      &:before {
+        width: 10px;
+        height: 100%;
+        opacity: 0.5;
+        position: absolute;
+        background: linear-gradient(transparent 0px, lightblue 4px, blue 5px, lightblue 6px, transparent 10px);
+        animation: 1.2s ease-out 0s infinite alternate kit;
+
+        @keyframes kit {
+          from { transform: left(0); }
+          to   { transform: left(100%); }
+        }
+      }
     }
   }
 }

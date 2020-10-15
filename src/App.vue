@@ -1,6 +1,7 @@
 <template>
   <AppLoader/>
   <ConfigModal/>
+  <ProjectSelector/>
   <Frame/>
   <!-- <router-view/> -->
 </template>
@@ -9,12 +10,14 @@
 import { Options, Vue } from 'vue-class-component'
 import Frame from '@/views/Frame.vue';
 import ConfigModal from '@/views/ConfigModal.vue';
+import ProjectSelector from '@/views/ProjectSelector.vue';
 import AppLoader from '@/views/AppLoader.vue';
 
 @Options({
   components: {
     Frame,
     ConfigModal,
+    ProjectSelector,
     AppLoader
   },
 })
