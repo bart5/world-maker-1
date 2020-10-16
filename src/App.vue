@@ -23,11 +23,11 @@ import AppLoader from '@/views/AppLoader.vue';
 })
 export default class App extends Vue {
   get showConfigurationModal() {
-    return this.$store.getters.activeModal === 'Configuration'
+    return this.$store.getters.activeModal === 'configuration'
   }
 
   get showProjectSelectorModal() {
-    return this.$store.getters.activeModal === 'ProjectSelector'
+    return this.$store.getters.activeModal === 'projectSelector'
   }
 }
 </script>

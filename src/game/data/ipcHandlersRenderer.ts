@@ -78,7 +78,7 @@ export const ipc: Ipc = {
         ipc.rejectExchange(reply as IpcReply)
       },
       startNewProject() {
-        vm.$store.dispatch('configureNewProject')
+        vm.$store.dispatch('startNewProjectConfiguration')
       },
       openExistingProject() {
         /*  */

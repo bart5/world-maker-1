@@ -37,3 +37,16 @@ button, .button {
     background: var(--color-active);
   }
 }
+
+hr {
+  display: block;
+  // border-bottom: 1px solid darkgray;
+  box-shadow: 0 0 1px 0 darkgray;
+  width: 100%;
+}
+
+h6 {
+  color: gray;
+  padding: 4px 0;
+  margin: 0;
+}

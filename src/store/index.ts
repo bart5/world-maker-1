@@ -140,7 +140,7 @@ export default createStore({
       }
       return workspaceConfig.lastSessionCamera
     },
-    activeModalType: (state) => state.ui.activeModal,
+    activeModal: (state) => state.ui.activeModal,
     projectConfigById: (state) => (projectId: string) => {
       const config = {
         ...state.applicationData?.projects[projectId]
@@ -528,8 +528,8 @@ export default createStore({
         throw Error(`Caught error while updating application data.\nError: ${e}`)
       })
     },
-    asyncFetchProject(state, path) {
-      return ipc.exchange('fetchProject', path)
+    asyncFetchProject(state, payload: { config?: ProjectConfig, fullPath?: string }) {
+      return ipc.exchange('fetchProject', payload)
     },
     saveProject(state, autosave: boolean) {
       if (state.getters.isUnsavedData) {
@@ -552,6 +552,7 @@ export default createStore({
       return ipc.exchange('testPath', path)
     },
     startNewProjectConfiguration() {
+      this.commit('OPEN_MODAL', 'configuration')
       this.commit('START_NEW_PROJECT_CONFIGURATION')
     },
     stopNewProjectConfiguration() {

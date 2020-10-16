@@ -183,9 +183,17 @@ export default function setupCommunicaton() {
         })
       })
     },
-    fetchProject(config: ProjectConfig) {
-      const fileName = config.name.replace(' ', '-') + '.json'
-      return loadFile(config.localSaveDirectory + fileName)
+    fetchProject(payload: { config?: ProjectConfig, fullPath?: string }) {
+      const { config, fullPath } = payload
+      if (config) {
+        const fileName = config.name.replace(' ', '-') + '.json'
+        const directory = config.localSaveDirectory
+        return loadFile(directory + fileName)
+      }
+      if (fullPath) {
+        return loadFile(fullPath)
+      }
+      return Promise.reject(Error('Wrong parameters provided for fetchProject operation.'))
     },
     saveProject(payload: { config: ProjectConfig, data: Project, autosave?: boolean }) {
       const directory = payload.config.localSaveDirectory

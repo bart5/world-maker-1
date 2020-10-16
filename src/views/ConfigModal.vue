@@ -112,7 +112,8 @@ export default class ConfigModal extends Vue {
     this.settingUpNewProject = true
     this.$store.dispatch('asyncSetupNewProject', this.projectConfig).then(() => {
       this.settingUpNewProject = false
-      this.$store.dispatch('closeModal', 'Configuration')
+      this.$store.dispatch('closeModal', 'configuration')
+      this.$store.dispatch('stopNewProjectConfiguration')
     })
   }
 
@@ -120,7 +121,7 @@ export default class ConfigModal extends Vue {
     this.updatingProjectConfig = true
     this.$store.dispatch('asyncSetProjectConfig', this.projectConfig).then(() => {
       this.updatingProjectConfig = false
-      this.$store.dispatch('closeModal', 'Configuration')
+      this.$store.dispatch('closeModal', 'configuration')
     })
   }
 
@@ -151,11 +152,11 @@ export default class ConfigModal extends Vue {
       const decision = window.confirm('You have unsaved changes. Close anyway?')
       if (!decision) return
     }
-    this.$store.dispatch('closeModal', 'Configuration')
+    this.$store.dispatch('closeModal', 'configuration')
   }
 
   openAnotherProject() {
-    this.$store.dispatch('openModal', 'ProjectSelector')
+    this.$store.dispatch('openModal', 'projectSelector')
   }
 
   setModalState() {
@@ -167,7 +168,7 @@ export default class ConfigModal extends Vue {
     this.projectConfig = { ...(this.initialProjectConfig as ProjectConfig) }
   }
 
-  mounted() {
+  beforeMount() {
     this.setModalState()
   }
 }

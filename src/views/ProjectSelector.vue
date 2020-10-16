@@ -2,15 +2,19 @@
   <div class="modal-wrapper">
     <div class="config-modal">
       <h4>Select Project</h4>
+      <hr>
       <h6>New project</h6>
       <div class="modal-buttons">
-        <button @click="openConfigModal" :disabled="!isDirty">Configure new project</button>
+        <button @click="startNewProjectConfiguration">Configure new project</button>
       </div>
       <hr>
       <h6>Import existing project</h6>
       <div class="input-wrapper">
         <div class="label">Load from path</div>
-        <input type="text" v-model="projectConfig.name">
+        <input type="text" v-model="projectPath" @change="fetchProjectFromPath">
+      </div>
+      <div v-if="projectFromPath && !loadingProjectFromPath">
+        <button class="project-button" @click="openUnknownProject(projectPath)">Open project: {{ projectFromPath.name }}</button>
       </div>
       <hr>
       <h6>Known projects</h6>
@@ -19,7 +23,7 @@
           v-for="projectConfig in applicationData.projects"
           :key="projectConfig.id"
         >
-          <button class="project-button" @click="openProject(projectConfig)">{{ projectConfig.name }}</button>
+          <button class="project-button" @click="openKnownProject(projectConfig.id)">{{ projectConfig.name }}</button>
         </template>
       </template>
       <span v-else>There are no known existing projects to load.</span>
@@ -35,12 +39,37 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class ProjectSelector extends Vue {
+  projectPath = ''
+
+  projectFromPath: Project | null = null
+
+  loadingProjectFromPath = false
+
   get applicationData(): ApplicationData {
-    return this.$store.getters('applicationData')
+    return this.$store.getters.applicationData
   }
 
-  openProject(projectId: string) {
-    this.$store.dispatch('openProject', projectId)
+  fetchProjectFromPath() {
+    this.loadingProjectFromPath = true
+    this.$store.dispatch('asyncFetchProject', { fullPath: this.projectPath }).then((project: Project) => {
+      this.projectFromPath = project
+    }).catch(() => {
+      this.projectFromPath = null
+    }).finally(() => {
+      this.loadingProjectFromPath = false
+    })
+  }
+
+  startNewProjectConfiguration() {
+    this.$store.dispatch('startNewProjectConfiguration')
+  }
+
+  openUnknownProject(path: string) {
+    this.$store.dispatch('asyncOpenUknownProjectFromPath', path)
+  }
+
+  openKnownProject(projectId: string) {
+    this.$store.dispatch('asyncOpenKnownProjectFromId', projectId)
   }
 }
 </script>
@@ -118,5 +147,12 @@ export default class ProjectSelector extends Vue {
   justify-content: center;
   align-items: center;
   margin: 6px 0;
+}
+
+h6 {
+  padding: 0;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
 }
 </style>
