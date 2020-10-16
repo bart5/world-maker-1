@@ -7,17 +7,7 @@ interface ApplicationData {
     [projectId: string]: ProjectConfig
   };
   lastProjectId: string;
-}
-
-interface WorkspaceConfiguration {
-  modulus: number;
-  fitToTiles: boolean;
-  lockScale: boolean;
-  lockedScale: number;
-  lockView: boolean;
-  lockedViewPosition: {};
-  lockTiles: boolean;
-  lastSessionCamera: Camera | null;
+  defaultLocalPath: string;
 }
 
 interface ProjectConfig {
@@ -30,10 +20,49 @@ interface ProjectConfig {
   autosaveInterval: number;
 }
 
-interface ProjectData {
+interface UiData {
+  workspaces: Array<Workspace>;
+  tiles: Array<Tile>;
+  staticDataPath: string;
+  assetsPath: string;
+  activeWorkspaceId: workspaceId;
+}
+
+interface ApplicationState {
+  applicationData: ApplicationData | null;
+  project: Project;
+  projectConfigTemplate: ProjectConfig;
+  projectConfigurationMutated: boolean;
+  projectStaticDataMutated: boolean;
+  projectStaticEntityBindings: boolean;
+  ui: UIState;
+}
+
+interface UIState {
+  connectingInProgress: boolean;
+  tileDeletionInProgress: boolean;
+  workspaceDeletionInProgress: boolean;
+  selectedInputSourceTile: tileId;
+  activeModal: modalTypes;
+}
+
+interface Project {
+  id: string;
+  name: string;
   staticData: StaticData;
   entityBindings: EntityBindings;
-  project: Project;
+  uiData: UiData;
+}
+
+interface WorkspaceConfiguration {
+  modulus: number;
+  fitToTiles: boolean;
+  lockScale: boolean;
+  lockedScale: number;
+  lockView: boolean;
+  lockedViewPosition: {};
+  lockTiles: boolean;
+  lastSessionCamera: Camera | null;
 }
 
 interface Workspace {
@@ -67,38 +96,6 @@ interface Tile extends Block {
   }
 }
 
-interface Project {
-  id: string;
-  name: string;
-  workspaces: Array<Workspace>;
-  tiles: Array<Tile>;
-  staticDataPath: string;
-  assetsPath: string;
-  activeWorkspaceId: workspaceId;
-  // config: ProjectConfig;
-  // defaultConfig: ProjectConfig;
-}
-
-interface ApplicationState {
-  // loadingStaticData: boolean;
-  applicationData: ApplicationData | null;
-  project: Project;
-  projectData: ProjectData | null;
-  defaultProjectConfig: ProjectConfig;
-  projectConfigurationMutated: boolean;
-  projectStaticDataMutated: boolean;
-  projectStaticEntityBindings: boolean;
-  ui: UIState;
-}
-
-interface UIState {
-  connectingInProgress: boolean;
-  tileDeletionInProgress: boolean;
-  workspaceDeletionInProgress: boolean;
-  selectedInputSourceTile: tileId;
-  activeModal: modalTypes;
-}
-
 interface Coords {
   x: number,
   y: number
@@ -111,6 +108,6 @@ interface Camera {
 }
 
 type modalTypes =
-  'Configuration'
-  | 'ProjectSelector'
+  'configuration'
+  | 'projectSelector'
   | null

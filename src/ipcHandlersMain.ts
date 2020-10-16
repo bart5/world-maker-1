@@ -10,6 +10,7 @@ import fs from 'fs'
 // const staticDataPath = cwd + staticDataSubpath
 
 const appDataPath = app.getPath('appData') + '/applicationData.json'
+const defaultProjectsPath = appDataPath + '/projects'
 
 function reportError(event: Electron.IpcMainEvent, response: IpcReply) {
   event.reply('error', response)
@@ -100,7 +101,23 @@ export default function setupCommunicaton() {
 
   const handlers: {[key in opType]: (data?: any) => Promise<any> } = {
     loadApplicationData() {
-      return loadFile(appDataPath)
+      return loadFile(appDataPath).then((data) => {
+        if (data === {}) {
+          const defaultAppData: ApplicationData = {
+            projects: {},
+            lastProjectId: '',
+            defaultLocalPath: defaultProjectsPath
+          }
+          return new Promise((resolve, reject) => {
+            saveFile(appDataPath, defaultAppData).then(() => {
+              resolve(defaultAppData)
+            }).catch((e) => {
+              reject(Error(`Failed creating default app data.\n${e}`))
+            })
+          })
+        }
+        return Promise.resolve(data)
+      })
     },
     saveApplicationData(data) {
       return saveFile(appDataPath, data)

@@ -160,8 +160,8 @@ export default class ConfigModal extends Vue {
 
   setModalState() {
     const baseConfig = this.newProjectConfigurationInProgress
-      ? this.$store.getters.defaultProjectConfig
-      : this.$store.getters.projectConfig
+      ? this.$store.getters.newProjectConfig()
+      : this.$store.getters.currentProjectConfig
 
     this.initialProjectConfig = { ...baseConfig }
     this.projectConfig = { ...(this.initialProjectConfig as ProjectConfig) }

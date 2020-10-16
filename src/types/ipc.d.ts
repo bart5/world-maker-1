@@ -2,6 +2,8 @@ type opType =
   'loadApplicationData'
   | 'saveApplicationData'
   | 'testPath'
+  | 'updateProjectPaths'
+  | 'updateApplicationData'
 
 type operationResponseType = 'reply' | 'error'
 
