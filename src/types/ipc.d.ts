@@ -1,11 +1,10 @@
 type opType =
   'loadApplicationData'
-  | 'saveApplicationData'
-  | 'testPath'
-  | 'updateProjectPaths'
   | 'updateApplicationData'
+  | 'updateProjectPaths'
   | 'fetchProject'
   | 'saveProject'
+  | 'testPath'
 
 type operationResponseType = 'reply' | 'error'
 

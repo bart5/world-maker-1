@@ -13,8 +13,8 @@ interface ApplicationData {
 interface ProjectConfig {
   name: string;
   id: projectId;
-  localSavePath: string,
-  remoteSavePath: string,
+  localSaveDirectory: string,
+  remoteSaveDirectory: string,
   allowAutosave: boolean;
   /* If there are changes for that long then they will be saved automatically */
   autosaveInterval: number;

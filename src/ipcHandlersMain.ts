@@ -1,16 +1,9 @@
 import { ipcMain, WebContents, app } from 'electron'
 import fs from 'fs'
 
-/* TODO: Figure out later better placemed */
-// const stateDataSubpath = '/src/game/data/stateData.json'
-// const staticDataSubpath = '/src/game/data/staticData.json'
-// const cwd = process.cwd()
-
-// const stateDataPath = cwd + stateDataSubpath
-// const staticDataPath = cwd + staticDataSubpath
-
-const appDataPath = app.getPath('appData') + '/applicationData.json'
-const defaultProjectsPath = appDataPath + '/projects'
+const appDataDirectory = app.getPath('appData')
+const appDataFile = 'applicationData.json'
+const defaultProjectsDirectory = appDataDirectory + '/projects'
 
 function reportError(event: Electron.IpcMainEvent, response: IpcReply) {
   event.reply('error', response)
@@ -57,7 +50,7 @@ const getError = (error: Error | NodeJS.ErrnoException | null, message: string) 
   }
 }
 
-function saveFile(directory: string, fileName: string, data: {}) {
+function saveFile(directory: string, fileName: string, data: any = {}) {
   const dir = directory === '/' ? directory : directory.replace(/$\//, '')
   const fName = fileName.replace('/', '')
   const path = `${dir}/${fName}`
@@ -130,16 +123,20 @@ export default function setupCommunicaton() {
   console.info('Setting up IPC communication.')
 
   const handlers: {[key in opType]: (data?: any) => Promise<any> } = {
+    testPath(path) {
+      const testFile = 'testFile.test'
+      return saveFile(path, testFile, '').then(() => deleteFile(`${path}/${testFile}`))
+    },
     loadApplicationData() {
-      return loadFile(appDataPath).then((data) => {
+      return loadFile(`${appDataDirectory}/${appDataFile}`).then((data) => {
         if (data === {}) {
           const defaultAppData: ApplicationData = {
             projects: {},
             lastProjectId: '',
-            defaultLocalPath: defaultProjectsPath
+            defaultLocalPath: defaultProjectsDirectory
           }
           return new Promise((resolve, reject) => {
-            saveFile(appDataPath, defaultAppData).then(() => {
+            saveFile(appDataDirectory, appDataFile, defaultAppData).then(() => {
               resolve(defaultAppData)
             }).catch((e) => {
               reject(Error(`Failed creating default app data.\n${e}`))
@@ -150,17 +147,15 @@ export default function setupCommunicaton() {
       })
     },
     updateApplicationData(data) {
-      return saveFile(appDataPath, data)
-    },
-    testPath(path) {
-      return saveFile(path, '').then(() => deleteFile(path))
+      return saveFile(appDataDirectory, appDataFile, data)
     },
     updateProjectPaths(data: { oldConfig: ProjectConfig, newConfig: ProjectConfig, removeOld: boolean }) {
-      const newPath = data.newConfig.localSavePath
-      const oldPath = data.oldConfig.localSavePath
+      const newPath = data.newConfig.localSaveDirectory
+      const oldPath = data.oldConfig.localSaveDirectory
       return new Promise((resolve, reject) => {
         (loadFile(oldPath) as Promise<Project>).then((project) => {
-          saveFile(newPath, project).then(() => {
+          const fileName = data.newConfig.name.replace(' ', '-') + '.json'
+          saveFile(newPath, fileName, project).then(() => {
             if (data.removeOld) {
               deleteFile(oldPath).catch((e) => {
                 reject(Error(`Failed to delete project from old location.\n${e}`))
@@ -177,6 +172,15 @@ export default function setupCommunicaton() {
           reject(Error(`Failed to load project from old location.\n${e}`))
         })
       })
+    },
+    fetchProject(config: ProjectConfig) {
+      const fileName = config.name.replace(' ', '-') + '.json'
+      return loadFile(config.localSaveDirectory + fileName)
+    },
+    saveProject(payload: { config: ProjectConfig, data: Project, autosave?: boolean }) {
+      const directory = payload.config.localSaveDirectory
+      const fileName = payload.config.name.replace(' ', '-') + '.json'
+      return saveFile(directory, fileName, payload.data)
     },
   }
 

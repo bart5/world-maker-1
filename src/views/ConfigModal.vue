@@ -14,8 +14,8 @@
             'invalid': !pathValidations.local.valid
           }"
           type="text"
-          v-model="projectConfig.localSavePath"
-          @change="validatePath('local', projectConfig.localSavePath)"
+          v-model="projectConfig.localSaveDirectory"
+          @change="validatePath('local', projectConfig.localSaveDirectory)"
         >
       </div>
       <div class="input-wrapper">
@@ -27,7 +27,7 @@
           }"
           disabled="true"
           type="text"
-          v-model="projectConfig.remoteSavePath"
+          v-model="projectConfig.remoteSaveDirectory"
         >
       </div>
       <div class="input-wrapper">

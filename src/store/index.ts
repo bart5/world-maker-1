@@ -23,8 +23,8 @@ const getWorkspaceConfigurationDefaults = () => {
 const projectConfigTemplate: ProjectConfig = {
   id: '',
   name: 'New Awesome Project',
-  localSavePath: '',
-  remoteSavePath: '',
+  localSaveDirectory: '',
+  remoteSaveDirectory: '',
   allowAutosave: true,
   autosaveInterval: 5,
 }
@@ -156,7 +156,7 @@ export default createStore({
       const path = (getters.applicationData as ApplicationData).defaultLocalPath
       const config: ProjectConfig = {
         ...state.projectConfigTemplate,
-        localSavePath: path,
+        localSaveDirectory: path,
         id,
         name
       }
@@ -468,7 +468,7 @@ export default createStore({
       this.commit('START_OPENING_PROJECT')
       await state.dispatch('saveProject')
       const projectConfig: ProjectConfig = await state.getters.projectConfigFromId(projectId)
-      const project = await state.dispatch('asyncFetchProject', projectConfig.localSavePath)
+      const project = await state.dispatch('asyncFetchProject', projectConfig.localSaveDirectory)
       this.commit('LOAD_PROJECT_TO_UI', project)
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
@@ -530,7 +530,8 @@ export default createStore({
     saveProject(state, autosave: boolean) {
       if (state.getters.isUnsavedData) {
         const { project } = state.state
-        ipc.exchange('saveProject', { project, autosave })
+        const config = state.getters.currentProjectConfig
+        ipc.exchange('saveProject', { config, data: project, autosave })
       }
       return Promise.resolve()
     },
