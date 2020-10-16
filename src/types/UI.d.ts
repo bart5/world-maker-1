@@ -51,6 +51,8 @@ interface UIState {
   tileDeletionInProgress: boolean;
   workspaceDeletionInProgress: boolean;
   selectedInputSourceTile: tileId;
+  projectDataIsLoaded: boolean;
+  newProjectConfigurationInProgress: boolean;
   activeModal: modalTypes;
 }
 

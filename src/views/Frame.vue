@@ -38,11 +38,10 @@
       </div> -->
     </div>
     <div class="workspace-selector">
-      <template
-        v-for="workspace in workspaces"
-        :key="workspace.id"
-      >
+      <template v-if="projectDataIsLoaded">
         <div
+          v-for="workspace in workspaces"
+          :key="workspace.id"
           :ref="`tab_${workspace.id}`"
           class="workspace-tab"
           :class="{
@@ -97,6 +96,7 @@
       >
         <div class="workspace-background" :style="backgroundStyle"></div>
         <div
+          v-if="projectDataIsLoaded"
           class="workspace"
           ref="workspace"
           :style="workspaceStyle"
@@ -180,6 +180,10 @@ export default class Frame extends Vue {
   workspaceCameras: {
     [workspaceId: string]: Camera
   } = {}
+
+  get projectDataIsLoaded() {
+    return this.$store.getters.projectDataIsLoaded
+  }
 
   get workspaceStyle() {
     const width = this.workspaceWidth

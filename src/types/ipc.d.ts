@@ -4,6 +4,8 @@ type opType =
   | 'testPath'
   | 'updateProjectPaths'
   | 'updateApplicationData'
+  | 'fetchProject'
+  | 'saveProject'
 
 type operationResponseType = 'reply' | 'error'
 

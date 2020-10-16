@@ -1,9 +1,10 @@
 import { ipc } from '@/game/data/ipcHandlersRenderer';
-import { createStore } from 'vuex';
+import { createStore, Store } from 'vuex';
 
-// const validateProjectDataKeys = (data: any) => {
-//   return Object.keys(data).every((k) => Object.keys(newProjectTemplate).some((dk) => dk === k))
-// }
+/* Shallow */
+const validateProjectDataKeys = (data: any) => {
+  return Object.keys(data).every((k) => Object.keys(getNewProjectTemplate()).some((dk) => dk === k))
+}
 
 const getWorkspaceConfigurationDefaults = () => {
   const workspaceConfiguration: WorkspaceConfiguration = {
@@ -80,6 +81,8 @@ const initialState: ApplicationState = {
     tileDeletionInProgress: false,
     workspaceDeletionInProgress: false,
     selectedInputSourceTile: '',
+    projectDataIsLoaded: false,
+    newProjectConfigurationInProgress: false,
     activeModal: null,
   }
 }
@@ -159,6 +162,7 @@ export default createStore({
       }
       return config
     },
+    projectDataIsLoaded: (state) => state.ui.projectDataIsLoaded,
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
@@ -329,6 +333,17 @@ export default createStore({
     CLOSE_MODAL(state) {
       state.ui.activeModal = null
     },
+    START_NEW_PROJECT_CONFIGURATION(state) {
+      state.ui.newProjectConfigurationInProgress = true
+      state.ui.activeModal = 'configuration'
+    },
+    STOP_NEW_PROJECT_CONFIGURATION(state) {
+      state.ui.newProjectConfigurationInProgress = false
+      state.ui.activeModal = 'configuration'
+    },
+    SET_PROJECT_DATA_LOADED(state, value) {
+      state.ui.projectDataIsLoaded = value
+    },
   },
   actions: {
     selectTask(state, taskId: string) {
@@ -451,27 +466,29 @@ export default createStore({
     */
     async asyncOpenKnownProjectFromId(state, projectId: string) {
       this.commit('START_OPENING_PROJECT')
-      await state.dispatch('asyncBeforeProjectOpen')
-      const projectConfig = await state.getters.projectConfigFromId(projectId)
-      const data = await state.dispatch('loadProject', projectConfig)
-      await state.dispatch('loadProjectToUI', data)
+      await state.dispatch('saveProject')
+      const projectConfig: ProjectConfig = await state.getters.projectConfigFromId(projectId)
+      const project = await state.dispatch('asyncFetchProject', projectConfig.localSavePath)
+      this.commit('LOAD_PROJECT_TO_UI', project)
       this.commit('STOP_OPENING_PROJECT')
+      this.commit('SET_PROJECT_DATA_LOADED', true)
     },
     /*
       Open existing project now known to Application Data.
     */
     async asyncOpenUknownProjectFromPath(state, path: string) {
       this.commit('START_OPENING_PROJECT')
-      await state.dispatch('asyncBeforeProjectOpen')
-      const data = await state.dispatch('loadProject', path) as Project
-      // if (!validateProjectDataKeys(data)) {
-      //   this.commit('STOP_OPENING_PROJECT')
-      //   state.dispatch('openModal', { type: 'error', message: 'Project data is ivalid' })
-      // }
-      await state.dispatch('loadProjectToUI', data)
-      const projectConfig = state.getters.newProjectConfig(data)
+      await state.dispatch('saveProject')
+      const project = await state.dispatch('asyncFetchProject', path) as Project
+      if (!validateProjectDataKeys(project)) {
+        this.commit('STOP_OPENING_PROJECT')
+        state.dispatch('openModal', { type: 'error', message: 'Project data is ivalid' })
+      }
+      this.commit('LOAD_PROJECT_TO_UI', project)
+      const projectConfig = state.getters.newProjectConfig(project)
       await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
       this.commit('STOP_OPENING_PROJECT')
+      this.commit('SET_PROJECT_DATA_LOADED', true)
       state.dispatch('openModal', 'configuration')
     },
     /*
@@ -479,17 +496,12 @@ export default createStore({
     */
     async asyncOpenNewProjectWithConfig(state, projectConfig: ProjectConfig) {
       this.commit('START_OPENING_PROJECT')
-      await state.dispatch('asyncBeforeProjectOpen')
+      await state.dispatch('saveProject')
       const project = getNewProjectTemplate()
-      await state.dispatch('loadProjectToUI', project)
+      this.commit('LOAD_PROJECT_TO_UI', project)
       await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
       this.commit('STOP_OPENING_PROJECT')
-    },
-    asyncBeforeProjectOpen(state) {
-      if (state.getters.isUnsavedData) {
-        return state.dispatch('saveProject')
-      }
-      return Promise.resolve()
+      this.commit('SET_PROJECT_DATA_LOADED', true)
     },
     asyncLoadApplicationData() {
       return ipc.exchange('loadApplicationData').then((data: ApplicationData) => {
@@ -512,23 +524,33 @@ export default createStore({
         throw Error(`Caught error while updating application data.\nError: ${e}`)
       })
     },
-    loadProject() {
-      /* Ask for locations to StaticData and EntityBindings */
+    asyncFetchProject(state, path) {
+      return ipc.exchange('fetchProject', path)
     },
-    loadProjectToUI(state, data) {
-      /* load project based on provided data */
-      /* Check if current project has unsaved data */
+    saveProject(state, autosave: boolean) {
+      if (state.getters.isUnsavedData) {
+        const { project } = state.state
+        ipc.exchange('saveProject', { project, autosave })
+      }
+      return Promise.resolve()
     },
-    saveProject(state, isAutosave) {
-      /* Encode to JSON and send */
-      /* Indicate if it's autosave */
-    },
-    beforeApplicationClose() {
-      /* Check for unsaved data */
-      /* Ask if user want's to save changes */
+    // saveProjectAs(state, autosave: boolean) {
+    //   /* Open modal with path selection */
+    //   /* Ask if path should become new default path of the project */
+    //   /* If no: just save project files to that location */
+    //   /* If yes: change local path in project config and then save */
+    // },
+    asyncBeforeApplicationClose() {
+      return this.dispatch('saveProject')
     },
     asyncTestPath(state, path: string) {
       return ipc.exchange('testPath', path)
+    },
+    startNewProjectConfiguration() {
+      this.commit('START_NEW_PROJECT_CONFIGURATION')
+    },
+    stopNewProjectConfiguration() {
+      this.commit('STOP_NEW_PROJECT_CONFIGURATION')
     },
   },
   modules: {

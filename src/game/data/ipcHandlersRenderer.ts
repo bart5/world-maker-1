@@ -77,13 +77,13 @@ export const ipc: Ipc = {
         ipc.rejectExchange(reply as IpcReply)
       },
       startNewProject() {
-        vm.$store.dispatch('startNewProject')
+        vm.$store.dispatch('configureNewProject')
       },
       openExistingProject() {
         /*  */
       },
       saveProject() {
-        /*  */
+        vm.$store.dispatch('saveProject')
       },
       saveProjectAs() {
         /*  */
