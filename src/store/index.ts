@@ -1,28 +1,22 @@
 import { ipc } from '@/game/data/ipcHandlersRenderer';
 import { createStore } from 'vuex';
 
-const workspaceConfigurationDefaults: WorkspaceConfiguration = {
-  modulus: 1,
-  fitToTiles: false,
-  lockScale: false,
-  lockedScale: 1,
-  lockView: false,
-  lockedViewPosition: {},
-  lockTiles: false,
-  lastSessionCamera: null,
-}
+// const validateProjectDataKeys = (data: any) => {
+//   return Object.keys(data).every((k) => Object.keys(newProjectTemplate).some((dk) => dk === k))
+// }
 
-const validateProjectDataKeys = (data: any) => {
-  return Object.keys(data).every((k) => Object.keys(newProjectTemplate).some((dk) => dk === k))
-}
-
-const workspaceDefaults: Workspace = {
-  id: '0',
-  name: 'New Workspace',
-  order: 1,
-  configuration: {
-    ...workspaceConfigurationDefaults
+const getWorkspaceConfigurationDefaults = () => {
+  const workspaceConfiguration: WorkspaceConfiguration = {
+    modulus: 1,
+    fitToTiles: false,
+    lockScale: false,
+    lockedScale: 1,
+    lockView: false,
+    lockedViewPosition: {},
+    lockTiles: false,
+    lastSessionCamera: null,
   }
+  return workspaceConfiguration
 }
 
 const projectConfigTemplate: ProjectConfig = {
@@ -34,31 +28,47 @@ const projectConfigTemplate: ProjectConfig = {
   autosaveInterval: 5,
 }
 
-const newProjectUiData: UiData = {
-  workspaces: [{
-    ...workspaceDefaults
-  }],
-  tiles: [],
-  staticDataPath: '',
-  assetsPath: '',
-  activeWorkspaceId: '0',
+const getWorkspaceDefaults = () => {
+  const workspace: Workspace = {
+    id: '0',
+    name: 'New Workspace',
+    order: 1,
+    configuration: {
+      ...getWorkspaceConfigurationDefaults()
+    }
+  }
+  return workspace
 }
 
-const newProjectTemplate: Project = {
-  id: '',
-  name: 'New Awesome Project',
-  staticData: {} as StaticData,
-  entityBindings: {},
-  uiData: {
-    ...newProjectUiData
+const getNewProjectUiData = () => {
+  const uiData: UiData = {
+    workspaces: [{
+      ...getWorkspaceDefaults()
+    }],
+    tiles: [],
+    staticDataPath: '',
+    assetsPath: '',
+    activeWorkspaceId: '0',
   }
+  return uiData
+}
+
+const getNewProjectTemplate = () => {
+  const project: Project = {
+    id: '',
+    name: 'New Awesome Project',
+    staticData: {} as StaticData,
+    entityBindings: {},
+    uiData: {
+      ...getNewProjectUiData()
+    }
+  }
+  return project
 }
 
 const initialState: ApplicationState = {
   applicationData: null,
-  project: {
-    ...newProjectTemplate
-  },
+  project: {} as Project,
   projectConfigTemplate: {
     ...projectConfigTemplate
   },
@@ -454,10 +464,10 @@ export default createStore({
       this.commit('START_OPENING_PROJECT')
       await state.dispatch('asyncBeforeProjectOpen')
       const data = await state.dispatch('loadProject', path) as Project
-      if (!validateProjectDataKeys(data)) {
-        this.commit('STOP_OPENING_PROJECT')
-        state.dispatch('openModal', { type: 'error', message: 'Project data is ivalid' })
-      }
+      // if (!validateProjectDataKeys(data)) {
+      //   this.commit('STOP_OPENING_PROJECT')
+      //   state.dispatch('openModal', { type: 'error', message: 'Project data is ivalid' })
+      // }
       await state.dispatch('loadProjectToUI', data)
       const projectConfig = state.getters.newProjectConfig(data)
       await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
@@ -470,8 +480,8 @@ export default createStore({
     async asyncOpenNewProjectWithConfig(state, projectConfig: ProjectConfig) {
       this.commit('START_OPENING_PROJECT')
       await state.dispatch('asyncBeforeProjectOpen')
-      const data = state.getters.newProject
-      await state.dispatch('loadProjectToUI', data)
+      const project = getNewProjectTemplate()
+      await state.dispatch('loadProjectToUI', project)
       await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
       this.commit('STOP_OPENING_PROJECT')
     },

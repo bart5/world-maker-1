@@ -28,6 +28,14 @@ interface UiData {
   activeWorkspaceId: workspaceId;
 }
 
+interface Project {
+  id: string;
+  name: string;
+  staticData: StaticData;
+  entityBindings: EntityBindings;
+  uiData: UiData;
+}
+
 interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
@@ -44,14 +52,6 @@ interface UIState {
   workspaceDeletionInProgress: boolean;
   selectedInputSourceTile: tileId;
   activeModal: modalTypes;
-}
-
-interface Project {
-  id: string;
-  name: string;
-  staticData: StaticData;
-  entityBindings: EntityBindings;
-  uiData: UiData;
 }
 
 interface WorkspaceConfiguration {
