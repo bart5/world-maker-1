@@ -14,12 +14,15 @@
       </div>
       <hr>
       <h6>Known projects</h6>
-      <template
-        v-for="projectConfig in applicationData.projects"
-        :key="projectConfig.id"
-      >
-        <button class="project-button" @click="openProject(projectConfig)">{{ projectConfig.name }}</button>
+      <template v-if="applicationData.projects.length">
+        <template
+          v-for="projectConfig in applicationData.projects"
+          :key="projectConfig.id"
+        >
+          <button class="project-button" @click="openProject(projectConfig)">{{ projectConfig.name }}</button>
+        </template>
       </template>
+      <span v-else>There are no known existing projects to load.</span>
     </div>
   </div>
 </template>
