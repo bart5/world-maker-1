@@ -1,5 +1,5 @@
 import { ipc } from '@/game/data/ipcHandlersRenderer';
-import { createStore, Store } from 'vuex';
+import { createStore } from 'vuex';
 
 /* Shallow */
 const validateProjectDataKeys = (data: any) => {
@@ -110,9 +110,9 @@ export default createStore({
     // loadingStaticData: (state) => state.loadingStaticData,
     // staticData: (state) => state.staticData,
     workspaces: (state) => state.project.uiData.workspaces,
-    activeWorkspaceId: (state) => state.project.uiData.activeWorkspaceId,
-    activeWorkspace: (state) => state.project.uiData.workspaces.filter((ws) => ws.id === state.project.uiData.activeWorkspaceId)[0],
-    allTilesOfWorkspace: (state) => (workspaceId: string) => state.project.uiData.tiles.filter((tile) => {
+    activeWorkspaceId: (state) => state.project.uiData?.activeWorkspaceId,
+    activeWorkspace: (state) => state.project.uiData?.workspaces.filter((ws) => ws.id === state.project.uiData.activeWorkspaceId)[0],
+    allTilesOfWorkspace: (state) => (workspaceId: string) => state.project.uiData?.tiles.filter((tile) => {
       return tile.workspaceId === workspaceId
     }),
     activeWorkspaceTiles: (state, getters) => getters.allTilesOfWorkspace(getters.activeWorkspaceId),
@@ -163,6 +163,7 @@ export default createStore({
       return config
     },
     projectDataIsLoaded: (state) => state.ui.projectDataIsLoaded,
+    activeProjectId: (state) => state.project.id,
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
@@ -343,6 +344,9 @@ export default createStore({
     },
     SET_PROJECT_DATA_LOADED(state, value) {
       state.ui.projectDataIsLoaded = value
+    },
+    SET_APPLICATION_DATA(state, data) {
+      state.applicationData = data
     },
   },
   actions: {

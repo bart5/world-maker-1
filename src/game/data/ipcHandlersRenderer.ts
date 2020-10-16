@@ -59,6 +59,7 @@ export const ipc: Ipc = {
     const { opType, data, exchangeId } = reply
     const exchange = this.exchangesInProgress[exchangeId]
     if (exchange) {
+      console.warn(`Exchange failed with following information from main process:\n${data}`)
       exchange.reject(data)
     } else {
       console.warn(`Received error to unregistered exchange for operation: ${opType}.\nError data: ${data}`)

@@ -6,11 +6,12 @@
       <button :disabled="!activeWorkspace || disableZoom" @click="zoomIn">Zoom in</button>
       <button :disabled="!activeWorkspace || disableZoom" @click="resetZoom">Reset zoom</button>
       <button :disabled="!activeWorkspace || disableZoom" @click="zoomOut">Zoom out</button>
-      <button :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
+      <button :disabled="!projectDataIsLoaded" :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
       |
       <div class="widget">
         <label>Mod:
           <input
+            :disabled="!projectDataIsLoaded"
             type="number"
             min="1"
             step="1"
@@ -23,12 +24,12 @@
       </div>
       <div class="widget">
         <label>Zoom lock:
-          <input type="checkbox" class="workspace-zoom-lock" v-model="workspaceConfig.lockScale" @change="onZoomLockChange">
+          <input :disabled="!projectDataIsLoaded" type="checkbox" class="workspace-zoom-lock" v-model="workspaceConfig.lockScale" @change="onZoomLockChange">
         </label>
       </div>
       <div class="widget">
         <label>Anchor view:
-          <input type="checkbox" class="workspace-view-lock" v-model="workspaceConfig.lockView" @change="onViewLockChange">
+          <input :disabled="!projectDataIsLoaded" type="checkbox" class="workspace-view-lock" v-model="workspaceConfig.lockView" @change="onViewLockChange">
         </label>
       </div>
       <!-- <div class="widget">
@@ -82,6 +83,7 @@
       </div>
 
       <button
+        :disabled="!projectDataIsLoaded"
         class="workspace-tab add-new-tab-tab"
         @click="createNewWorkspace"
       >+</button>
@@ -138,6 +140,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
+import { Watch } from 'vue-property-decorator';
 import TileComponent from '@/views/Tile.vue'
 import Curve from '@/views/Curve.vue'
 
@@ -180,6 +183,15 @@ export default class Frame extends Vue {
   workspaceCameras: {
     [workspaceId: string]: Camera
   } = {}
+
+  @Watch('activeProjectId')
+  handleProjectChange() {
+    this.setupFrame()
+  }
+
+  get activeProjectId() {
+    return this.$store.getters.activeProjectId
+  }
 
   get projectDataIsLoaded() {
     return this.$store.getters.projectDataIsLoaded
@@ -287,6 +299,8 @@ export default class Frame extends Vue {
   }
 
   startBoardMove(e: MouseEvent) {
+    if (!this.projectDataIsLoaded) return
+
     if (this.dragInProgress || this.resizeInProgress) return
     this.draggingBoard = true
     this.updateRelativeMousePosition(e)
@@ -649,6 +663,8 @@ export default class Frame extends Vue {
   }
 
   keyboardHandler(e: KeyboardEvent) {
+    if (!this.projectDataIsLoaded) return
+
     if (e.ctrlKey) {
       switch (e.key) {
         case '1':
@@ -660,9 +676,7 @@ export default class Frame extends Vue {
         case '7':
         case '8':
         case '9':
-          this.activateWorkspace(
-            this.workspaces.sort((w1, w2) => w1.order - w2.order)[Number(e.key) - 1]?.id || ''
-          )
+          this.activateNthOrderWorkspace(Number(e.key))
           break;
         case 'PageUp':
           this.activatePreviousTabWorkspace()
@@ -680,6 +694,12 @@ export default class Frame extends Vue {
           break;
       }
     }
+  }
+
+  activateNthOrderWorkspace(n: number) {
+    this.activateWorkspace(
+      this.workspaces.sort((w1, w2) => w1.order - w2.order)[n - 1]?.id || ''
+    )
   }
 
   saveCurrentWorkspaceCamera(workspaceId: string = this.activeWorkspaceId) {
@@ -707,11 +727,15 @@ export default class Frame extends Vue {
     return this.$store.getters.getLastSessionCamera(workspaceId)
   }
 
-  mounted() {
-    if (!this.allTilesOfActiveWorkspace.length) {
-      this.createNewTile()
-    }
+  setupFrame() {
     this.setWorkspaceCamera(this.activeWorkspaceId)
+    this.activateNthOrderWorkspace(1)
+  }
+
+  mounted() {
+    // if (!this.allTilesOfActiveWorkspace.length) {
+    //   this.createNewTile()
+    // }
     window.addEventListener('keydown', this.keyboardHandler)
   }
 }

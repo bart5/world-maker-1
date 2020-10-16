@@ -1,7 +1,7 @@
 import { ipcMain, WebContents, app } from 'electron'
 import fs from 'fs'
 
-const appDataDirectory = app.getPath('appData')
+const appDataDirectory = app.getPath('appData') + '/World-Maker'
 const appDataFile = 'applicationData.json'
 const defaultProjectsDirectory = appDataDirectory + '/projects'
 
@@ -33,7 +33,7 @@ function loadFile(path: string) {
     fs.readFile(path, (err, data) => {
       if (err) {
         console.warn(`No file was found under: ${path}`)
-        resolve({})
+        resolve('')
       } else {
         console.log(`Success loading data from file: ${path}`)
         const parsed = JSON.parse(data.toString())
@@ -56,9 +56,9 @@ function saveFile(directory: string, fileName: string, data: any = {}) {
   const path = `${dir}/${fName}`
   return new Promise((resolve, reject) => {
     /* Save file as .temp */
-    fs.writeFile(`${path}.temp`, JSON.stringify(data), (err) => {
+    const saveData = () => fs.writeFile(`${path}.temp`, JSON.stringify(data), (err) => {
       if (err) return reject(getError(err, `Error saving data for file in path: ${path}`))
-      console.info(`Success saving data to file: ${path}`)
+      console.info(`Success saving data to file: ${path}.temp`)
 
       /* Check for existance of old version */
       return fs.readdir(dir, (err1, files) => {
@@ -82,6 +82,19 @@ function saveFile(directory: string, fileName: string, data: any = {}) {
           return resolve(`Successfully saved file ${fileName} in ${directory}`)
         })
       })
+    })
+
+    return fs.readdir(dir, (err) => {
+      if (err) {
+        console.info(`Directory ${dir} does not exist. Will try to create it.`)
+
+        fs.mkdir(appDataDirectory, { recursive: true }, (err1) => {
+          if (err1) return reject(getError(err1, `Failed recursively creating new directory: ${appDataDirectory}`))
+          return saveData()
+        })
+      } else {
+        saveData()
+      }
     })
   })
 }
@@ -129,21 +142,18 @@ export default function setupCommunicaton() {
     },
     loadApplicationData() {
       return loadFile(`${appDataDirectory}/${appDataFile}`).then((data) => {
-        if (data === {}) {
-          const defaultAppData: ApplicationData = {
+        if (typeof data === 'string' && data === '') {
+          const initialApplicationData: ApplicationData = {
             projects: {},
             lastProjectId: '',
             defaultLocalPath: defaultProjectsDirectory
           }
-          return new Promise((resolve, reject) => {
-            saveFile(appDataDirectory, appDataFile, defaultAppData).then(() => {
-              resolve(defaultAppData)
-            }).catch((e) => {
-              reject(Error(`Failed creating default app data.\n${e}`))
-            })
+
+          return saveFile(appDataDirectory, appDataFile, initialApplicationData).then(() => {
+            return initialApplicationData
           })
         }
-        return Promise.resolve(data)
+        return data
       })
     },
     updateApplicationData(data) {
@@ -181,7 +191,7 @@ export default function setupCommunicaton() {
       const directory = payload.config.localSaveDirectory
       const fileName = payload.config.name.replace(' ', '-') + '.json'
       return saveFile(directory, fileName, payload.data)
-    },
+    }
   }
 
   const setupListeners = () => {

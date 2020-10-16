@@ -15,7 +15,7 @@ export default class AppLoader extends Vue {
   loadingApplicationData = true
 
   get applicationData(): ApplicationData {
-    return this.$store.getters('applicationData')
+    return this.$store.getters.applicationData
   }
 
   async mounted() {
