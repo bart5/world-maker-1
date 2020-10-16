@@ -75,8 +75,8 @@ interface Project {
   staticDataPath: string;
   assetsPath: string;
   activeWorkspaceId: workspaceId;
-  config: ProjectConfig;
-  defaultConfig: ProjectConfig;
+  // config: ProjectConfig;
+  // defaultConfig: ProjectConfig;
 }
 
 interface ApplicationState {
@@ -84,6 +84,7 @@ interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
   projectData: ProjectData | null;
+  defaultProjectConfig: ProjectConfig;
   projectConfigurationMutated: boolean;
   projectStaticDataMutated: boolean;
   projectStaticEntityBindings: boolean;

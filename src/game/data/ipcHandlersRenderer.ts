@@ -52,7 +52,7 @@ export const ipc: Ipc = {
     if (exchange) {
       exchange.resolve(data)
     } else {
-      console.warn(`Received reply to unregistered exchange for operation: ${opType}, reply data: ${data}`)
+      console.warn(`Received reply to unregistered exchange for operation: ${opType}.\nReply data: ${data}`)
     }
   },
   rejectExchange(reply: IpcReply) {
@@ -61,7 +61,7 @@ export const ipc: Ipc = {
     if (exchange) {
       exchange.reject(data)
     } else {
-      console.warn(`Received error to unregistered exchange for operation: ${opType}, error data: ${data}`)
+      console.warn(`Received error to unregistered exchange for operation: ${opType}.\nError data: ${data}`)
     }
   },
   initListener(eventType, handler) {

@@ -422,23 +422,58 @@ export default createStore({
     setApplicationData(state, data: ApplicationData) {
       this.commit('SET_APPLICATION_DATA', data)
     },
-    async openProject(state, payload: { config?: ProjectConfig, projectId?: string, path?: string}) {
-      this.commit('START_OPENING_PROJECT')
+    asyncBeforeProjectOpen(state) {
       if (state.getters.isUnsavedData) {
-        await state.dispatch('saveProjectData')
+        return state.dispatch('saveProjectData')
       }
-      let data
-      if (payload.path) {
-        data = await state.dispatch('loadProjectData', { path: payload.path })
-      } else {
-        const config = payload.config || state.getters.projectConfigFromId(payload.projectId)
-        data = await state.dispatch('loadProjectData', { config })
-      }
+      return Promise.resolve()
+    },
+    /*
+      Opening project known to Application Data.
+    */
+    async asyncOpenKnownProjectFromId(state, projectId: string) {
+      this.commit('START_OPENING_PROJECT')
+      await state.dispatch('asyncBeforeProjectOpen')
+      const projectConfig = await state.getters.projectConfigFromId(projectId)
+      const data = await state.dispatch('loadProjectData', projectConfig)
       await state.dispatch('loadProjectToUI', data)
       this.commit('STOP_OPENING_PROJECT')
     },
+    /*
+      Open existing project now known to Application Data.
+    */
+    async asyncOpenUknownProjectFromPath(state, path: string) {
+      this.commit('START_OPENING_PROJECT')
+      await state.dispatch('asyncBeforeProjectOpen')
+      const data = await state.dispatch('loadProjectData', path)
+      await state.dispatch('loadProjectToUI', data)
+      const projectConfig = state.getters.defaultProjectConfig
+      await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
+      this.commit('STOP_OPENING_PROJECT')
+    },
+    /*
+      Opening completely new project and assigning to it provided config.
+    */
+    async asyncOpenNewProjectWithConfig(state, projectConfig: ProjectConfig) {
+      this.commit('START_OPENING_PROJECT')
+      await state.dispatch('asyncBeforeProjectOpen')
+      const data = state.getters.newProjectData
+      await state.dispatch('loadProjectToUI', data)
+      await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
+      this.commit('STOP_OPENING_PROJECT')
+    },
+    asyncUpdateLoadedProjectPaths(state, { oldProjectConfig, newProjectConfig }) {
+      return ipc.exchange('updateProjectPaths', { oldProjectConfig, newProjectConfig }).then(() => {
+        state.dispatch('asyncUpdateApplicationData', newProjectConfig)
+      })
+    },
+    asyncUpdateApplicationData(state, projectConfig) {
+      return ipc.exchange('updateApplicationData', projectConfig).then(() => {
+        this.commit('UPDATE_APPLICATION_DATA', projectConfig)
+      })
+    },
     loadProjectData() {
-      /* Ask for locations to StaticData and AssetMappings */
+      /* Ask for locations to StaticData and EntityBindings */
     },
     loadProjectToUI(state, data) {
       /* load project based on provided data */
