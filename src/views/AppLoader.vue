@@ -24,7 +24,7 @@ export default class AppLoader extends Vue {
     this.loadingApplicationData = false
 
     if (this.applicationData.lastProjectId) {
-      this.$store.dispatch('openProject', this.applicationData.lastProjectId)
+      this.$store.dispatch('asyncOpenKnownProjectFromId', this.applicationData.lastProjectId)
     } else {
       this.$store.dispatch('openModal', 'projectSelector')
     }

@@ -1,4 +1,4 @@
-import { ipcMain, WebContents, app, dialog, BrowserWindow } from 'electron'
+import { ipcMain, WebContents, app, dialog, BrowserWindow, shell } from 'electron'
 import fs from 'fs'
 
 const appDataDirectory = app.getPath('appData') + '/World-Maker'
@@ -6,13 +6,13 @@ const appDataFile = 'applicationData.json'
 const defaultProjectsDirectory = appDataDirectory + '/projects'
 
 /* It assumes that path leads to a file */
-function getFileFromPath(path: string) {
+function getFileNameFromPath(path: string) {
   return path.replace(/^.*\/+/, '')
 }
 
 /* It assumes that path leads to a file */
 function getDirectoryFromPath(path: string) {
-  return path.replace(`/${getFileFromPath(path)}`, '')
+  return path.replace(`/${getFileNameFromPath(path)}`, '')
 }
 
 function reportError(event: Electron.IpcMainEvent, response: IpcReply) {
@@ -167,7 +167,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
       return saveFile(path, testFile, '').then(() => deleteFile(`${path}/${testFile}`))
     },
     loadApplicationData() {
-      return loadFile(`${appDataDirectory}/${appDataFile}`).then((data) => {
+      return (loadFile(`${appDataDirectory}/${appDataFile}`) as Promise<ApplicationData | ''>).then((data) => {
         if (typeof data === 'string' && data === '') {
           const initialApplicationData: ApplicationData = {
             projects: {},
@@ -179,7 +179,29 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
             return initialApplicationData
           })
         }
-        return data
+        /* Validating if paths know to projects are still valid */
+        const projects: { [projectId: string]: ProjectConfig } = {}
+        const pathsValidations = Object.keys(data.projects).map((projectId: string) => {
+          const config = data.projects[projectId]
+          const fileName = getFileNameFromPath(config.localSavePath).replace('.json', '')
+          const directory = getDirectoryFromPath(config.localSavePath)
+          return new Promise((resolve) => {
+            fs.readdir(directory, (e, files) => {
+              console.log('comparing files to:', fileName)
+              if (files.some((fName) => fName.replace('.json', '') === fileName)) {
+                projects[config.id] = config
+              }
+              resolve()
+            })
+          })
+        })
+        return Promise.all(pathsValidations).then(() => {
+          console.log('projects adter validation: ', projects)
+          return {
+            ...data,
+            projects
+          }
+        })
       })
     },
     updateApplicationData(payload) {
@@ -189,7 +211,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
       const { oldPath, newPath } = payload
       return new Promise((resolve, reject) => {
         (loadFile(oldPath) as Promise<Project>).then((project) => {
-          const fileName = getFileFromPath(newPath)
+          const fileName = getFileNameFromPath(newPath)
           const directory = getDirectoryFromPath(newPath)
           saveFile(directory, fileName, project).then(() => {
             if (payload.removeOld) {
@@ -214,13 +236,13 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
     },
     saveProject(payload: { path: string, data: Project }) {
       const { path, data } = payload
-      const fileName = getFileFromPath(path)
+      const fileName = getFileNameFromPath(path)
       const directory = getDirectoryFromPath(path)
       return saveFile(directory, fileName, data)
     },
     backupProject(payload: { path: string, data: Project }) {
       const { path, data } = payload
-      const fileName = getFileFromPath(path)
+      const fileName = getFileNameFromPath(path)
       const directory = getDirectoryFromPath(path)
       return saveFile(directory, fileName, data, true)
     },
@@ -253,9 +275,8 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
         return { canceled, path: filePaths[0] }
       })
     },
-    saveProjectAs(payload: { data: string }) {
+    saveProjectAs(project: Project) {
       const win = getWindow()
-      const project = payload.data
       if (!win) return Promise.reject(getError('No browser window found'))
 
       return dialog.showSaveDialog(win, {
@@ -270,12 +291,16 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
         const { canceled, filePath } = data
         if (canceled || !filePath) return Promise.reject(getError('File selection canceled.'))
 
-        const fileName = getFileFromPath(filePath).replace('.json', '') + '.json'
+        const fileName = getFileNameFromPath(filePath).replace('.json', '') + '.json'
         const directory = getDirectoryFromPath(filePath)
         return saveFile(directory, fileName, project).then(() => {
           return `${directory}/${fileName}`
         })
       })
+    },
+    openProjectFolder(path: string) {
+      shell.openPath(path)
+      return Promise.resolve()
     }
   }
 

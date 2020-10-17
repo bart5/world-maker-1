@@ -539,9 +539,10 @@ export default createStore({
     async asyncOpenKnownProjectFromId(state, projectId: string) {
       this.commit('START_OPENING_PROJECT')
       await state.dispatch('saveProject')
-      const projectConfig: ProjectConfig = await state.getters.projectConfigFromId(projectId)
+      const projectConfig: ProjectConfig = state.getters.projectConfigById(projectId)
       const project = await state.dispatch('asyncFetchProject', projectConfig.localSavePath)
       this.commit('LOAD_PROJECT_TO_UI', project)
+      await state.dispatch('asyncUpdateApplicationData', { lastProjectId: projectId })
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
     },
@@ -556,7 +557,7 @@ export default createStore({
       const newPath = await state.dispatch('saveProjectAs')
       const projectConfig = state.getters.newProjectConfig
       projectConfig.localSavePath = newPath
-      await state.dispatch('asyncUpdateApplicationData', projectConfig)
+      await state.dispatch('asyncUpdateApplicationData', { projectConfig })
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
       state.dispatch('openModal', 'configuration')
@@ -574,7 +575,7 @@ export default createStore({
       this.commit('LOAD_PROJECT_TO_UI', project)
       const newPath = await state.dispatch('saveProjectAs')
       projectConfig.localSavePath = newPath
-      await state.dispatch('asyncUpdateApplicationData', projectConfig)
+      await state.dispatch('asyncUpdateApplicationData', { projectConfig })
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
     },
@@ -595,12 +596,18 @@ export default createStore({
     //     throw Error(`Caught error while updating project paths.\nError: ${e}`)
     //   })
     // },
-    asyncUpdateApplicationData(state, projectConfig: ProjectConfig) {
+    asyncUpdateApplicationData(state, data: { projectConfig?: ProjectConfig, lastProjectId?: string }) {
       const newApplicationData: ApplicationData = {
         ...state.getters.applicationData
       }
-      newApplicationData.projects[projectConfig.id] = projectConfig
+      if (data.projectConfig) {
+        newApplicationData.projects[data.projectConfig.id] = { ...data.projectConfig }
+        newApplicationData.lastProjectId = data.projectConfig.id
+      } else if (data.lastProjectId) {
+        newApplicationData.lastProjectId = data.lastProjectId
+      }
 
+      console.log('will set application data to : ', newApplicationData)
       return ipc.exchange('updateApplicationData', { data: newApplicationData }).then(() => {
         this.commit('SET_APPLICATION_DATA', newApplicationData)
       }).catch((e) => {
@@ -608,9 +615,9 @@ export default createStore({
         throw Error(`Caught error while updating application data.\nError: ${e}`)
       })
     },
-    asyncFetchProject(state, payload: { config?: ProjectConfig, fullPath?: string }) {
-      const opPayload = { data: payload }
-      return ipc.exchange('fetchProject', opPayload).then((project: Project) => {
+    asyncFetchProject(state, path: string) {
+      console.log('fetching project under path: ', path)
+      return ipc.exchange('fetchProject', { data: path }).then((project: Project) => {
         if (!validateProjectDataKeys(project)) {
           console.warn('Fetched project data was invalid.')
           /* Will add later some notifications queue and small popup window for them */
@@ -648,7 +655,7 @@ export default createStore({
     saveProjectAs(state) {
       // const projectData = JSON.stringify(state.state.project)
       const projectData = state.state.project
-      return ipc.exchange('saveProjectAs', { data: { data: projectData } })
+      return ipc.exchange('saveProjectAs', { data: projectData })
     },
     asyncBeforeApplicationClose() {
       return this.dispatch('saveProject')

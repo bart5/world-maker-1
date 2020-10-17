@@ -56,7 +56,7 @@ export default class ProjectSelector extends Vue {
 
   fetchProjectFromPath() {
     this.loadingProjectFromPath = true
-    this.$store.dispatch('asyncFetchProject', { fullPath: this.projectPath }).then((project: Project) => {
+    this.$store.dispatch('asyncFetchProject', this.projectPath).then((project: Project) => {
       this.projectFromPath = project
     }).catch(() => {
       this.projectFromPath = null
