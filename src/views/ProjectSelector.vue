@@ -10,8 +10,9 @@
       <hr>
       <h6>Import existing project</h6>
       <div class="input-wrapper">
-        <div class="label">Load from path</div>
+        <div class="label">Load from file</div>
         <input type="text" v-model="projectPath" @change="fetchProjectFromPath">
+        <button class="file-dialog-button" @click="selectFileDialog">B</button>
       </div>
       <div v-if="projectFromPath && !loadingProjectFromPath">
         <button class="project-button" @click="openUnknownProject(projectPath)">Open project: {{ projectFromPath.name }}</button>
@@ -47,6 +48,10 @@ export default class ProjectSelector extends Vue {
 
   get applicationData(): ApplicationData {
     return this.$store.getters.applicationData
+  }
+
+  selectFileDialog() {
+    this.$store.dispatch('openSelectFileDialog')
   }
 
   fetchProjectFromPath() {

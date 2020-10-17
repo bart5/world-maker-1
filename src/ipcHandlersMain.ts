@@ -1,4 +1,4 @@
-import { ipcMain, WebContents, app } from 'electron'
+import { ipcMain, WebContents, app, dialog, BrowserWindow } from 'electron'
 import fs from 'fs'
 
 const appDataDirectory = app.getPath('appData') + '/World-Maker'
@@ -43,11 +43,10 @@ function loadFile(path: string) {
   })
 }
 
-const getError = (error: Error | NodeJS.ErrnoException | null, message: string) => {
+const getError = (message: string, error?: Error | NodeJS.ErrnoException | null) => {
   message = message || 'Caught error.'
-  if (error) {
-    return Error(`${message}\n${error}`)
-  }
+  const content = message + (error ? `\n${error}` : '')
+  return Error(content)
 }
 
 function saveFile(directory: string, fileName: string, data: any = {}) {
@@ -57,26 +56,26 @@ function saveFile(directory: string, fileName: string, data: any = {}) {
   return new Promise((resolve, reject) => {
     /* Save file as .temp */
     const saveData = () => fs.writeFile(`${path}.temp`, JSON.stringify(data), (err) => {
-      if (err) return reject(getError(err, `Error saving data for file in path: ${path}`))
+      if (err) return reject(getError(`Error saving data for file in path: ${path}`, err))
       console.info(`Success saving data to file: ${path}.temp`)
 
       /* Check for existance of old version */
       return fs.readdir(dir, (err1, files) => {
-        if (err1) return reject(getError(err, `Error trying to read the directory: ${dir}`))
+        if (err1) return reject(getError(`Error trying to read the directory: ${dir}`, err))
         console.info(`Success reading directory: ${dir}`)
 
         const oldVersion = files.filter((file) => file === fName)[0]
         /* Delete old version if exists */
         if (oldVersion) {
           deleteFile(path).catch((e) => {
-            return reject(getError(e, `Could not delete old version of the file in path: ${path}.\n${e}`))
+            return reject(getError(`Could not delete old version of the file in path: ${path}.\n${e}`, e))
           })
           console.info(`Success deleting file: ${path}`)
         }
 
         /* Remove .temp appendix from the new file */
         return fs.rename(`${path}.temp`, path, (err2) => {
-          if (err2) return reject(getError(err2, `Could not rename file: ${path}.temp`))
+          if (err2) return reject(getError(`Could not rename file: ${path}.temp`, err2))
           console.info(`Success renaming file to: ${path}`)
 
           return resolve(`Successfully saved file ${fileName} in ${directory}`)
@@ -89,7 +88,7 @@ function saveFile(directory: string, fileName: string, data: any = {}) {
         console.info(`Directory ${dir} does not exist. Will try to create it.`)
 
         fs.mkdir(appDataDirectory, { recursive: true }, (err1) => {
-          if (err1) return reject(getError(err1, `Failed recursively creating new directory: ${appDataDirectory}`))
+          if (err1) return reject(getError(`Failed recursively creating new directory: ${appDataDirectory}`, err1))
           return saveData()
         })
       } else {
@@ -132,7 +131,7 @@ export const emittersFactory = (contents: WebContents) => ({
   },
 })
 
-export default function setupCommunicaton() {
+export default function setupCommunicaton(getWindow: () => BrowserWindow | null) {
   console.info('Setting up IPC communication.')
 
   const handlers: {[key in opType]: (data?: any) => Promise<any> } = {
@@ -156,17 +155,17 @@ export default function setupCommunicaton() {
         return data
       })
     },
-    updateApplicationData(data) {
-      return saveFile(appDataDirectory, appDataFile, data)
+    updateApplicationData(payload) {
+      return saveFile(appDataDirectory, appDataFile, payload)
     },
-    updateProjectPaths(data: { oldConfig: ProjectConfig, newConfig: ProjectConfig, removeOld: boolean }) {
-      const newPath = data.newConfig.localSaveDirectory
-      const oldPath = data.oldConfig.localSaveDirectory
+    updateProjectPaths(payload: { oldConfig: ProjectConfig, newConfig: ProjectConfig, removeOld: boolean }) {
+      const newPath = payload.newConfig.localSaveDirectory
+      const oldPath = payload.oldConfig.localSaveDirectory
       return new Promise((resolve, reject) => {
         (loadFile(oldPath) as Promise<Project>).then((project) => {
-          const fileName = data.newConfig.name.replace(' ', '-') + '.json'
+          const fileName = payload.newConfig.name.replace(' ', '-') + '.json'
           saveFile(newPath, fileName, project).then(() => {
-            if (data.removeOld) {
+            if (payload.removeOld) {
               deleteFile(oldPath).catch((e) => {
                 reject(Error(`Failed to delete project from old location.\n${e}`))
               }).then(() => {
@@ -199,15 +198,44 @@ export default function setupCommunicaton() {
       const directory = payload.config.localSaveDirectory
       const fileName = payload.config.name.replace(' ', '-') + '.json'
       return saveFile(directory, fileName, payload.data)
-    }
+    },
+    selectDirectoryDialog(payload: { buttonLabel: string, defaultPath: string }) {
+      const win = getWindow()
+      if (!win) return Promise.reject(getError('No browser window found'))
+
+      return dialog.showOpenDialog(win, {
+        defaultPath: payload.defaultPath || defaultProjectsDirectory,
+        properties: ['openDirectory', 'createDirectory'],
+        buttonLabel: payload.buttonLabel || 'Select directory'
+      }).then((data: { canceled: boolean, filePaths: string[] }) => {
+        const { canceled, filePaths } = data
+        return { canceled, directory: filePaths[0] }
+      })
+    },
+    selectFileDialog(payload: { buttonLabel: string, defaultPath: string }) {
+      const win = getWindow()
+      if (!win) return Promise.reject(getError('No browser window found'))
+
+      return dialog.showOpenDialog(win, {
+        defaultPath: defaultProjectsDirectory,
+        filters: [
+          { name: 'JSON', extensions: ['json'] },
+        ],
+        properties: ['openFile'],
+        buttonLabel: payload.buttonLabel || 'Select project file'
+      }).then((data: { canceled: boolean, filePaths: string[] }) => {
+        const { canceled, filePaths } = data
+        return { canceled, path: filePaths[0] }
+      })
+    },
   }
 
   const setupListeners = () => {
     (Object.keys(handlers) as Array<keyof typeof handlers>).forEach((operationType) => {
-      ipcMain.on(operationType, (event, payload: IpcRequest) => {
+      ipcMain.on(operationType, (event, request: IpcRequest) => {
         console.log(`On: ${operationType}`)
-        console.log(`Received payload: ${JSON.stringify(payload)}`)
-        operationWrapper(event, payload.opType, payload.exchangeId, handlers[operationType](payload))
+        console.log(`Received request: ${JSON.stringify(request)}`)
+        operationWrapper(event, request.opType, request.exchangeId, handlers[operationType](request.payload || {}))
       })
     })
   }

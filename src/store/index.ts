@@ -484,10 +484,6 @@ export default createStore({
       this.commit('START_OPENING_PROJECT')
       await state.dispatch('saveProject')
       const project = await state.dispatch('asyncFetchProject', path) as Project
-      if (!validateProjectDataKeys(project)) {
-        this.commit('STOP_OPENING_PROJECT')
-        state.dispatch('openModal', { type: 'error', message: 'Project data is ivalid' })
-      }
       this.commit('LOAD_PROJECT_TO_UI', project)
       const projectConfig = state.getters.newProjectConfig(project)
       await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
@@ -517,7 +513,8 @@ export default createStore({
       })
     },
     asyncUpdateLoadedProjectPaths(state, { oldProjectConfig, newProjectConfig }) {
-      return ipc.exchange('updateProjectPaths', { oldProjectConfig, newProjectConfig }).then(() => {
+      const payload = { data: { oldProjectConfig, newProjectConfig } }
+      return ipc.exchange('updateProjectPaths', payload).then(() => {
         state.dispatch('asyncUpdateApplicationData', newProjectConfig)
       }).catch((e) => {
         /* Only design time really, no idea what to do in that case with a running app */
@@ -533,13 +530,24 @@ export default createStore({
       })
     },
     asyncFetchProject(state, payload: { config?: ProjectConfig, fullPath?: string }) {
-      return ipc.exchange('fetchProject', payload)
+      const opPayload = { data: payload }
+      return ipc.exchange('fetchProject', opPayload).then((project: Project) => {
+        if (!validateProjectDataKeys(project)) {
+          console.warn('Fetched project data was invalid.')
+          /* Will add later some notifications queue and small popup window for them */
+          // this.commit('STOP_OPENING_PROJECT')
+          // state.dispatch('openPopup', { type: 'error', message: 'Project data is ivalid' })
+          return Promise.reject()
+        }
+        return project
+      })
     },
     saveProject(state, autosave: boolean) {
       if (state.getters.isUnsavedData) {
         const { project } = state.state
         const config = state.getters.currentProjectConfig
-        ipc.exchange('saveProject', { config, data: project, autosave })
+        const opPayload = { data: { config, data: project, autosave } }
+        ipc.exchange('saveProject', opPayload)
       }
       return Promise.resolve()
     },
@@ -553,7 +561,7 @@ export default createStore({
       return this.dispatch('saveProject')
     },
     asyncTestPath(state, path: string) {
-      return ipc.exchange('testPath', path)
+      return ipc.exchange('testPath', { data: { path } })
     },
     startNewProjectConfiguration() {
       this.commit('OPEN_MODAL', 'configuration')
@@ -561,6 +569,12 @@ export default createStore({
     },
     stopNewProjectConfiguration() {
       this.commit('STOP_NEW_PROJECT_CONFIGURATION')
+    },
+    openSelectDirectoryDialog() {
+      return ipc.exchange('selectDirectoryDialog')
+    },
+    openSelectFileDialog() {
+      return ipc.exchange('selectFileDialog')
     },
   },
   modules: {

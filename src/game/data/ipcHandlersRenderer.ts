@@ -11,7 +11,7 @@ interface Ipc {
     resolve: (value: unknown) => void,
     reject: (reason?: any) => void
   }};
-  exchange: (opType: opType, data?: any) => Promise<any>;
+  exchange: (opType: opType, payload?: { data?: any, noTimeout?: boolean }) => Promise<any>;
   send: (opType: opType, request: IpcRequest) => void;
   resolveExchange: (reply: IpcReply) => void;
   rejectExchange: (reply: IpcReply) => void;
@@ -24,16 +24,19 @@ export const ipc: Ipc = {
   vm: {} as Vue,
   exchangeTimeout: 1000 * 30,
   exchangesInProgress: {},
-  exchange(opType, data) {
+  exchange(opType, payload) {
+    const { data, noTimeout } = payload || {}
     const exchangeId = `${opType}_sent:${Date.now()}_hash:${Math.random()}`
-    this.send(opType, { opType, data, exchangeId })
+    this.send(opType, { opType, payload: data, exchangeId })
     return new Promise((resolve, reject) => {
-      window.setTimeout(() => {
-        if (this.exchangesInProgress.exchangeId) {
-          delete this.exchangesInProgress.exchangeId
-          reject()
-        }
-      }, this.exchangeTimeout)
+      if (!noTimeout) {
+        window.setTimeout(() => {
+          if (this.exchangesInProgress.exchangeId) {
+            delete this.exchangesInProgress.exchangeId
+            reject()
+          }
+        }, this.exchangeTimeout)
+      }
       this.exchangesInProgress = {
         ...this.exchangesInProgress,
         [exchangeId]: {

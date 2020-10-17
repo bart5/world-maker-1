@@ -6,11 +6,13 @@ import setupCommunicaton, { emittersFactory } from './ipcHandlersMain';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-setupCommunicaton()
-
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win: BrowserWindow | null;
+
+const getWindow = (): typeof win => win
+
+setupCommunicaton(getWindow)
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([

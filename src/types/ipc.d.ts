@@ -5,6 +5,8 @@ type opType =
   | 'fetchProject'
   | 'saveProject'
   | 'testPath'
+  | 'selectDirectoryDialog'
+  | 'selectFileDialog'
 
 type operationResponseType = 'reply' | 'error'
 
@@ -25,5 +27,5 @@ interface IpcReply {
 interface IpcRequest {
   opType: opType;
   exchangeId: string
-  data?: any,
+  payload?: any,
 }
