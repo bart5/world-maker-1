@@ -5,6 +5,16 @@ const appDataDirectory = app.getPath('appData') + '/World-Maker'
 const appDataFile = 'applicationData.json'
 const defaultProjectsDirectory = appDataDirectory + '/projects'
 
+/* It assumes that path leads to a file */
+function getFileFromPath(path: string) {
+  return path.replace(/^.*\/+/, '')
+}
+
+/* It assumes that path leads to a file */
+function getDirectoryFromPath(path: string) {
+  return path.replace(`/${getFileFromPath(path)}`, '')
+}
+
 function reportError(event: Electron.IpcMainEvent, response: IpcReply) {
   event.reply('error', response)
 }
@@ -49,39 +59,56 @@ const getError = (message: string, error?: Error | NodeJS.ErrnoException | null)
   return Error(content)
 }
 
-function saveFile(directory: string, fileName: string, data: any = {}) {
+/*
+  It will create directory if they are not existent.
+  Overwriting happens in 3 steps: 1) create temp 2) delete old 3) rename temp.
+  When backuping will never overwrite.
+  When backuping establishes a unique fileName.
+*/
+function saveFile(directory: string, fileName: string, data: any = {}, isBackup?: boolean) {
   const dir = directory === '/' ? directory : directory.replace(/$\//, '')
   const fName = fileName.replace('/', '')
   const path = `${dir}/${fName}`
   return new Promise((resolve, reject) => {
     /* Save file as .temp */
-    const saveData = () => fs.writeFile(`${path}.temp`, JSON.stringify(data), (err) => {
-      if (err) return reject(getError(`Error saving data for file in path: ${path}`, err))
-      console.info(`Success saving data to file: ${path}.temp`)
-
-      /* Check for existance of old version */
-      return fs.readdir(dir, (err1, files) => {
-        if (err1) return reject(getError(`Error trying to read the directory: ${dir}`, err))
-        console.info(`Success reading directory: ${dir}`)
-
-        const oldVersion = files.filter((file) => file === fName)[0]
-        /* Delete old version if exists */
-        if (oldVersion) {
-          deleteFile(path).catch((e) => {
-            return reject(getError(`Could not delete old version of the file in path: ${path}.\n${e}`, e))
-          })
-          console.info(`Success deleting file: ${path}`)
-        }
-
-        /* Remove .temp appendix from the new file */
-        return fs.rename(`${path}.temp`, path, (err2) => {
-          if (err2) return reject(getError(`Could not rename file: ${path}.temp`, err2))
-          console.info(`Success renaming file to: ${path}`)
-
-          return resolve(`Successfully saved file ${fileName} in ${directory}`)
+    const saveData = () => {
+      if (isBackup) {
+        const backupPath = path + `-${Date.now()}`
+        fs.writeFile(backupPath, JSON.stringify(data), (err) => {
+          if (err) return reject(getError(`Error saving data for file in path: ${backupPath}`, err))
+          console.info(`Success saving data to file: ${backupPath}.temp`)
+          return resolve({ path: backupPath })
         })
-      })
-    })
+      } else {
+        fs.writeFile(`${path}.temp`, JSON.stringify(data), (err) => {
+          if (err) return reject(getError(`Error saving data for file in path: ${path}`, err))
+          console.info(`Success saving data to file: ${path}.temp`)
+
+          /* Check for existance of old version */
+          return fs.readdir(dir, (err1, files) => {
+            if (err1) return reject(getError(`Error trying to read the directory: ${dir}`, err))
+            console.info(`Success reading directory: ${dir}`)
+
+            const oldVersion = files.filter((file) => file === fName)[0]
+            /* Delete old version if exists */
+            if (oldVersion) {
+              deleteFile(path).catch((e) => {
+                return reject(getError(`Could not delete old version of the file in path: ${path}.\n${e}`, e))
+              })
+              console.info(`Success deleting file: ${path}`)
+            }
+
+            /* Remove .temp appendix from the new file */
+            return fs.rename(`${path}.temp`, path, (err2) => {
+              if (err2) return reject(getError(`Could not rename file: ${path}.temp`, err2))
+              console.info(`Success renaming file to: ${path}`)
+
+              return resolve({ path })
+            })
+          })
+        })
+      }
+    }
 
     return fs.readdir(dir, (err) => {
       if (err) {
@@ -158,13 +185,13 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
     updateApplicationData(payload) {
       return saveFile(appDataDirectory, appDataFile, payload)
     },
-    updateProjectPaths(payload: { oldConfig: ProjectConfig, newConfig: ProjectConfig, removeOld: boolean }) {
-      const newPath = payload.newConfig.localSaveDirectory
-      const oldPath = payload.oldConfig.localSaveDirectory
+    updateProjectPaths(payload: { oldPath: string, newPath: string, removeOld: boolean }) {
+      const { oldPath, newPath } = payload
       return new Promise((resolve, reject) => {
         (loadFile(oldPath) as Promise<Project>).then((project) => {
-          const fileName = payload.newConfig.name.replace(' ', '-') + '.json'
-          saveFile(newPath, fileName, project).then(() => {
+          const fileName = getFileFromPath(newPath)
+          const directory = getDirectoryFromPath(newPath)
+          saveFile(directory, fileName, project).then(() => {
             if (payload.removeOld) {
               deleteFile(oldPath).catch((e) => {
                 reject(Error(`Failed to delete project from old location.\n${e}`))
@@ -182,22 +209,20 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
         })
       })
     },
-    fetchProject(payload: { config?: ProjectConfig, fullPath?: string }) {
-      const { config, fullPath } = payload
-      if (config) {
-        const fileName = config.name.replace(' ', '-') + '.json'
-        const directory = config.localSaveDirectory
-        return loadFile(directory + fileName)
-      }
-      if (fullPath) {
-        return loadFile(fullPath)
-      }
-      return Promise.reject(Error('Wrong parameters provided for fetchProject operation.'))
+    fetchProject(path: string) {
+      return loadFile(path)
     },
-    saveProject(payload: { config: ProjectConfig, data: Project, autosave?: boolean }) {
-      const directory = payload.config.localSaveDirectory
-      const fileName = payload.config.name.replace(' ', '-') + '.json'
-      return saveFile(directory, fileName, payload.data)
+    saveProject(payload: { path: string, data: Project }) {
+      const { path, data } = payload
+      const fileName = getFileFromPath(path)
+      const directory = getDirectoryFromPath(path)
+      return saveFile(directory, fileName, data)
+    },
+    backupProject(payload: { path: string, data: Project }) {
+      const { path, data } = payload
+      const fileName = getFileFromPath(path)
+      const directory = getDirectoryFromPath(path)
+      return saveFile(directory, fileName, data, true)
     },
     selectDirectoryDialog(payload: { buttonLabel: string, defaultPath: string }) {
       const win = getWindow()

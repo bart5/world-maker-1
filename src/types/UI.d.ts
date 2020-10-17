@@ -11,10 +11,9 @@ interface ApplicationData {
 }
 
 interface ProjectConfig {
-  name: string;
   id: projectId;
-  localSaveDirectory: string,
-  remoteSaveDirectory: string,
+  localSavePath: string,
+  remoteSavePath: string,
   allowAutosave: boolean;
   /* If there are changes for that long then they will be saved automatically */
   autosaveInterval: number;
@@ -30,7 +29,6 @@ interface UiData {
 
 interface Project {
   id: string;
-  name: string;
   staticData: StaticData;
   entityBindings: EntityBindings;
   uiData: UiData;

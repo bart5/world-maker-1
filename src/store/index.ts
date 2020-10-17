@@ -22,9 +22,8 @@ const getWorkspaceConfigurationDefaults = () => {
 
 const projectConfigTemplate: ProjectConfig = {
   id: '',
-  name: 'New Awesome Project',
-  localSaveDirectory: '',
-  remoteSaveDirectory: '',
+  localSavePath: '',
+  remoteSavePath: '',
   allowAutosave: true,
   autosaveInterval: 5,
 }
@@ -57,7 +56,6 @@ const getNewProjectUiData = () => {
 const getNewProjectTemplate = () => {
   const project: Project = {
     id: '',
-    name: 'New Awesome Project',
     staticData: {} as StaticData,
     entityBindings: {},
     uiData: {
@@ -150,20 +148,20 @@ export default createStore({
     },
     currentProjectConfig: (state, getters) => getters.projectConfigById(state.project.id),
     applicationData: (state) => state.applicationData,
-    newProjectConfig: (state, getters) => (data?: Project) => {
+    newProjectConfig: (state, getters) => {
       const id = `project_${Date.now()}_hash:${Math.random()}`
-      const name = data ? data.name : 'New awesome project'
       const path = (getters.applicationData as ApplicationData).defaultLocalPath
       const config: ProjectConfig = {
         ...state.projectConfigTemplate,
-        localSaveDirectory: path,
+        localSavePath: path,
         id,
-        name
       }
+      console.log('returning config from getter: ', config)
       return config
     },
     projectDataIsLoaded: (state) => state.ui.projectDataIsLoaded,
     activeProjectId: (state) => state.project.id,
+    newProjectConfigurationInProgress: (state) => state.ui.newProjectConfigurationInProgress,
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
@@ -340,7 +338,7 @@ export default createStore({
     },
     STOP_NEW_PROJECT_CONFIGURATION(state) {
       state.ui.newProjectConfigurationInProgress = false
-      state.ui.activeModal = 'configuration'
+      state.ui.activeModal = null
     },
     SET_PROJECT_DATA_LOADED(state, value) {
       state.ui.projectDataIsLoaded = value
@@ -472,7 +470,7 @@ export default createStore({
       this.commit('START_OPENING_PROJECT')
       await state.dispatch('saveProject')
       const projectConfig: ProjectConfig = await state.getters.projectConfigFromId(projectId)
-      const project = await state.dispatch('asyncFetchProject', projectConfig.localSaveDirectory)
+      const project = await state.dispatch('asyncFetchProject', projectConfig.localSavePath)
       this.commit('LOAD_PROJECT_TO_UI', project)
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
@@ -485,7 +483,7 @@ export default createStore({
       await state.dispatch('saveProject')
       const project = await state.dispatch('asyncFetchProject', path) as Project
       this.commit('LOAD_PROJECT_TO_UI', project)
-      const projectConfig = state.getters.newProjectConfig(project)
+      const projectConfig = state.getters.newProjectConfig
       await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
@@ -495,16 +493,15 @@ export default createStore({
       Opening completely new project and assigning to it provided config.
     */
     async asyncOpenNewProjectWithConfig(state, projectConfig: ProjectConfig) {
-      this.commit('START_OPENING_PROJECT')
-      await state.dispatch('saveProject')
+      // this.commit('START_OPENING_PROJECT')
+      // await state.dispatch('saveProject')
       const project = {
         ...getNewProjectTemplate(),
         id: projectConfig.id,
-        name: projectConfig.name
       }
       this.commit('LOAD_PROJECT_TO_UI', project)
       await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
-      this.commit('STOP_OPENING_PROJECT')
+      // this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
     },
     asyncLoadApplicationData() {
@@ -564,7 +561,6 @@ export default createStore({
       return ipc.exchange('testPath', { data: { path } })
     },
     startNewProjectConfiguration() {
-      this.commit('OPEN_MODAL', 'configuration')
       this.commit('START_NEW_PROJECT_CONFIGURATION')
     },
     stopNewProjectConfiguration() {

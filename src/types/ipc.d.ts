@@ -7,6 +7,7 @@ type opType =
   | 'testPath'
   | 'selectDirectoryDialog'
   | 'selectFileDialog'
+  | 'backupProject'
 
 type operationResponseType = 'reply' | 'error'
 

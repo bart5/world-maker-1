@@ -3,10 +3,6 @@
     <div class="config-modal">
       <h4>Project configuration</h4>
       <div class="input-wrapper">
-        <div class="label">Project name</div>
-        <input type="text" v-model="projectConfig.name">
-      </div>
-      <div class="input-wrapper">
         <div class="label">Local save path</div>
         <input
           :class="{
@@ -17,6 +13,7 @@
           v-model="projectConfig.localSaveDirectory"
           @change="validatePath('local', projectConfig.localSaveDirectory)"
         >
+        <button class="file-dialog-button" @click="selectDirectoryDialog">B</button>
       </div>
       <div class="input-wrapper">
         <div class="label">Remote save path</div>
@@ -40,7 +37,7 @@
       </div>
       <template v-if="newProjectConfigurationInProgress">
         <div class="modal-buttons">
-          <button @click="setupNewProject" :disabled="!isDirty || !formIsValid">Start Work</button>
+          <button @click="setupNewProject" :disabled="!formIsValid">Start Work</button>
           <button @click="openAnotherProject">Open Another Project</button>
         </div>
         <span v-if="!formIsValid">
@@ -108,11 +105,14 @@ export default class ConfigModal extends Vue {
     })
   }
 
+  selectDirectoryDialog() {
+    this.$store.dispatch('openSelectDirectoryDialog')
+  }
+
   setupNewProject() {
     this.settingUpNewProject = true
     this.$store.dispatch('asyncOpenNewProjectWithConfig', this.projectConfig).then(() => {
       this.settingUpNewProject = false
-      this.$store.dispatch('closeModal', 'configuration')
       this.$store.dispatch('stopNewProjectConfiguration')
     })
   }
@@ -161,7 +161,7 @@ export default class ConfigModal extends Vue {
 
   setModalState() {
     const baseConfig = this.newProjectConfigurationInProgress
-      ? this.$store.getters.newProjectConfig()
+      ? this.$store.getters.newProjectConfig
       : this.$store.getters.currentProjectConfig
 
     this.initialProjectConfig = { ...baseConfig }
@@ -170,6 +170,7 @@ export default class ConfigModal extends Vue {
 
   beforeMount() {
     this.setModalState()
+    console.log('set modal state with given config: ', this.projectConfig)
   }
 }
 </script>
