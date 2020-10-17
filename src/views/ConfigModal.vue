@@ -2,31 +2,33 @@
   <div class="modal modal-wrapper">
     <div class="config-modal">
       <h4>Project configuration</h4>
-      <div class="input-wrapper">
-        <div class="label">Local save path</div>
-        <input
-          :class="{
-            'validating': pathValidations.local.validating,
-            'invalid': !pathValidations.local.valid
-          }"
-          type="text"
-          v-model="projectConfig.localSaveDirectory"
-          @change="validatePath('local', projectConfig.localSaveDirectory)"
-        >
-        <button class="file-dialog-button" @click="selectDirectoryDialog">B</button>
-      </div>
-      <div class="input-wrapper">
-        <div class="label">Remote save path</div>
-        <input
-          :class="{
-            'validating': pathValidations.remote.validating,
-            'invalid': !pathValidations.remote.valid
-          }"
-          disabled="true"
-          type="text"
-          v-model="projectConfig.remoteSaveDirectory"
-        >
-      </div>
+      <template v-if="!newProjectConfigurationInProgress">
+        <div class="input-wrapper">
+          <div class="label">Local save path</div>
+          <input
+            :class="{
+              'validating': pathValidations.local.validating,
+              'invalid': !pathValidations.local.valid
+            }"
+            type="text"
+            v-model="projectConfig.localSavePath"
+            @change="validatePath('local', projectConfig.localSavePath)"
+          >
+          <button class="file-dialog-button" @click="selectNewSaveLocation">B</button>
+        </div>
+        <div class="input-wrapper">
+          <div class="label">Remote save path</div>
+          <input
+            :class="{
+              'validating': pathValidations.remote.validating,
+              'invalid': !pathValidations.remote.valid
+            }"
+            disabled="true"
+            type="text"
+            v-model="projectConfig.remoteSaveDirectory"
+          >
+        </div>
+      </template>
       <div class="input-wrapper">
         <div class="label">Use autosaves</div>
         <input type="checkbox" v-model="projectConfig.allowAutosave">
@@ -37,7 +39,7 @@
       </div>
       <template v-if="newProjectConfigurationInProgress">
         <div class="modal-buttons">
-          <button @click="setupNewProject" :disabled="!formIsValid">Start Work</button>
+          <button @click="setupNewProject" :disabled="!formIsValid">Confirm</button>
           <button @click="openAnotherProject">Open Another Project</button>
         </div>
         <span v-if="!formIsValid">
@@ -83,8 +85,6 @@ export default class ConfigModal extends Vue {
 
   updatingProjectConfig = false;
 
-  settingUpNewProject = false;
-
   get newProjectConfigurationInProgress() {
     return this.$store.getters.newProjectConfigurationInProgress
   }
@@ -105,14 +105,17 @@ export default class ConfigModal extends Vue {
     })
   }
 
+  selectNewSaveLocation() {
+    this.$store.dispatch('openSelectDirectoryDialog')
+  }
+
   selectDirectoryDialog() {
     this.$store.dispatch('openSelectDirectoryDialog')
   }
 
   setupNewProject() {
-    this.settingUpNewProject = true
     this.$store.dispatch('asyncOpenNewProjectWithConfig', this.projectConfig).then(() => {
-      this.settingUpNewProject = false
+      this.$store.dispatch('closeModal')
       this.$store.dispatch('stopNewProjectConfiguration')
     })
   }

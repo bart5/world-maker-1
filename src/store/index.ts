@@ -26,6 +26,8 @@ const projectConfigTemplate: ProjectConfig = {
   remoteSavePath: '',
   allowAutosave: true,
   autosaveInterval: 5,
+  allowBackup: true,
+  backupInterval: 30,
 }
 
 const getWorkspaceDefaults = () => {
@@ -81,6 +83,8 @@ const initialState: ApplicationState = {
     selectedInputSourceTile: '',
     projectDataIsLoaded: false,
     newProjectConfigurationInProgress: false,
+    openingProjectInProgress: false,
+    savingProjectInProgress: false,
     activeModal: null,
   }
 }
@@ -93,12 +97,12 @@ const minTileSize = {
 const registerUiDataMutation = (state: ApplicationState) => {
   state.projectUiDataMutated = true
 }
-const registerStaticDataMutation = (state: ApplicationState) => {
-  state.projectStaticDataMutated = true
-}
-const registerEntityBindingsMutation = (state: ApplicationState) => {
-  state.projectEntityBindingsMutated = true
-}
+// const registerStaticDataMutation = (state: ApplicationState) => {
+//   state.projectStaticDataMutated = true
+// }
+// const registerEntityBindingsMutation = (state: ApplicationState) => {
+//   state.projectEntityBindingsMutated = true
+// }
 const resetMutations = (state: ApplicationState) => {
   state.projectUiDataMutated = false
   state.projectStaticDataMutated = false
@@ -177,6 +181,11 @@ export default createStore({
     projectDataIsLoaded: (state) => state.ui.projectDataIsLoaded,
     activeProjectId: (state) => state.project.id,
     newProjectConfigurationInProgress: (state) => state.ui.newProjectConfigurationInProgress,
+    isUnsavedData: (state) => {
+      return state.projectEntityBindingsMutated
+        || state.projectStaticDataMutated
+        || state.projectUiDataMutated
+    },
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
@@ -392,6 +401,21 @@ export default createStore({
     SET_PROJECT_DATA_LOADED(state, value) {
       state.ui.projectDataIsLoaded = value
     },
+    START_OPENING_PROJECT(state) {
+      state.ui.openingProjectInProgress = true
+    },
+    STOP_OPENING_PROJECT(state) {
+      state.ui.openingProjectInProgress = false
+    },
+    START_SAVING_PROJECT(state) {
+      state.ui.savingProjectInProgress = true
+    },
+    STOP_SAVING_PROJECT(state) {
+      state.ui.savingProjectInProgress = false
+    },
+    LOAD_PROJECT_TO_UI(state, project: Project) {
+      state.project = project
+    },
   },
   actions: {
     selectTask(state, taskId: string) {
@@ -529,8 +553,9 @@ export default createStore({
       await state.dispatch('saveProject')
       const project = await state.dispatch('asyncFetchProject', path) as Project
       this.commit('LOAD_PROJECT_TO_UI', project)
-      await state.dispatch('saveProject')
+      const newPath = await state.dispatch('saveProjectAs')
       const projectConfig = state.getters.newProjectConfig
+      projectConfig.localSavePath = newPath
       await state.dispatch('asyncUpdateApplicationData', projectConfig)
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
@@ -547,7 +572,8 @@ export default createStore({
         id: projectConfig.id,
       }
       this.commit('LOAD_PROJECT_TO_UI', project)
-      await state.dispatch('saveProject')
+      const newPath = await state.dispatch('saveProjectAs')
+      projectConfig.localSavePath = newPath
       await state.dispatch('asyncUpdateApplicationData', projectConfig)
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
@@ -576,7 +602,7 @@ export default createStore({
       newApplicationData.projects[projectConfig.id] = projectConfig
 
       return ipc.exchange('updateApplicationData', { data: newApplicationData }).then(() => {
-        this.commit('UPDATE_APPLICATION_DATA', newApplicationData)
+        this.commit('SET_APPLICATION_DATA', newApplicationData)
       }).catch((e) => {
         /* Only design time really, no idea what to do in that case with a running app */
         throw Error(`Caught error while updating application data.\nError: ${e}`)
@@ -596,7 +622,7 @@ export default createStore({
       })
     },
     saveProject(state) {
-      this.commit('START_PROJECT_SAVE')
+      this.commit('START_SAVING_PROJECT')
       if (state.getters.isUnsavedData) {
         const { project } = state.state
         const path = state.getters.currentProjectConfig.localSavePath
@@ -604,10 +630,10 @@ export default createStore({
         return ipc.exchange('saveProject', opPayload).then(() => {
           resetMutations(state.state)
         }).finally(() => {
-          this.commit('END_PROJECT_SAVE')
+          this.commit('STOP_SAVING_PROJECT')
         })
       }
-      this.commit('END_PROJECT_SAVE')
+      this.commit('STOP_SAVING_PROJECT')
       return Promise.resolve()
     },
     backupProject(state) {
@@ -619,12 +645,11 @@ export default createStore({
         this.commit('END_PROJECT_BACKUP')
       })
     },
-    // saveProjectAs(state, autosave: boolean) {
-    //   /* Open modal with path selection */
-    //   /* Ask if path should become new default path of the project */
-    //   /* If no: just save project files to that location */
-    //   /* If yes: change local path in project config and then save */
-    // },
+    saveProjectAs(state) {
+      // const projectData = JSON.stringify(state.state.project)
+      const projectData = state.state.project
+      return ipc.exchange('saveProjectAs', { data: { data: projectData } })
+    },
     asyncBeforeApplicationClose() {
       return this.dispatch('saveProject')
     },

@@ -9,6 +9,7 @@ type opType =
   | 'selectFileDialog'
   | 'backupProject'
   | 'openProjectFolder'
+  | 'saveProjectAs'
 
 type operationResponseType = 'reply' | 'error'
 

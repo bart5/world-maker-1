@@ -27,7 +27,7 @@ export const ipc: Ipc = {
   exchange(opType, payload) {
     const { data, noTimeout } = payload || {}
     const exchangeId = `${opType}_sent:${Date.now()}_hash:${Math.random()}`
-    this.send(opType, { opType, payload: data, exchangeId })
+    this.send(opType, { opType, payload: JSON.stringify(data), exchangeId })
     return new Promise((resolve, reject) => {
       if (!noTimeout) {
         window.setTimeout(() => {

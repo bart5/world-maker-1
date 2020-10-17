@@ -18,7 +18,6 @@ interface ProjectConfig {
   /* If there are changes for that long then they will be saved automatically */
   autosaveInterval: number;
   allowBackup: boolean;
-  /* If there are changes for that long then they will be saved automatically */
   backupInterval: number;
 }
 
@@ -54,6 +53,8 @@ interface UIState {
   selectedInputSourceTile: tileId;
   projectDataIsLoaded: boolean;
   newProjectConfigurationInProgress: boolean;
+  openingProjectInProgress: boolean;
+  savingProjectInProgress: boolean;
   activeModal: modalTypes;
 }
 

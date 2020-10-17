@@ -253,6 +253,30 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
         return { canceled, path: filePaths[0] }
       })
     },
+    saveProjectAs(payload: { data: string }) {
+      const win = getWindow()
+      const project = payload.data
+      if (!win) return Promise.reject(getError('No browser window found'))
+
+      return dialog.showSaveDialog(win, {
+        title: 'Save project',
+        defaultPath: defaultProjectsDirectory + '/project.json',
+        filters: [
+          { name: 'JSON', extensions: ['json'] },
+        ],
+        properties: ['createDirectory'],
+        buttonLabel: 'Save project as'
+      }).then((data: { canceled: boolean, filePath?: string }) => {
+        const { canceled, filePath } = data
+        if (canceled || !filePath) return Promise.reject(getError('File selection canceled.'))
+
+        const fileName = getFileFromPath(filePath).replace('.json', '') + '.json'
+        const directory = getDirectoryFromPath(filePath)
+        return saveFile(directory, fileName, project).then(() => {
+          return `${directory}/${fileName}`
+        })
+      })
+    }
   }
 
   const setupListeners = () => {
@@ -260,7 +284,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
       ipcMain.on(operationType, (event, request: IpcRequest) => {
         console.log(`On: ${operationType}`)
         console.log(`Received request: ${JSON.stringify(request)}`)
-        operationWrapper(event, request.opType, request.exchangeId, handlers[operationType](request.payload || {}))
+        operationWrapper(event, request.opType, request.exchangeId, handlers[operationType](JSON.parse(request.payload || '{}')))
       })
     })
   }
