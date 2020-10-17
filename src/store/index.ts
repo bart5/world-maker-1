@@ -71,9 +71,9 @@ const initialState: ApplicationState = {
   projectConfigTemplate: {
     ...projectConfigTemplate
   },
-  projectConfigurationMutated: false,
+  projectUiDataMutated: false,
   projectStaticDataMutated: false,
-  projectStaticEntityBindings: false,
+  projectEntityBindingsMutated: false,
   ui: {
     connectingInProgress: false,
     tileDeletionInProgress: false,
@@ -88,6 +88,21 @@ const initialState: ApplicationState = {
 const minTileSize = {
   width: 80,
   height: 100
+}
+
+const registerUiDataMutation = (state: ApplicationState) => {
+  state.projectUiDataMutated = true
+}
+const registerStaticDataMutation = (state: ApplicationState) => {
+  state.projectStaticDataMutated = true
+}
+const registerEntityBindingsMutation = (state: ApplicationState) => {
+  state.projectEntityBindingsMutated = true
+}
+const resetMutations = (state: ApplicationState) => {
+  state.projectUiDataMutated = false
+  state.projectStaticDataMutated = false
+  state.projectEntityBindingsMutated = false
 }
 
 export default createStore({
@@ -175,6 +190,8 @@ export default createStore({
     // },
     /* =========== PROJECT CONFIGURATION MUTATIONS =========== */
     CREATE_NEW_TILE(state, { workspaceId, tileId, position }) {
+      registerUiDataMutation(state)
+
       state.project.uiData.tiles.push({
         id: tileId,
         name: 'New Tile',
@@ -194,16 +211,22 @@ export default createStore({
       })
     },
     RESIZE_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
+      registerUiDataMutation(state)
+
       const tile = state.project.uiData.tiles.filter((t) => t.id === tileId)[0]
       tile.width = Math.max(newPosition.x - tile.x, minTileSize.width)
       tile.height = Math.max(newPosition.y - tile.y, minTileSize.height)
     },
     DRAG_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
+      registerUiDataMutation(state)
+
       const tile = state.project.uiData.tiles.filter((t) => t.id === tileId)[0]
       tile.x = newPosition.x
       tile.y = newPosition.y
     },
     BRING_TILE_FORWARD(state, tileId) {
+      registerUiDataMutation(state)
+
       const newFrontTile = state.project.uiData.tiles.filter((t) => t.id === tileId)[0]
       // Push other tiles behind
       // Notice that we only push behind the tiles that were in front
@@ -215,6 +238,8 @@ export default createStore({
       newFrontTile.zIndex = state.project.uiData.tiles.length
     },
     CONNECT_TO_THIS_TILE(state, tileId) {
+      registerUiDataMutation(state)
+
       state.ui.connectingInProgress = false
       const source = state.ui.selectedInputSourceTile
       state.ui.selectedInputSourceTile = ''
@@ -222,6 +247,8 @@ export default createStore({
       state.project.uiData.tiles.filter((t) => t.id === tileId)[0].inputSource = source
     },
     DELETE_TILE_OUT_BOUND_CONNECTIONS(state, tileId) {
+      registerUiDataMutation(state)
+
       state.project.uiData.tiles.forEach((t) => {
         if (t.inputSource === tileId) {
           t.inputSource = ''
@@ -229,15 +256,21 @@ export default createStore({
       })
     },
     DELETE_TILE_IN_BOUND_CONNECTIONS(state, tileId) {
+      registerUiDataMutation(state)
+
       /* As of now tile can have just one inbound connection */
       state.project.uiData.tiles.filter((t) => t.id === tileId)[0].inputSource = ''
     },
     DELETE_TILE(state, tileId) {
+      registerUiDataMutation(state)
+
       state.project.uiData.tiles = [
         ...state.project.uiData.tiles.filter((t) => t.id !== tileId)
       ]
     },
     CREATE_NEW_WORKSPACE(state, workspaceId: string) {
+      registerUiDataMutation(state)
+
       const order = state.project.uiData.workspaces.length
         ? state.project.uiData.workspaces.sort((w1, w2) => w2.order - w1.order)[0].order + 1
         : 1
@@ -259,6 +292,8 @@ export default createStore({
       })
     },
     DELETE_WORKSPACE(state, workspaceId) {
+      registerUiDataMutation(state)
+
       state.project.uiData.workspaces.splice(
         state.project.uiData.workspaces.findIndex((w) => w.id === workspaceId),
         1
@@ -266,16 +301,22 @@ export default createStore({
       state.project.uiData.tiles = state.project.uiData.tiles.filter((t) => t.workspaceId !== workspaceId)
     },
     RENAME_WORKSPACE(state, { workspaceId, newName }) {
+      registerUiDataMutation(state)
+
       const workspace = state.project.uiData.workspaces.filter((w) => w.id === workspaceId)[0]
       workspace.name = newName
     },
     SWAP_WORKSPACES_ORDER(state, { workspaceToMoveLeft, workspaceToMoveRight }) {
+      registerUiDataMutation(state)
+
       const leftPosition = workspaceToMoveRight.order
       const rightPosition = workspaceToMoveLeft.order
       workspaceToMoveLeft.order = leftPosition
       workspaceToMoveRight.order = rightPosition
     },
     SET_WORKSPACE_CONFIG(state, { workspaceId, newConfig }) {
+      registerUiDataMutation(state)
+
       const workspace = state.project.uiData.workspaces.find((w) => w.id === workspaceId)
       if (!workspace) return
       workspace.configuration = {
@@ -284,6 +325,8 @@ export default createStore({
       }
     },
     SNAP_WORKSPACE_TILES_TO_MODULUS(state, { workspaceId, modulus }) {
+      registerUiDataMutation(state)
+
       const workspace = state.project.uiData.workspaces.find((w) => w.id === workspaceId)
       if (!workspace) return
       const alignToModulus = (n: number, mod: number) => {
@@ -298,14 +341,20 @@ export default createStore({
         }
       })
     },
-    /* =========== PROJECT STATIC DATA MUTATIONS =========== */
-    /* =========== PROJECT ENTITY BINDING MUTATIONS =========== */
-    /* =========== UI STATE MUTATIONS =========== */
     ACTIVATE_WORKSPACE(state, workspaceId: string) {
+      registerUiDataMutation(state)
+
       if (workspaceId) {
         state.project.uiData.activeWorkspaceId = workspaceId
       }
     },
+    /* =========== PROJECT STATIC DATA MUTATIONS =========== */
+    /* =========== PROJECT ENTITY BINDING MUTATIONS =========== */
+    /* =========== APPLICATION DATA MUTATIONS =========== */
+    SET_APPLICATION_DATA(state, data) {
+      state.applicationData = data
+    },
+    /* =========== UI STATE MUTATIONS =========== */
     START_CONNECTING_TILES(state, tileId) {
       state.ui.connectingInProgress = true
       state.ui.selectedInputSourceTile = tileId
@@ -342,9 +391,6 @@ export default createStore({
     },
     SET_PROJECT_DATA_LOADED(state, value) {
       state.ui.projectDataIsLoaded = value
-    },
-    SET_APPLICATION_DATA(state, data) {
-      state.applicationData = data
     },
   },
   actions: {
@@ -476,15 +522,16 @@ export default createStore({
       this.commit('SET_PROJECT_DATA_LOADED', true)
     },
     /*
-      Open existing project now known to Application Data.
+      Open existing project not known to Application Data.
     */
     async asyncOpenUknownProjectFromPath(state, path: string) {
       this.commit('START_OPENING_PROJECT')
       await state.dispatch('saveProject')
       const project = await state.dispatch('asyncFetchProject', path) as Project
       this.commit('LOAD_PROJECT_TO_UI', project)
+      await state.dispatch('saveProject')
       const projectConfig = state.getters.newProjectConfig
-      await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
+      await state.dispatch('asyncUpdateApplicationData', projectConfig)
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
       state.dispatch('openModal', 'configuration')
@@ -493,15 +540,16 @@ export default createStore({
       Opening completely new project and assigning to it provided config.
     */
     async asyncOpenNewProjectWithConfig(state, projectConfig: ProjectConfig) {
-      // this.commit('START_OPENING_PROJECT')
-      // await state.dispatch('saveProject')
+      this.commit('START_OPENING_PROJECT')
+      await state.dispatch('saveProject')
       const project = {
         ...getNewProjectTemplate(),
         id: projectConfig.id,
       }
       this.commit('LOAD_PROJECT_TO_UI', project)
-      await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
-      // this.commit('STOP_OPENING_PROJECT')
+      await state.dispatch('saveProject')
+      await state.dispatch('asyncUpdateApplicationData', projectConfig)
+      this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
     },
     asyncLoadApplicationData() {
@@ -509,18 +557,26 @@ export default createStore({
         this.commit('SET_APPLICATION_DATA', data)
       })
     },
-    asyncUpdateLoadedProjectPaths(state, { oldProjectConfig, newProjectConfig }) {
-      const payload = { data: { oldProjectConfig, newProjectConfig } }
-      return ipc.exchange('updateProjectPaths', payload).then(() => {
-        state.dispatch('asyncUpdateApplicationData', newProjectConfig)
-      }).catch((e) => {
-        /* Only design time really, no idea what to do in that case with a running app */
-        throw Error(`Caught error while updating project paths.\nError: ${e}`)
-      })
-    },
-    asyncUpdateApplicationData(state, projectConfig) {
-      return ipc.exchange('updateApplicationData', projectConfig).then(() => {
-        this.commit('UPDATE_APPLICATION_DATA', projectConfig)
+    // asyncUpdateLoadedProjectPaths(state, { oldPath, newPath }) {
+    //   const payload = { data: { oldPath, newPath } }
+    //   return ipc.exchange('updateProjectPaths', payload).then(() => {
+    //     const newConfig = {
+    //       ...state.getters.currentProjectConfig
+    //     }
+    //     state.dispatch('asyncUpdateApplicationData', newProjectConfig)
+    //   }).catch((e) => {
+    //     /* Only design time really, no idea what to do in that case with a running app */
+    //     throw Error(`Caught error while updating project paths.\nError: ${e}`)
+    //   })
+    // },
+    asyncUpdateApplicationData(state, projectConfig: ProjectConfig) {
+      const newApplicationData: ApplicationData = {
+        ...state.getters.applicationData
+      }
+      newApplicationData.projects[projectConfig.id] = projectConfig
+
+      return ipc.exchange('updateApplicationData', { data: newApplicationData }).then(() => {
+        this.commit('UPDATE_APPLICATION_DATA', newApplicationData)
       }).catch((e) => {
         /* Only design time really, no idea what to do in that case with a running app */
         throw Error(`Caught error while updating application data.\nError: ${e}`)
@@ -539,14 +595,29 @@ export default createStore({
         return project
       })
     },
-    saveProject(state, autosave: boolean) {
+    saveProject(state) {
+      this.commit('START_PROJECT_SAVE')
       if (state.getters.isUnsavedData) {
         const { project } = state.state
-        const config = state.getters.currentProjectConfig
-        const opPayload = { data: { config, data: project, autosave } }
-        ipc.exchange('saveProject', opPayload)
+        const path = state.getters.currentProjectConfig.localSavePath
+        const opPayload = { data: { path, data: project } }
+        return ipc.exchange('saveProject', opPayload).then(() => {
+          resetMutations(state.state)
+        }).finally(() => {
+          this.commit('END_PROJECT_SAVE')
+        })
       }
+      this.commit('END_PROJECT_SAVE')
       return Promise.resolve()
+    },
+    backupProject(state) {
+      this.commit('START_PROJECT_BACKUP')
+      const { project } = state.state
+      const path = state.getters.currentProjectConfig.localSavePath
+      const opPayload = { data: { path, data: project, isBackup: true } }
+      return ipc.exchange('backupProject', opPayload).finally(() => {
+        this.commit('END_PROJECT_BACKUP')
+      })
     },
     // saveProjectAs(state, autosave: boolean) {
     //   /* Open modal with path selection */

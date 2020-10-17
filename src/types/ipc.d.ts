@@ -8,6 +8,7 @@ type opType =
   | 'selectDirectoryDialog'
   | 'selectFileDialog'
   | 'backupProject'
+  | 'openProjectFolder'
 
 type operationResponseType = 'reply' | 'error'
 

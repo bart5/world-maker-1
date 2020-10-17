@@ -1,5 +1,6 @@
 <template>
   <AppLoader/>
+  <ProjectLoader/>
   <ConfigModal v-if="showConfigurationModal"/>
   <ProjectSelector v-if="showProjectSelectorModal"/>
   <Frame/>
@@ -12,13 +13,15 @@ import Frame from '@/views/Frame.vue';
 import ConfigModal from '@/views/ConfigModal.vue';
 import ProjectSelector from '@/views/ProjectSelector.vue';
 import AppLoader from '@/views/AppLoader.vue';
+import ProjectLoader from '@/views/ProjectLoader.vue';
 
 @Options({
   components: {
     Frame,
     ConfigModal,
     ProjectSelector,
-    AppLoader
+    AppLoader,
+    ProjectLoader,
   },
 })
 export default class App extends Vue {

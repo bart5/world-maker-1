@@ -17,6 +17,9 @@ interface ProjectConfig {
   allowAutosave: boolean;
   /* If there are changes for that long then they will be saved automatically */
   autosaveInterval: number;
+  allowBackup: boolean;
+  /* If there are changes for that long then they will be saved automatically */
+  backupInterval: number;
 }
 
 interface UiData {
@@ -38,9 +41,9 @@ interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
   projectConfigTemplate: ProjectConfig;
-  projectConfigurationMutated: boolean;
+  projectUiDataMutated: boolean;
   projectStaticDataMutated: boolean;
-  projectStaticEntityBindings: boolean;
+  projectEntityBindingsMutated: boolean;
   ui: UIState;
 }
 
