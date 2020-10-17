@@ -1,4 +1,4 @@
-import { app, protocol, BrowserWindow, Menu } from 'electron';
+import { app, protocol, BrowserWindow, Menu, shell } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import path from 'path'
@@ -36,26 +36,49 @@ function createWindow() {
 
   const menu = Menu.buildFromTemplate([
     {
-      label: 'Menu',
+      label: 'File',
       submenu: [
         {
           label: 'Create New Project',
           click() { emitters.onStartNewProject() }
-        }, {
+        },
+        {
           label: 'Open Project',
           click() { emitters.onOpenProject() }
-        }, {
+        },
+        { type: 'separator' },
+        {
           label: 'Save',
           click() { emitters.onSave() }
-        }, {
+        },
+        {
           label: 'Save As',
           click() { emitters.onSaveAs() }
-        }, {
+        },
+        { type: 'separator' },
+        {
           label: 'Configuration',
           click() { emitters.onConfiguration() }
-        }, {
+        },
+        { type: 'separator' },
+        {
           label: 'Close',
-          click() { emitters.onClose() } }
+          click() { emitters.onClose() }
+        }
+      ]
+    },
+    {
+      role: 'viewMenu',
+    },
+    {
+      role: 'help',
+      submenu: [
+        {
+          label: 'Learn More',
+          click: async () => {
+            await shell.openExternal('https://electronjs.org')
+          }
+        }
       ]
     }
   ])

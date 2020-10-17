@@ -501,7 +501,11 @@ export default createStore({
     async asyncOpenNewProjectWithConfig(state, projectConfig: ProjectConfig) {
       this.commit('START_OPENING_PROJECT')
       await state.dispatch('saveProject')
-      const project = getNewProjectTemplate()
+      const project = {
+        ...getNewProjectTemplate(),
+        id: projectConfig.id,
+        name: projectConfig.name
+      }
       this.commit('LOAD_PROJECT_TO_UI', project)
       await state.dispatch('asyncUpdateLoadedProjectPaths', { oldProjectConfig: null, newProjectConfig: projectConfig })
       this.commit('STOP_OPENING_PROJECT')

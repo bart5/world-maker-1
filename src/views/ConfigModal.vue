@@ -1,5 +1,5 @@
 <template>
-  <div class="modal-wrapper">
+  <div class="modal modal-wrapper">
     <div class="config-modal">
       <h4>Project configuration</h4>
       <div class="input-wrapper">
@@ -110,7 +110,7 @@ export default class ConfigModal extends Vue {
 
   setupNewProject() {
     this.settingUpNewProject = true
-    this.$store.dispatch('asyncSetupNewProject', this.projectConfig).then(() => {
+    this.$store.dispatch('asyncOpenNewProjectWithConfig', this.projectConfig).then(() => {
       this.settingUpNewProject = false
       this.$store.dispatch('closeModal', 'configuration')
       this.$store.dispatch('stopNewProjectConfiguration')

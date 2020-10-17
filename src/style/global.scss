@@ -40,13 +40,20 @@ button, .button {
 
 hr {
   display: block;
-  // border-bottom: 1px solid darkgray;
   box-shadow: 0 0 1px 0 darkgray;
   width: 100%;
 }
 
-h6 {
-  color: gray;
-  padding: 4px 0;
-  margin: 0;
+
+.modal {
+  h6 {
+    color: gray;
+    padding: 4px 0;
+    margin: 0;
+    font-size: 12px !important;
+  }
+
+  *:not(h1), *:not(h2), *:not(h3), *:not(h4), *:not(h5), *:not(h6) {
+    font-size: 14px;
+  }
 }

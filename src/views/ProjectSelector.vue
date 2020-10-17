@@ -1,10 +1,10 @@
 <template>
-  <div class="modal-wrapper">
+  <div class="modal modal-wrapper">
     <div class="config-modal">
       <h4>Select Project</h4>
       <hr>
       <h6>New project</h6>
-      <div class="modal-buttons">
+      <div class="new-project-button-wrapper">
         <button @click="startNewProjectConfiguration">Configure new project</button>
       </div>
       <hr>
@@ -106,6 +106,7 @@ export default class ProjectSelector extends Vue {
   display: flex;
   width: 100%;
   padding: 10px 0;
+  align-items: center;
 
   .label {
     width: 150px;
@@ -154,5 +155,15 @@ h6 {
   width: 100%;
   display: flex;
   justify-content: flex-start;
+}
+
+.new-project-button-wrapper {
+  display: flex;
+  justify-content: center;
+
+  button {
+    border: 1px solid gray;
+    height: 32px;
+  }
 }
 </style>
