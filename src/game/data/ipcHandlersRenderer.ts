@@ -26,7 +26,6 @@ export const ipc: Ipc = {
   exchangesInProgress: {},
   exchange(opType, payload) {
     const { data, noTimeout } = payload || {}
-    console.log('will send request with data: ', data)
     const exchangeId = `${opType}_sent:${Date.now()}_hash:${Math.random()}`
     this.send(opType, { opType, payload: JSON.stringify(data), exchangeId })
     return new Promise((resolve, reject) => {
@@ -75,7 +74,6 @@ export const ipc: Ipc = {
   getListeners(vm: Vue) {
     return {
       reply(reply) {
-        console.log(`Received reply: ${JSON.stringify(reply)}`)
         ipc.resolveExchange(reply as IpcReply)
       },
       error(reply) {

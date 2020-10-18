@@ -50,8 +50,7 @@ export default class Curve extends Vue {
   horizontalCurve = false
 
   mounted() {
-    this.drawBezierCurve(this.horizontalCurve)
-    this.positionSvg()
+    this.dragHandler()
   }
 
   get p1p2x() {

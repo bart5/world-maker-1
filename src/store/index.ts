@@ -22,7 +22,7 @@ const getWorkspaceConfigurationDefaults = () => {
 
 const getWorkspaceDefaults = () => {
   const workspace: Workspace = {
-    id: '0',
+    id: `workspace_${Date.now()}${Math.random()}`,
     name: 'New Workspace',
     order: 1,
     configuration: {
@@ -33,14 +33,15 @@ const getWorkspaceDefaults = () => {
 }
 
 const getNewProjectUiData = () => {
+  const workspaceDefaults = getWorkspaceDefaults()
   const uiData: UiData = {
     workspaces: [{
-      ...getWorkspaceDefaults()
+      ...workspaceDefaults
     }],
     tiles: [],
     staticDataPath: '',
     assetsPath: '',
-    activeWorkspaceId: '0',
+    activeWorkspaceId: workspaceDefaults.id,
   }
   return uiData
 }
@@ -72,6 +73,9 @@ const initialState: ApplicationState = {
     openingProjectInProgress: false,
     savingProjectInProgress: false,
     activeModal: null,
+    lastProjectSaveTime: '',
+    lastProjectLoadTime: '',
+    frameData: null,
   }
 }
 
@@ -134,14 +138,9 @@ export default createStore({
     getInputSourceTileOfTile: (state, getters) => (tile: Tile) => getters.tileOfId(tile.inputSource),
     tileDeletionInProgress: (state) => state.ui.tileDeletionInProgress,
     workspaceDeletionInProgress: (state) => state.ui.workspaceDeletionInProgress,
-    getLastSessionCamera: (state, getters) => (workspaceId?: string) => {
-      let workspaceConfig: WorkspaceConfiguration
-      if (workspaceId) {
-        workspaceConfig = (state.project.uiData.workspaces.find((w) => w.id === workspaceId) as Workspace).configuration
-      } else {
-        workspaceConfig = getters.activeWorkspace.configuration
-      }
-      return workspaceConfig.lastSessionCamera
+    getLastSessionCamera: (state, getters) => () => {
+      const activeWorkspaceConfig: WorkspaceConfiguration = getters.activeWorkspace.configuration
+      return activeWorkspaceConfig.lastSessionCamera
     },
     activeModal: (state) => state.ui.activeModal,
     applicationData: (state) => state.applicationData,
@@ -151,6 +150,12 @@ export default createStore({
         || state.projectStaticDataMutated
         || state.projectUiDataMutated
     },
+    lastProjectSaveTime: (state) => {
+      return state.ui.lastProjectSaveTime
+    },
+    lastProjectLoadTime: (state) => {
+      return state.ui.lastProjectLoadTime
+    }
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
@@ -322,6 +327,18 @@ export default createStore({
         state.project.uiData.activeWorkspaceId = workspaceId
       }
     },
+    SET_CURRENT_WORKSPACE_CAMERA(state) {
+      const camera = {
+        x: state.ui.frameData?.board.scrollLeft || 0,
+        y: state.ui.frameData?.board.scrollTop || 0,
+        scale: Number(state.ui.frameData?.workspace?.style.transform.replace(/scale|\(|\)/g, '')) || 1
+      }
+      if (!state.project.uiData) return
+      const activeWorkspace = state.project.uiData.workspaces.find(
+        (w) => w.id === state.project.uiData.activeWorkspaceId
+      ) as Workspace
+      activeWorkspace.configuration.lastSessionCamera = camera
+    },
     /* =========== PROJECT STATIC DATA MUTATIONS =========== */
     /* =========== PROJECT ENTITY BINDING MUTATIONS =========== */
     /* =========== APPLICATION DATA MUTATIONS =========== */
@@ -365,6 +382,7 @@ export default createStore({
       state.ui.openingProjectInProgress = false
     },
     START_SAVING_PROJECT(state) {
+      state.ui.lastProjectSaveTime = String(Date.now())
       state.ui.savingProjectInProgress = true
     },
     STOP_SAVING_PROJECT(state) {
@@ -372,6 +390,12 @@ export default createStore({
     },
     LOAD_PROJECT_TO_UI(state, project: Project) {
       state.project = project
+      window.setTimeout(() => {
+        state.ui.lastProjectLoadTime = String(Date.now())
+      })
+    },
+    REFERENCE_FRAME_DATA(state, payload: { board: HTMLElement, workspace: HTMLElement }) {
+      state.ui.frameData = payload
     },
   },
   actions: {
@@ -443,7 +467,6 @@ export default createStore({
     },
     connectToThisTile(state, tileId) {
       const inputSource = state.getters.selectedInputSourceTile
-      console.log('trying connect: ', tileId, ' to: ', inputSource)
       if (inputSource.id === tileId) {
         this.commit('STOP_CONNECTING_TILES')
         return
@@ -514,7 +537,7 @@ export default createStore({
       this.commit('LOAD_PROJECT_TO_UI', project)
       if (isNew) {
         await state.dispatch('asyncSaveProjectAs')
-          .catch((e) => Error(`Failed saiving project as. \n${e}`))
+          .catch((e) => Error(`Failed saving project as. \n${e}`))
       } else {
         await state.dispatch('asyncUpdateApplicationData', { lastProjectPath: path })
           .catch((e) => Error(`Failed updating application data. \n${e}`))
@@ -530,7 +553,6 @@ export default createStore({
         ...state.getters.applicationData,
         ...applicationData
       }
-      console.log('Will set application data to : ', newApplicationData)
 
       return ipc.exchange('updateApplicationData', { data: newApplicationData }).then(() => {
         this.commit('SET_APPLICATION_DATA', newApplicationData)
@@ -540,7 +562,6 @@ export default createStore({
       })
     },
     asyncFetchProject(state, path: string) {
-      console.log('fetching project under path: ', path)
       return ipc.exchange('fetchProject', { data: path }).then((project: Project) => {
         if (!validateProjectDataKeys(project)) {
           console.warn('Fetched project data was invalid.')
@@ -553,10 +574,12 @@ export default createStore({
       })
     },
     asyncSaveProject(state, noConfirm: boolean) {
+      if (Object.keys(state.state.project).length === 0) return Promise.resolve()
       this.commit('START_SAVING_PROJECT')
       if (state.getters.isUnsavedData) {
         const decision = noConfirm || window.confirm('You have unsaved changes, do you want to save them?')
         if (decision) {
+          this.dispatch('saveCurrentWorkspaceCamera')
           const { project } = state.state
           return ipc.exchange('saveProject', { data: project }).then(() => {
             resetMutations(state.state)
@@ -569,6 +592,7 @@ export default createStore({
       return Promise.resolve()
     },
     asyncBackupProject(state) {
+      if (Object.keys(state.state.project).length === 0) return Promise.resolve()
       this.commit('START_PROJECT_BACKUP')
       const { project } = state.state
       const path = state.getters.applicationData.lastProjectPath
@@ -578,7 +602,9 @@ export default createStore({
       })
     },
     asyncSaveProjectAs(state) {
+      if (Object.keys(state.state.project).length === 0) return Promise.resolve()
       this.commit('START_SAVING_PROJECT')
+      this.dispatch('saveCurrentWorkspaceCamera')
       const projectData = state.state.project
       return ipc.exchange('saveProjectAs', { data: projectData }).then((path) => {
         return this.dispatch('asyncUpdateApplicationData', { lastProjectPath: path }).then(() => {
@@ -597,6 +623,12 @@ export default createStore({
     },
     openSelectFileDialog() {
       return ipc.exchange('selectFileDialog')
+    },
+    referenceFrameData(state, payload: { board: HTMLElement, workspace: HTMLElement }) {
+      this.commit('REFERENCE_FRAME_DATA', payload)
+    },
+    saveCurrentWorkspaceCamera() {
+      this.commit('SET_CURRENT_WORKSPACE_CAMERA')
     },
   },
   modules: {

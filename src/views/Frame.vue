@@ -98,7 +98,6 @@
       >
         <div class="workspace-background" :style="backgroundStyle"></div>
         <div
-          v-if="projectDataIsLoaded"
           class="workspace"
           ref="workspace"
           :style="workspaceStyle"
@@ -180,17 +179,21 @@ export default class Frame extends Vue {
 
   draggedTabWorkspaceId = ''
 
-  workspaceCameras: {
-    [workspaceId: string]: Camera
-  } = {}
+  // @Watch('lastProjectSaveTime')
+  // handleProjectSave() {
+  // }
 
-  @Watch('activeProjectId')
-  handleProjectChange() {
+  get lastProjectSaveTime() {
+    return this.$store.getters.lastProjectSaveTime
+  }
+
+  @Watch('lastProjectLoadTime')
+  handleProjectLoad() {
     this.setupFrame()
   }
 
-  get activeProjectId() {
-    return this.$store.getters.activeProjectId
+  get lastProjectLoadTime() {
+    return this.$store.getters.lastProjectLoadTime
   }
 
   get projectDataIsLoaded() {
@@ -300,7 +303,6 @@ export default class Frame extends Vue {
 
   startBoardMove(e: MouseEvent) {
     if (!this.projectDataIsLoaded) return
-
     if (this.dragInProgress || this.resizeInProgress) return
     this.draggingBoard = true
     this.updateRelativeMousePosition(e)
@@ -426,7 +428,7 @@ export default class Frame extends Vue {
   activateWorkspace(workspaceId: string) {
     this.saveCurrentWorkspaceCamera()
     this.$store.dispatch('activateWorkspace', workspaceId)
-    this.setWorkspaceCamera()
+    this.loadWorkspaceCamera()
   }
 
   createNewWorkspace() {
@@ -702,21 +704,16 @@ export default class Frame extends Vue {
     )
   }
 
-  saveCurrentWorkspaceCamera(workspaceId: string = this.activeWorkspaceId) {
-    const camera = {
-      x: this.boardElement.scrollLeft,
-      y: this.boardElement.scrollTop,
-      scale: this.workspaceScale
-    }
-    this.workspaceCameras[workspaceId] = camera
+  saveCurrentWorkspaceCamera() {
+    this.$store.dispatch('saveCurrentWorkspaceCamera')
   }
 
-  setWorkspaceCamera(workspaceId: string = this.activeWorkspaceId) {
-    const camera = this.workspaceCameras[workspaceId] || this.getLastSessionCamera()
+  loadWorkspaceCamera() {
+    const camera = this.getLastSessionCamera()
     if (!camera) {
       this.centerOnTiles()
       this.workspaceScale = 1
-      this.saveCurrentWorkspaceCamera(workspaceId)
+      this.saveCurrentWorkspaceCamera()
     } else {
       this.setBoardScroll({ x: camera.x, y: camera.y })
       this.workspaceScale = camera.scale
@@ -728,15 +725,19 @@ export default class Frame extends Vue {
   }
 
   setupFrame() {
-    this.setWorkspaceCamera(this.activeWorkspaceId)
-    this.activateNthOrderWorkspace(1)
+    this.loadWorkspaceCamera()
+    /* Allow scale style to take effect */
+    window.setTimeout(() => {
+      this.activateWorkspace(this.activeWorkspaceId)
+    })
   }
 
   mounted() {
-    // if (!this.allTilesOfActiveWorkspace.length) {
-    //   this.createNewTile()
-    // }
     window.addEventListener('keydown', this.keyboardHandler)
+    this.$store.dispatch('referenceFrameData', {
+      board: this.boardElement,
+      workspace: this.workspaceElement
+    })
   }
 }
 </script>

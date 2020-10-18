@@ -45,6 +45,9 @@ interface UIState {
   openingProjectInProgress: boolean;
   savingProjectInProgress: boolean;
   activeModal: modalTypes;
+  lastProjectSaveTime: string;
+  lastProjectLoadTime: string;
+  frameData: { board: HTMLElement, workspace: HTMLElement } | null;
 }
 
 interface WorkspaceConfiguration {
