@@ -533,81 +533,49 @@ export default createStore({
     closeModal() {
       this.commit('CLOSE_MODAL')
     },
-    /*
-      Opening project known to Application Data.
-    */
-    async asyncOpenKnownProjectFromId(state, projectId: string) {
+    async asyncOpenProjectFromPath(state, path: string) {
       this.commit('START_OPENING_PROJECT')
-      await state.dispatch('saveProject')
-      const projectConfig: ProjectConfig = state.getters.projectConfigById(projectId)
-      const project = await state.dispatch('asyncFetchProject', projectConfig.localSavePath)
-      this.commit('LOAD_PROJECT_TO_UI', project)
-      await state.dispatch('asyncUpdateApplicationData', { lastProjectId: projectId })
+      await this.dispatch('asyncLoadProject', { path })
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
     },
-    /*
-      Open existing project not known to Application Data.
-    */
-    async asyncOpenUknownProjectFromPath(state, path: string) {
+    async asyncOpenNewProject() {
       this.commit('START_OPENING_PROJECT')
-      await state.dispatch('saveProject')
-      const project = await state.dispatch('asyncFetchProject', path) as Project
-      this.commit('LOAD_PROJECT_TO_UI', project)
-      const newPath = await state.dispatch('saveProjectAs')
-      const projectConfig = state.getters.newProjectConfig
-      projectConfig.localSavePath = newPath
-      await state.dispatch('asyncUpdateApplicationData', { projectConfig })
+      await this.dispatch('asyncLoadProject', { isNew: true })
       this.commit('STOP_OPENING_PROJECT')
       this.commit('SET_PROJECT_DATA_LOADED', true)
-      state.dispatch('openModal', 'configuration')
     },
-    /*
-      Opening completely new project and assigning to it provided config.
-    */
-    async asyncOpenNewProjectWithConfig(state, projectConfig: ProjectConfig) {
-      this.commit('START_OPENING_PROJECT')
+    async asyncLoadProject(state, { path, isNew }) {
       await state.dispatch('saveProject')
-      const project = {
-        ...getNewProjectTemplate(),
-        id: projectConfig.id,
-      }
+        .catch((e) => Error(`Failed saiving project. \n${e}`))
+      const project = isNew
+        ? { ...getNewProjectTemplate() }
+        : (
+          await state.dispatch('asyncFetchProject', path)
+            .catch((e) => Error(`Failed fetching project. \n${e}`))
+        )
       this.commit('LOAD_PROJECT_TO_UI', project)
-      const newPath = await state.dispatch('saveProjectAs')
-      projectConfig.localSavePath = newPath
-      await state.dispatch('asyncUpdateApplicationData', { projectConfig })
-      this.commit('STOP_OPENING_PROJECT')
-      this.commit('SET_PROJECT_DATA_LOADED', true)
+      const lastProjectPath = isNew
+        ? (
+          await state.dispatch('saveProjectAs')
+            .catch((e) => Error(`Failed saiving project as. \n${e}`))
+        )
+        : path
+      await state.dispatch('asyncUpdateApplicationData', { lastProjectPath })
+        .catch((e) => Error(`Failed updating application data. \n${e}`))
     },
     asyncLoadApplicationData() {
       return ipc.exchange('loadApplicationData').then((data: ApplicationData) => {
         this.commit('SET_APPLICATION_DATA', data)
       })
     },
-    // asyncUpdateLoadedProjectPaths(state, { oldPath, newPath }) {
-    //   const payload = { data: { oldPath, newPath } }
-    //   return ipc.exchange('updateProjectPaths', payload).then(() => {
-    //     const newConfig = {
-    //       ...state.getters.currentProjectConfig
-    //     }
-    //     state.dispatch('asyncUpdateApplicationData', newProjectConfig)
-    //   }).catch((e) => {
-    //     /* Only design time really, no idea what to do in that case with a running app */
-    //     throw Error(`Caught error while updating project paths.\nError: ${e}`)
-    //   })
-    // },
-    asyncUpdateApplicationData(state, data: { projectConfig?: ProjectConfig, lastProjectId?: string }) {
+    asyncUpdateApplicationData(state, applicationData: Partial<ApplicationData>) {
       const newApplicationData: ApplicationData = {
-        ...state.getters.applicationData
+        ...state.getters.applicationData,
+        ...applicationData
       }
-      if (data.projectConfig) {
-        newApplicationData.projects[data.projectConfig.id] = { ...data.projectConfig }
-        newApplicationData.lastProjectId = data.projectConfig.id
-      } else if (data.lastProjectId) {
-        newApplicationData.lastProjectId = data.lastProjectId
-      }
-
       console.log('will set application data to : ', newApplicationData)
+
       return ipc.exchange('updateApplicationData', { data: newApplicationData }).then(() => {
         this.commit('SET_APPLICATION_DATA', newApplicationData)
       }).catch((e) => {
@@ -653,9 +621,12 @@ export default createStore({
       })
     },
     saveProjectAs(state) {
-      // const projectData = JSON.stringify(state.state.project)
+      this.commit('START_SAVING_PROJECT')
       const projectData = state.state.project
-      return ipc.exchange('saveProjectAs', { data: projectData })
+      return ipc.exchange('saveProjectAs', { data: projectData }).then((path) => {
+        this.commit('STOP_SAVING_PROJECT')
+        return path
+      })
     },
     asyncBeforeApplicationClose() {
       return this.dispatch('saveProject')

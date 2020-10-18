@@ -171,7 +171,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
         if (typeof data === 'string' && data === '') {
           const initialApplicationData: ApplicationData = {
             projects: {},
-            lastProjectId: '',
+            lastProjectPath: '',
             defaultLocalPath: defaultProjectsDirectory
           }
 
@@ -183,12 +183,16 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
         const projects: { [projectId: string]: ProjectConfig } = {}
         const pathsValidations = Object.keys(data.projects).map((projectId: string) => {
           const config = data.projects[projectId]
+          if (!config.localSavePath) {
+            console.log('No localSavePath found!!, config: ', config)
+            return Promise.resolve()
+          }
           const fileName = getFileNameFromPath(config.localSavePath).replace('.json', '')
           const directory = getDirectoryFromPath(config.localSavePath)
           return new Promise((resolve) => {
             fs.readdir(directory, (e, files) => {
               console.log('comparing files to:', fileName)
-              if (files.some((fName) => fName.replace('.json', '') === fileName)) {
+              if (!e && files.some((fName) => fName.replace('.json', '') === fileName)) {
                 projects[config.id] = config
               }
               resolve()
@@ -196,11 +200,18 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
           })
         })
         return Promise.all(pathsValidations).then(() => {
-          console.log('projects adter validation: ', projects)
-          return {
+          console.log('projects after validation: ', projects)
+          if (!Object.keys(projects).some((pId) => pId === data.lastProjectPath)) {
+            data.lastProjectPath = ''
+          }
+
+          const correctedData = {
             ...data,
             projects
           }
+          return saveFile(appDataDirectory, appDataFile, correctedData).then(() => {
+            return correctedData
+          })
         })
       })
     },
@@ -248,7 +259,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
     },
     selectDirectoryDialog(payload: { buttonLabel: string, defaultPath: string }) {
       const win = getWindow()
-      if (!win) return Promise.reject(getError('No browser window found'))
+      if (!win) return Promise.reject(getError('No browser window found.'))
 
       return dialog.showOpenDialog(win, {
         defaultPath: payload.defaultPath || defaultProjectsDirectory,
@@ -261,7 +272,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
     },
     selectFileDialog(payload: { buttonLabel: string, defaultPath: string }) {
       const win = getWindow()
-      if (!win) return Promise.reject(getError('No browser window found'))
+      if (!win) return Promise.reject(getError('No browser window found.'))
 
       return dialog.showOpenDialog(win, {
         defaultPath: defaultProjectsDirectory,
@@ -277,7 +288,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
     },
     saveProjectAs(project: Project) {
       const win = getWindow()
-      if (!win) return Promise.reject(getError('No browser window found'))
+      if (!win) return Promise.reject(getError('No browser window found.'))
 
       return dialog.showSaveDialog(win, {
         title: 'Save project',

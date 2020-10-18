@@ -12,8 +12,6 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class AppLoader extends Vue {
-  loadingApplicationData = true
-
   get applicationData(): ApplicationData {
     return this.$store.getters.applicationData
   }
@@ -21,10 +19,9 @@ export default class AppLoader extends Vue {
   async mounted() {
     ipc.initListeners(this)
     await this.$store.dispatch('asyncLoadApplicationData')
-    this.loadingApplicationData = false
 
-    if (this.applicationData.lastProjectId) {
-      this.$store.dispatch('asyncOpenKnownProjectFromId', this.applicationData.lastProjectId)
+    if (this.applicationData.lastProjectPath) {
+      this.$store.dispatch('asyncOpenProjectFromPath', this.applicationData.lastProjectPath)
     } else {
       this.$store.dispatch('openModal', 'projectSelector')
     }

@@ -19,15 +19,18 @@
       </div>
       <hr>
       <h6>Known projects</h6>
-      <template v-if="applicationData.projects.length">
+      <template v-if="knownProjects.length">
         <template
-          v-for="projectConfig in applicationData.projects"
+          v-for="projectConfig in knownProjects"
           :key="projectConfig.id"
         >
-          <button class="project-button" @click="openKnownProject(projectConfig.id)">{{ projectConfig.name }}</button>
+          <button class="project-button" @click="openKnownProject(projectConfig.id)">{{ projectConfig.localSavePath }}</button>
         </template>
       </template>
       <span v-else>There are no known existing projects to load.</span>
+      <div class="modal-buttons">
+          <button @click="closeModal">Close</button>
+        </div>
     </div>
   </div>
 </template>
@@ -48,6 +51,10 @@ export default class ProjectSelector extends Vue {
 
   get applicationData(): ApplicationData {
     return this.$store.getters.applicationData
+  }
+
+  get knownProjects(): ProjectConfig[] {
+    return Object.keys(this.applicationData.projects).map((projectId) => this.applicationData.projects[projectId])
   }
 
   selectFileDialog() {
@@ -75,6 +82,10 @@ export default class ProjectSelector extends Vue {
 
   openKnownProject(projectId: string) {
     this.$store.dispatch('asyncOpenKnownProjectFromId', projectId)
+  }
+
+  closeModal() {
+    this.$store.dispatch('closeModal')
   }
 }
 </script>
