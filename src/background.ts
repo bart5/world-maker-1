@@ -102,6 +102,10 @@ function createWindow() {
     win.loadURL('app://./index.html');
   }
 
+  win.on('close', () => {
+    emitters.onClose()
+  })
+
   win.on('closed', () => {
     win = null;
   });

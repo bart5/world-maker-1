@@ -15,8 +15,9 @@ interface Ipc {
   send: (opType: opType, request: IpcRequest) => void;
   resolveExchange: (reply: IpcReply) => void;
   rejectExchange: (reply: IpcReply) => void;
-  initListener: (eventType: menuSignal | operationResponseType, handler: (reply?: IpcReply) => void) => void;
-  getListeners: (vm: Vue) => Record<menuSignal | operationResponseType, (reply?: IpcReply) => void>;
+  initListener: (eventType: menuSignal | operationResponseType, handler: (data?: any) => void) => void;
+  getExchangeListeners: () => Record<operationResponseType, (reply?: IpcReply) => void>;
+  getSignalListeners: (vm: Vue) => Record<menuSignal, (window?: string) => void>;
   initListeners: (vm: Vue) => void
 }
 
@@ -69,9 +70,9 @@ export const ipc: Ipc = {
     }
   },
   initListener(eventType, handler) {
-    window.ipcRenderer.on(eventType, (event, reply?: IpcReply) => handler(reply))
+    window.ipcRenderer.on(eventType, (event, data?: any) => handler(data))
   },
-  getListeners(vm: Vue) {
+  getExchangeListeners() {
     return {
       reply(reply) {
         ipc.resolveExchange(reply as IpcReply)
@@ -79,6 +80,10 @@ export const ipc: Ipc = {
       error(reply) {
         ipc.rejectExchange(reply as IpcReply)
       },
+    }
+  },
+  getSignalListeners(vm: Vue) {
+    return {
       startNewProject() {
         vm.$store.dispatch('asyncOpenNewProject')
       },
@@ -97,13 +102,15 @@ export const ipc: Ipc = {
         vm.$store.dispatch('openModal', 'configuration')
       },
       closeApplication() {
-        /*  */
+        vm.$store.dispatch('asyncSaveProject').then(() => {
+          window.close()
+        })
       },
     }
   },
   initListeners(vm: Vue) {
     console.info('Initializing IPC listeners.')
-    const listeners = this.getListeners(vm);
+    const listeners = { ...this.getExchangeListeners(), ...this.getSignalListeners(vm) };
     (Object.keys(listeners) as Array<menuSignal | operationResponseType>).forEach((k) => {
       return this.initListener(k, listeners[k])
     })

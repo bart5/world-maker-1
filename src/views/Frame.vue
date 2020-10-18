@@ -692,6 +692,9 @@ export default class Frame extends Vue {
         case '-':
           this.zoomOut()
           break;
+        case 's':
+          this.$store.dispatch('asyncSaveProject', true)
+          break;
         default:
           break;
       }
