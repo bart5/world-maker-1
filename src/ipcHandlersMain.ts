@@ -76,7 +76,10 @@ const getError = (message: string, error?: Error | NodeJS.ErrnoException | null)
   When backuping establishes a unique fileName.
 */
 function saveFile(directory: string, fileName: string, data: any = {}, isBackup?: boolean) {
-  const dir = directory === '/' ? directory : directory.replace(/$\//, '')
+  if (directory === '/') {
+    return Promise.reject(getError('Invalid directory - cannot save to directory "/".'))
+  }
+  const dir = directory
   const fName = fileName.replace('/', '')
   const path = `${dir}/${fName}`
   return new Promise((resolve, reject) => {
@@ -242,17 +245,19 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
           resolve()
         })
       }).then(() => {
-        return saveFile(appDataDirectory, appDataFile, payload)
+        return saveFile(appDataDirectory, appDataFile, payload).then(() => {
+          rememberCurrentApplicationData(payload)
+        })
       })
     },
     fetchProject(path: string) {
       return loadFile(path)
     },
-    saveProject(payload: { path: string, data: Project }) {
-      const { path, data } = payload
+    saveProject(payload: Project) {
+      const path = applicationData.lastProjectPath
       const fileName = getFileNameFromPath(path)
       const directory = getDirectoryFromPath(path)
-      return saveFile(directory, fileName, data)
+      return saveFile(directory, fileName, payload)
     },
     backupProject(payload: { path: string, data: Project }) {
       const { path, data } = payload

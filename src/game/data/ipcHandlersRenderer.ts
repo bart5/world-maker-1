@@ -88,7 +88,7 @@ export const ipc: Ipc = {
         vm.$store.dispatch('openModal', 'projectSelector')
       },
       saveProject() {
-        vm.$store.dispatch('asyncSaveProject')
+        vm.$store.dispatch('asyncSaveProject', true)
       },
       saveProjectAs() {
         vm.$store.dispatch('asyncSaveProjectAs').catch((r) => {

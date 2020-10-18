@@ -512,14 +512,13 @@ export default createStore({
             .catch((e) => Error(`Failed fetching project. \n${e}`))
         )
       this.commit('LOAD_PROJECT_TO_UI', project)
-      const lastProjectPath = isNew
-        ? (
-          await state.dispatch('asyncSaveProjectAs')
-            .catch((e) => Error(`Failed saiving project as. \n${e}`))
-        )
-        : path
-      await state.dispatch('asyncUpdateApplicationData', { lastProjectPath })
-        .catch((e) => Error(`Failed updating application data. \n${e}`))
+      if (isNew) {
+        await state.dispatch('asyncSaveProjectAs')
+          .catch((e) => Error(`Failed saiving project as. \n${e}`))
+      } else {
+        await state.dispatch('asyncUpdateApplicationData', { lastProjectPath: path })
+          .catch((e) => Error(`Failed updating application data. \n${e}`))
+      }
     },
     asyncLoadApplicationData() {
       return ipc.exchange('loadApplicationData').then((data: ApplicationData) => {
@@ -531,7 +530,7 @@ export default createStore({
         ...state.getters.applicationData,
         ...applicationData
       }
-      console.log('will set application data to : ', newApplicationData)
+      console.log('Will set application data to : ', newApplicationData)
 
       return ipc.exchange('updateApplicationData', { data: newApplicationData }).then(() => {
         this.commit('SET_APPLICATION_DATA', newApplicationData)
@@ -553,15 +552,13 @@ export default createStore({
         return project
       })
     },
-    asyncSaveProject(state) {
+    asyncSaveProject(state, noConfirm: boolean) {
       this.commit('START_SAVING_PROJECT')
       if (state.getters.isUnsavedData) {
-        const decision = window.confirm('You have unsaved changes, do you want to save them?')
+        const decision = noConfirm || window.confirm('You have unsaved changes, do you want to save them?')
         if (decision) {
           const { project } = state.state
-          const path = state.getters.applicationData.lastProjectPath
-          const opPayload = { data: { path, data: project } }
-          return ipc.exchange('saveProject', opPayload).then(() => {
+          return ipc.exchange('saveProject', { data: project }).then(() => {
             resetMutations(state.state)
           }).finally(() => {
             this.commit('STOP_SAVING_PROJECT')
