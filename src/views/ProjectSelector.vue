@@ -5,37 +5,27 @@
       <hr>
       <h6>New project</h6>
       <div class="new-project-button-wrapper">
-        <button @click="startNewProjectConfiguration">Configure new project</button>
+        <button @click="startNewProject">Start new project</button>
       </div>
       <hr>
-      <h6>Import existing project</h6>
+      <h6>Open existing project</h6>
       <div class="input-wrapper">
-        <div class="label">Load from file</div>
-        <input type="text" v-model="projectPath" @change="fetchProjectFromPath">
+        <div class="label">Project pact</div>
+        <input type="text" v-model="projectPath" @change="fetchProject">
         <button class="file-dialog-button" @click="selectFileDialog">B</button>
       </div>
-      <div v-if="projectFromPath && !loadingProjectFromPath">
-        <button class="project-button" @click="openUnknownProject(projectPath)">Open project: {{ projectFromPath.name }}</button>
+      <div v-if="projectFileIsValid && !validatingProject">
+        <button class="project-button" @click="openProjectFromPath(projectPath)">Open project under: {{ projectPath }}</button>
       </div>
-      <hr>
-      <h6>Known projects</h6>
-      <template v-if="knownProjects.length">
-        <template
-          v-for="projectConfig in knownProjects"
-          :key="projectConfig.id"
-        >
-          <button class="project-button" @click="openKnownProject(projectConfig.id)">{{ projectConfig.localSavePath }}</button>
-        </template>
-      </template>
-      <span v-else>There are no known existing projects to load.</span>
       <div class="modal-buttons">
-          <button @click="closeModal">Close</button>
-        </div>
+        <button @click="closeModal">Close</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
+import { validateProjectDataKeys } from '@/store'
 import { Options, Vue } from 'vue-class-component'
 
 @Options({
@@ -45,43 +35,36 @@ import { Options, Vue } from 'vue-class-component'
 export default class ProjectSelector extends Vue {
   projectPath = ''
 
-  projectFromPath: Project | null = null
+  projectFileIsValid = true
 
-  loadingProjectFromPath = false
-
-  get applicationData(): ApplicationData {
-    return this.$store.getters.applicationData
-  }
-
-  get knownProjects(): ProjectConfig[] {
-    return Object.keys(this.applicationData.projects).map((projectId) => this.applicationData.projects[projectId])
-  }
+  validatingProject = false
 
   selectFileDialog() {
     this.$store.dispatch('openSelectFileDialog')
   }
 
-  fetchProjectFromPath() {
-    this.loadingProjectFromPath = true
+  fetchProject() {
+    this.validatingProject = true
     this.$store.dispatch('asyncFetchProject', this.projectPath).then((project: Project) => {
-      this.projectFromPath = project
+      this.projectFileIsValid = validateProjectDataKeys(project)
     }).catch(() => {
-      this.projectFromPath = null
+      console.warn('Could not load file from path')
+      this.projectFileIsValid = false
     }).finally(() => {
-      this.loadingProjectFromPath = false
+      this.validatingProject = false
     })
   }
 
-  startNewProjectConfiguration() {
-    this.$store.dispatch('startNewProjectConfiguration')
+  startNewProject() {
+    this.$store.dispatch('asyncOpenNewProject').then(() => {
+      this.closeModal()
+    })
   }
 
-  openUnknownProject(path: string) {
-    this.$store.dispatch('asyncOpenUknownProjectFromPath', path)
-  }
-
-  openKnownProject(projectId: string) {
-    this.$store.dispatch('asyncOpenKnownProjectFromId', projectId)
+  openProjectFromPath(path: string) {
+    this.$store.dispatch('asyncOpenProjectFromPath', path).then(() => {
+      this.closeModal()
+    })
   }
 
   closeModal() {

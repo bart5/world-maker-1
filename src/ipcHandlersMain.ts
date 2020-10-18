@@ -170,77 +170,53 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
       return (loadFile(`${appDataDirectory}/${appDataFile}`) as Promise<ApplicationData | ''>).then((data) => {
         if (typeof data === 'string' && data === '') {
           const initialApplicationData: ApplicationData = {
-            projects: {},
+            allowAutosave: true,
+            autosaveInterval: 5,
+            allowBackup: true,
+            backupInterval: 60,
             lastProjectPath: '',
-            defaultLocalPath: defaultProjectsDirectory
+            defaultLocalPath: defaultProjectsDirectory,
           }
 
-          return saveFile(appDataDirectory, appDataFile, initialApplicationData).then(() => {
-            return initialApplicationData
-          })
-        }
-        /* Validating if paths know to projects are still valid */
-        const projects: { [projectId: string]: ProjectConfig } = {}
-        const pathsValidations = Object.keys(data.projects).map((projectId: string) => {
-          const config = data.projects[projectId]
-          if (!config.localSavePath) {
-            console.log('No localSavePath found!!, config: ', config)
-            return Promise.resolve()
-          }
-          const fileName = getFileNameFromPath(config.localSavePath).replace('.json', '')
-          const directory = getDirectoryFromPath(config.localSavePath)
           return new Promise((resolve) => {
-            fs.readdir(directory, (e, files) => {
-              console.log('comparing files to:', fileName)
-              if (!e && files.some((fName) => fName.replace('.json', '') === fileName)) {
-                projects[config.id] = config
+            /* Check for projects directory and potentially create it */
+            fs.readdir(defaultProjectsDirectory, (e) => {
+              if (e) {
+                fs.mkdir(defaultProjectsDirectory, { recursive: true }, (e1) => {
+                  if (e1) getError('Could not create default projects directory,', e1)
+                })
               }
               resolve()
             })
+          }).then(() => {
+            return saveFile(appDataDirectory, appDataFile, initialApplicationData).then(() => {
+              return initialApplicationData
+            })
           })
-        })
-        return Promise.all(pathsValidations).then(() => {
-          console.log('projects after validation: ', projects)
-          if (!Object.keys(projects).some((pId) => pId === data.lastProjectPath)) {
-            data.lastProjectPath = ''
-          }
-
-          const correctedData = {
-            ...data,
-            projects
-          }
-          return saveFile(appDataDirectory, appDataFile, correctedData).then(() => {
-            return correctedData
+        }
+        /* Validating if lastProjectPath is still valid */
+        return new Promise((resolve) => {
+          const fileName = getFileNameFromPath(data.lastProjectPath).replace('.json', '')
+          const directory = getDirectoryFromPath(data.lastProjectPath)
+          fs.readdir(directory, (e, files) => {
+            if (e || !files.some((fName) => fName.replace('.json', '') === fileName)) {
+              data.lastProjectPath = ''
+              return resolve(false)
+            }
+            return resolve(true)
           })
+        }).then((newData) => {
+          if (newData) {
+            return saveFile(appDataDirectory, appDataFile, data).then(() => {
+              return data
+            })
+          }
+          return Promise.resolve(data)
         })
       })
     },
     updateApplicationData(payload) {
       return saveFile(appDataDirectory, appDataFile, payload)
-    },
-    updateProjectPaths(payload: { oldPath: string, newPath: string, removeOld: boolean }) {
-      const { oldPath, newPath } = payload
-      return new Promise((resolve, reject) => {
-        (loadFile(oldPath) as Promise<Project>).then((project) => {
-          const fileName = getFileNameFromPath(newPath)
-          const directory = getDirectoryFromPath(newPath)
-          saveFile(directory, fileName, project).then(() => {
-            if (payload.removeOld) {
-              deleteFile(oldPath).catch((e) => {
-                reject(Error(`Failed to delete project from old location.\n${e}`))
-              }).then(() => {
-                resolve('Successfully updated project location.')
-              })
-            }
-          }).catch((e) => {
-            reject(Error(`Failed to save project to new location.\n${e}`))
-          }).then(() => {
-            resolve('Successfully updated project location.')
-          })
-        }).catch((e) => {
-          reject(Error(`Failed to load project from old location.\n${e}`))
-        })
-      })
     },
     fetchProject(path: string) {
       return loadFile(path)

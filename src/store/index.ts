@@ -2,7 +2,7 @@ import { ipc } from '@/game/data/ipcHandlersRenderer';
 import { createStore } from 'vuex';
 
 /* Shallow */
-const validateProjectDataKeys = (data: any) => {
+export const validateProjectDataKeys = (data: any) => {
   return Object.keys(data).every((k) => Object.keys(getNewProjectTemplate()).some((dk) => dk === k))
 }
 
@@ -546,7 +546,7 @@ export default createStore({
       this.commit('SET_PROJECT_DATA_LOADED', true)
     },
     async asyncLoadProject(state, { path, isNew }) {
-      await state.dispatch('saveProject')
+      await state.dispatch('asyncSaveProject')
         .catch((e) => Error(`Failed saiving project. \n${e}`))
       const project = isNew
         ? { ...getNewProjectTemplate() }
@@ -557,7 +557,7 @@ export default createStore({
       this.commit('LOAD_PROJECT_TO_UI', project)
       const lastProjectPath = isNew
         ? (
-          await state.dispatch('saveProjectAs')
+          await state.dispatch('asyncSaveProjectAs')
             .catch((e) => Error(`Failed saiving project as. \n${e}`))
         )
         : path
@@ -611,7 +611,7 @@ export default createStore({
       this.commit('STOP_SAVING_PROJECT')
       return Promise.resolve()
     },
-    backupProject(state) {
+    asyncBackupProject(state) {
       this.commit('START_PROJECT_BACKUP')
       const { project } = state.state
       const path = state.getters.currentProjectConfig.localSavePath
@@ -620,7 +620,7 @@ export default createStore({
         this.commit('END_PROJECT_BACKUP')
       })
     },
-    saveProjectAs(state) {
+    asyncSaveProjectAs(state) {
       this.commit('START_SAVING_PROJECT')
       const projectData = state.state.project
       return ipc.exchange('saveProjectAs', { data: projectData }).then((path) => {
@@ -629,7 +629,7 @@ export default createStore({
       })
     },
     asyncBeforeApplicationClose() {
-      return this.dispatch('saveProject')
+      return this.dispatch('asyncSaveProject')
     },
     asyncTestPath(state, path: string) {
       return ipc.exchange('testPath', { data: { path } })

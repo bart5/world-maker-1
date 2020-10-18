@@ -88,10 +88,10 @@ export const ipc: Ipc = {
         vm.$store.dispatch('openModal', 'projectSelector')
       },
       saveProject() {
-        vm.$store.dispatch('saveProject')
+        vm.$store.dispatch('asyncSaveProject')
       },
       async saveProjectAs() {
-        const newPath = await vm.$store.dispatch('saveProjectAs').catch((r) => {
+        const newPath = await vm.$store.dispatch('asyncSaveProjectAs').catch((r) => {
           console.info('Did not save project: ', r)
         })
         const projectConfig = { ...vm.$store.getters.newProjectConfig }

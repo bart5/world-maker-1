@@ -1,7 +1,6 @@
 type opType =
   'loadApplicationData'
   | 'updateApplicationData'
-  | 'updateProjectPaths'
   | 'fetchProject'
   | 'saveProject'
   | 'testPath'
