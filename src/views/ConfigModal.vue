@@ -1,13 +1,14 @@
 <template>
-  <div class="modal modal-overlay">
-    <div class="config-modal">
+  <div class="modal-overlay">
+    <div class="modal">
       <h4>App configuration</h4>
+      <hr>
       <div class="input-wrapper">
-        <div class="label">Default Projects path</div>
         <div class="input-box">
+          <div class="input-prefix">Default Projects path:</div>
           <input
             :class="{ 'validating': validatingDefaultLocalPath }"
-            type="checkbox"
+            type="text"
             v-model="newApplicationData.defaultLocalPath"
             @change="validateProjectsDirectory"
           >
@@ -15,21 +16,26 @@
         </div>
       </div>
       <div class="input-wrapper">
-        <div class="label">Use autosaves</div>
-        <input type="checkbox" v-model="newApplicationData.allowAutosave">
+        <label class="inbox-prefix">Use autosaves
+          <input type="checkbox" v-model="newApplicationData.allowAutosave">
+        </label>
       </div>
       <div class="input-wrapper">
-        <div class="label">Autosave interval</div>
-        <input type="number" v-model="newApplicationData.autosaveInterval">
+        <label class="input-prefix">Autosave interval
+          <input type="number" v-model="newApplicationData.autosaveInterval">
+        </label>
       </div>
       <div class="input-wrapper">
-        <div class="label">Use backups</div>
-        <input type="checkbox" v-model="newApplicationData.allowBackup">
+        <label class="input-prefix">Use backups
+          <input type="checkbox" v-model="newApplicationData.allowBackup">
+        </label>
       </div>
       <div class="input-wrapper">
-        <div class="label">Backup interval</div>
-        <input type="number" v-model="newApplicationData.backupInterval">
+        <label class="input-prefix">Backup interval
+          <input type="number" v-model="newApplicationData.backupInterval">
+        </label>
       </div>
+      <hr>
       <div class="button-wrapper">
         <button @click="setApplicationData" :disabled="!isDirty || !formIsValid">Save</button>
         <button @click="closeModal">Close</button>
@@ -120,7 +126,7 @@ export default class ConfigModal extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .modal-overlay {
   z-index: 1000;
   position: fixed;
@@ -132,7 +138,7 @@ export default class ConfigModal extends Vue {
   align-items: center;
 }
 
-.config-modal {
+.modal {
   display: flex;
   flex-flow: column;
   justify-content: center;
@@ -146,12 +152,22 @@ export default class ConfigModal extends Vue {
   h4 {
     user-select: none;
   }
+
+  hr {
+    margin-top: 24px;
+    margin-bottom: 12px;
+  }
 }
 
 .input-wrapper {
   display: flex;
+  flex-flow: row wrap;
   width: 100%;
   padding: 10px 0;
+
+  .label, .input-prefix {
+    user-select: none;
+  }
 
   .label {
     font-size: 14px;
@@ -164,12 +180,21 @@ export default class ConfigModal extends Vue {
   }
 
   .input-box {
+    width: 100%;
     display: flex;
     flex-flow: row nowrap;
     align-items: center;
   }
 
+  .input-prefix {
+    font-size: 14px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
   input {
+    margin-left: 6px;
     flex-grow: 1;
     &:not([type='checkbox']) {
       flex-grow: 1;
@@ -203,18 +228,34 @@ export default class ConfigModal extends Vue {
   }
 }
 
-.modal-buttons {
-  margin-top: 25px;
+.button-wrapper {
   display: flex;
-  width: 50%;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  width: 100%;
+  margin-top: 25px;
 
   button {
     width: 120px;
     height: 26px;
     border: 1px solid darkgray;
+    box-shadow: 0 0 1px 1px darkgray;
   }
+
+  button.major {
+    width: 100%;
+    height: 38px;
+    color: rgba(50,50,50);
+    font-size: 16px;
+    font-weight: bold;
+  }
+}
+
+h6 {
+  padding: 0;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
 }
 
 </style>

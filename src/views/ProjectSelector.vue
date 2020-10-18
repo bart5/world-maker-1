@@ -10,8 +10,9 @@
       <hr>
       <h6>Open existing project</h6>
       <div class="input-wrapper">
-        <div class="label">Project pact</div>
+        <!-- <div class="label">Project path</div> -->
         <div class="input-box">
+          <span class="input-prefix">path:</span>
           <input
             :class="{ 'validating': validatingDefaultLocalPath }"
             type="text"
@@ -23,7 +24,7 @@
       </div>
       <div class="button-wrapper major">
         <button
-          class="open-project-button"
+          class="open-project-button major"
           @click="openProjectFromPath(projectPath)"
           :disabled="!projectFileIsValid || validatingProject"
         >
@@ -103,7 +104,7 @@ export default class ProjectSelector extends Vue {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .modal-overlay {
   z-index: 1000;
   position: fixed;
@@ -138,9 +139,9 @@ export default class ProjectSelector extends Vue {
 
 .input-wrapper {
   display: flex;
+  flex-flow: row wrap;
   width: 100%;
   padding: 10px 0;
-  align-items: center;
 
   .label {
     font-size: 14px;
@@ -153,9 +154,15 @@ export default class ProjectSelector extends Vue {
   }
 
   .input-box {
+    width: 100%;
     display: flex;
     flex-flow: row nowrap;
     align-items: center;
+  }
+
+  .input-prefix {
+    font-size: 14px;
+    margin-right: 4px;
   }
 
   input {
@@ -203,11 +210,15 @@ export default class ProjectSelector extends Vue {
     width: 120px;
     height: 26px;
     border: 1px solid darkgray;
+    box-shadow: 0 0 1px 1px darkgray;
   }
 
   button.major {
     width: 100%;
-    height: 34px;
+    height: 38px;
+    color: rgba(50,50,50);
+    font-size: 16px;
+    font-weight: bold;
   }
 }
 

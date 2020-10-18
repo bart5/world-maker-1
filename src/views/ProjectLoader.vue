@@ -39,7 +39,7 @@ export default class ProjectLoader extends Vue {
 <style lang="scss" scoped>
 .project-loader-overlay {
   position: fixed;
-  z-index: 9999;
+  z-index: 1000;
   background: transparent;
   display: flex;
   justify-content: center;
