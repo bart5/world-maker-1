@@ -20,16 +20,6 @@ const getWorkspaceConfigurationDefaults = () => {
   return workspaceConfiguration
 }
 
-const projectConfigTemplate: ProjectConfig = {
-  id: '',
-  localSavePath: '',
-  remoteSavePath: '',
-  allowAutosave: true,
-  autosaveInterval: 5,
-  allowBackup: true,
-  backupInterval: 30,
-}
-
 const getWorkspaceDefaults = () => {
   const workspace: Workspace = {
     id: '0',
@@ -57,9 +47,9 @@ const getNewProjectUiData = () => {
 
 const getNewProjectTemplate = () => {
   const project: Project = {
-    id: '',
     staticData: {} as StaticData,
     entityBindings: {},
+    vocabulary: {},
     uiData: {
       ...getNewProjectUiData()
     }
@@ -70,9 +60,6 @@ const getNewProjectTemplate = () => {
 const initialState: ApplicationState = {
   applicationData: null,
   project: {} as Project,
-  projectConfigTemplate: {
-    ...projectConfigTemplate
-  },
   projectUiDataMutated: false,
   projectStaticDataMutated: false,
   projectEntityBindingsMutated: false,
@@ -82,7 +69,6 @@ const initialState: ApplicationState = {
     workspaceDeletionInProgress: false,
     selectedInputSourceTile: '',
     projectDataIsLoaded: false,
-    newProjectConfigurationInProgress: false,
     openingProjectInProgress: false,
     savingProjectInProgress: false,
     activeModal: null,
@@ -158,29 +144,8 @@ export default createStore({
       return workspaceConfig.lastSessionCamera
     },
     activeModal: (state) => state.ui.activeModal,
-    projectConfigById: (state) => (projectId: string) => {
-      const config = {
-        ...state.applicationData?.projects[projectId]
-      }
-      if (!config) return console.error(`Could not find config for projectId: ${projectId}`)
-      return config
-    },
-    currentProjectConfig: (state, getters) => getters.projectConfigById(state.project.id),
     applicationData: (state) => state.applicationData,
-    newProjectConfig: (state, getters) => {
-      const id = `project_${Date.now()}_hash:${Math.random()}`
-      const path = (getters.applicationData as ApplicationData).defaultLocalPath
-      const config: ProjectConfig = {
-        ...state.projectConfigTemplate,
-        localSavePath: path,
-        id,
-      }
-      console.log('returning config from getter: ', config)
-      return config
-    },
     projectDataIsLoaded: (state) => state.ui.projectDataIsLoaded,
-    activeProjectId: (state) => state.project.id,
-    newProjectConfigurationInProgress: (state) => state.ui.newProjectConfigurationInProgress,
     isUnsavedData: (state) => {
       return state.projectEntityBindingsMutated
         || state.projectStaticDataMutated
@@ -390,14 +355,6 @@ export default createStore({
     CLOSE_MODAL(state) {
       state.ui.activeModal = null
     },
-    START_NEW_PROJECT_CONFIGURATION(state) {
-      state.ui.newProjectConfigurationInProgress = true
-      state.ui.activeModal = 'configuration'
-    },
-    STOP_NEW_PROJECT_CONFIGURATION(state) {
-      state.ui.newProjectConfigurationInProgress = false
-      state.ui.activeModal = null
-    },
     SET_PROJECT_DATA_LOADED(state, value) {
       state.ui.projectDataIsLoaded = value
     },
@@ -547,7 +504,7 @@ export default createStore({
     },
     async asyncLoadProject(state, { path, isNew }) {
       await state.dispatch('asyncSaveProject')
-        .catch((e) => Error(`Failed saiving project. \n${e}`))
+        .catch((e) => Error(`Failed saving project. \n${e}`))
       const project = isNew
         ? { ...getNewProjectTemplate() }
         : (
@@ -596,17 +553,20 @@ export default createStore({
         return project
       })
     },
-    saveProject(state) {
+    asyncSaveProject(state) {
       this.commit('START_SAVING_PROJECT')
       if (state.getters.isUnsavedData) {
-        const { project } = state.state
-        const path = state.getters.currentProjectConfig.localSavePath
-        const opPayload = { data: { path, data: project } }
-        return ipc.exchange('saveProject', opPayload).then(() => {
-          resetMutations(state.state)
-        }).finally(() => {
-          this.commit('STOP_SAVING_PROJECT')
-        })
+        const decision = window.confirm('You have unsaved changes, do you want to save them?')
+        if (decision) {
+          const { project } = state.state
+          const path = state.getters.applicationData.lastProjectPath
+          const opPayload = { data: { path, data: project } }
+          return ipc.exchange('saveProject', opPayload).then(() => {
+            resetMutations(state.state)
+          }).finally(() => {
+            this.commit('STOP_SAVING_PROJECT')
+          })
+        }
       }
       this.commit('STOP_SAVING_PROJECT')
       return Promise.resolve()
@@ -614,7 +574,7 @@ export default createStore({
     asyncBackupProject(state) {
       this.commit('START_PROJECT_BACKUP')
       const { project } = state.state
-      const path = state.getters.currentProjectConfig.localSavePath
+      const path = state.getters.applicationData.lastProjectPath
       const opPayload = { data: { path, data: project, isBackup: true } }
       return ipc.exchange('backupProject', opPayload).finally(() => {
         this.commit('END_PROJECT_BACKUP')
@@ -624,8 +584,9 @@ export default createStore({
       this.commit('START_SAVING_PROJECT')
       const projectData = state.state.project
       return ipc.exchange('saveProjectAs', { data: projectData }).then((path) => {
-        this.commit('STOP_SAVING_PROJECT')
-        return path
+        return this.dispatch('asyncUpdateApplicationData', { lastProjectPath: path }).then(() => {
+          this.commit('STOP_SAVING_PROJECT')
+        })
       })
     },
     asyncBeforeApplicationClose() {
@@ -633,12 +594,6 @@ export default createStore({
     },
     asyncTestPath(state, path: string) {
       return ipc.exchange('testPath', { data: { path } })
-    },
-    startNewProjectConfiguration() {
-      this.commit('START_NEW_PROJECT_CONFIGURATION')
-    },
-    stopNewProjectConfiguration() {
-      this.commit('STOP_NEW_PROJECT_CONFIGURATION')
     },
     openSelectDirectoryDialog() {
       return ipc.exchange('selectDirectoryDialog')

@@ -7,7 +7,6 @@ type opType =
   | 'selectDirectoryDialog'
   | 'selectFileDialog'
   | 'backupProject'
-  | 'openProjectFolder'
   | 'saveProjectAs'
 
 type operationResponseType = 'reply' | 'error'
@@ -17,7 +16,7 @@ type menuSignal =
   | 'openExistingProject'
   | 'saveProject'
   | 'saveProjectAs'
-  | 'showCurrentProjectConfiguration'
+  | 'showApplicationConfiguration'
   | 'closeApplication'
 
 interface IpcReply {

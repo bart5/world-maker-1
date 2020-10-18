@@ -1,57 +1,39 @@
 <template>
-  <div class="modal modal-wrapper">
+  <div class="modal modal-overlay">
     <div class="config-modal">
-      <h4>Project configuration</h4>
-      <template v-if="!newProjectConfigurationInProgress">
-        <div class="input-wrapper">
-          <div class="label">Local save path</div>
+      <h4>App configuration</h4>
+      <div class="input-wrapper">
+        <div class="label">Default Projects path</div>
+        <div class="input-box">
           <input
-            :class="{
-              'validating': pathValidations.local.validating,
-              'invalid': !pathValidations.local.valid
-            }"
-            type="text"
-            v-model="projectConfig.localSavePath"
-            @change="validatePath('local', projectConfig.localSavePath)"
+            :class="{ 'validating': validatingDefaultLocalPath }"
+            type="checkbox"
+            v-model="newApplicationData.defaultLocalPath"
+            @change="validateProjectsDirectory"
           >
-          <button class="file-dialog-button" @click="selectNewSaveLocation">B</button>
+          <button class="file-dialog-button" @click="openSelectDirectoryDialog">B</button>
         </div>
-        <div class="input-wrapper">
-          <div class="label">Remote save path</div>
-          <input
-            :class="{
-              'validating': pathValidations.remote.validating,
-              'invalid': !pathValidations.remote.valid
-            }"
-            disabled="true"
-            type="text"
-            v-model="projectConfig.remoteSaveDirectory"
-          >
-        </div>
-      </template>
+      </div>
       <div class="input-wrapper">
         <div class="label">Use autosaves</div>
-        <input type="checkbox" v-model="projectConfig.allowAutosave">
+        <input type="checkbox" v-model="newApplicationData.allowAutosave">
       </div>
       <div class="input-wrapper">
         <div class="label">Autosave interval</div>
-        <input type="number" v-model="projectConfig.autosaveInterval">
+        <input type="number" v-model="newApplicationData.autosaveInterval">
       </div>
-      <template v-if="newProjectConfigurationInProgress">
-        <div class="modal-buttons">
-          <button @click="setupNewProject" :disabled="!formIsValid">Confirm</button>
-          <button @click="openAnotherProject">Open Another Project</button>
-        </div>
-        <span v-if="!formIsValid">
-          You need a valid project configuration to proceed.
-        </span>
-      </template>
-      <template v-else>
-        <div class="modal-buttons">
-          <button @click="setProjectConfig" :disabled="!isDirty || !formIsValid">Save</button>
-          <button @click="closeModal">Close</button>
-        </div>
-      </template>
+      <div class="input-wrapper">
+        <div class="label">Use backups</div>
+        <input type="checkbox" v-model="newApplicationData.allowBackup">
+      </div>
+      <div class="input-wrapper">
+        <div class="label">Backup interval</div>
+        <input type="number" v-model="newApplicationData.backupInterval">
+      </div>
+      <div class="button-wrapper">
+        <button @click="setApplicationData" :disabled="!isDirty || !formIsValid">Save</button>
+        <button @click="closeModal">Close</button>
+      </div>
     </div>
   </div>
 </template>
@@ -64,90 +46,64 @@ import { Options, Vue } from 'vue-class-component'
   },
 })
 export default class ConfigModal extends Vue {
-  initialProjectConfig: ProjectConfig | null = null
+  newApplicationData = {} as ApplicationData
 
-  projectConfig: ProjectConfig | null = null
+  defaultLocalPathIsValid = true;
 
-  pathValidations = {
-    local: {
-      valid: true,
-      validating: false,
-      delayedCallId: 0,
-    },
-    remote: {
-      valid: true,
-      validating: false,
-      delayedCallId: 0,
-    },
-  }
+  validatingDefaultLocalPath = false
 
-  pathsAreValid = true;
+  validationTimeoutId = 0
 
-  updatingProjectConfig = false;
-
-  get newProjectConfigurationInProgress() {
-    return this.$store.getters.newProjectConfigurationInProgress
+  get applicationData(): ApplicationData {
+    return this.$store.getters.applicationData
   }
 
   get formIsValid() {
-    return this.pathValidations.local.valid
-      && !this.pathValidations.local.validating
-      && this.pathValidations.remote.valid
-      && !this.pathValidations.remote.validating
+    return this.defaultLocalPathIsValid
+      && !this.validatingDefaultLocalPath
   }
 
   get isDirty() {
-    if (this.initialProjectConfig === null || this.projectConfig === null) {
-      return Error('Config is null')
-    }
-    return (Object.keys(this.projectConfig) as Array<keyof ProjectConfig>).some((k) => {
-      return (this.initialProjectConfig as ProjectConfig)[k] !== (this.projectConfig as ProjectConfig)[k]
+    return (Object.keys(this.applicationData) as Array<keyof ApplicationData>).some((k) => {
+      return this.applicationData[k] !== this.newApplicationData[k]
     })
   }
 
-  selectNewSaveLocation() {
-    this.$store.dispatch('openSelectDirectoryDialog')
-  }
-
-  selectDirectoryDialog() {
-    this.$store.dispatch('openSelectDirectoryDialog')
-  }
-
-  setupNewProject() {
-    this.$store.dispatch('asyncOpenNewProjectWithConfig', this.projectConfig).then(() => {
-      this.$store.dispatch('closeModal')
-      this.$store.dispatch('stopNewProjectConfiguration')
-    })
-  }
-
-  setProjectConfig() {
-    this.updatingProjectConfig = true
-    this.$store.dispatch('asyncSetProjectConfig', this.projectConfig).then(() => {
-      this.updatingProjectConfig = false
+  setApplicationData() {
+    this.$store.dispatch('asyncUpdateApplicationData', this.newApplicationData).then(() => {
       this.$store.dispatch('closeModal', 'configuration')
+    }).catch((e) => {
+      console.warn(`Could not update application data:\n${e}`)
     })
   }
 
-  validatePath(type: 'local' | 'remote', path: string) {
-    if (this.pathValidations[type].validating) {
-      window.clearTimeout(this.pathValidations[type].delayedCallId)
+  validateProjectsDirectory() {
+    if (this.validatingDefaultLocalPath) {
+      window.clearTimeout(this.validationTimeoutId)
     }
 
-    this.pathValidations[type].validating = true
+    this.validatingDefaultLocalPath = true
 
     const id = window.setTimeout(() => {
-      if (this.pathValidations[type].delayedCallId === id) {
-        this.$store.dispatch('testPath', path).then(() => {
-          this.pathValidations[type].valid = true
-        }).catch(() => {
-          this.pathValidations[type].valid = false
+      if (this.validationTimeoutId === id) {
+        this.$store.dispatch('asyncTestPath', this.newApplicationData.defaultLocalPath).then(() => {
+          this.defaultLocalPathIsValid = true
+        }).catch((e) => {
+          console.warn(`Testing provided path failed:\n${e}`)
+          this.defaultLocalPathIsValid = false
         }).finally(() => {
-          this.pathValidations[type].validating = false
+          this.validatingDefaultLocalPath = false
         })
       }
     }, 500)
 
-    this.pathValidations[type].delayedCallId = id
+    this.validationTimeoutId = id
+  }
+
+  openSelectDirectoryDialog() {
+    this.$store.dispatch('openSelectDirectoryDialog').then((path) => {
+      this.newApplicationData.defaultLocalPath = path
+    })
   }
 
   closeModal() {
@@ -158,28 +114,14 @@ export default class ConfigModal extends Vue {
     this.$store.dispatch('closeModal', 'configuration')
   }
 
-  openAnotherProject() {
-    this.$store.dispatch('openModal', 'projectSelector')
-  }
-
-  setModalState() {
-    const baseConfig = this.newProjectConfigurationInProgress
-      ? this.$store.getters.newProjectConfig
-      : this.$store.getters.currentProjectConfig
-
-    this.initialProjectConfig = { ...baseConfig }
-    this.projectConfig = { ...(this.initialProjectConfig as ProjectConfig) }
-  }
-
   beforeMount() {
-    this.setModalState()
-    console.log('set modal state with given config: ', this.projectConfig)
+    this.newApplicationData = { ...this.applicationData }
   }
 }
 </script>
 
 <style lang="scss">
-.modal-wrapper {
+.modal-overlay {
   z-index: 1000;
   position: fixed;
   width: 100%;
@@ -212,13 +154,23 @@ export default class ConfigModal extends Vue {
   padding: 10px 0;
 
   .label {
-    width: 150px;
+    font-size: 14px;
+    width: 100%;
     display: flex;
     justify-content: flex-start;
     user-select: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .input-box {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
   }
 
   input {
+    flex-grow: 1;
     &:not([type='checkbox']) {
       flex-grow: 1;
     }

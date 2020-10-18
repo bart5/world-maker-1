@@ -1,11 +1,7 @@
 type tileId = string
 type workspaceId = string
-// type projectId = string
 
 interface ApplicationData {
-  // projects: {
-  //   [projectId: string]: ProjectConfig
-  // };
   allowAutosave: boolean;
   /* If there are changes for that long then they will be saved automatically */
   autosaveInterval: number;
@@ -14,19 +10,7 @@ interface ApplicationData {
   lastProjectPath: string;
   /* Path to projects directory under appData */
   defaultLocalPath: string;
-  // defaultRemotePath: string,
 }
-
-// interface ProjectConfig {
-//   id: projectId;
-//   localSavePath: string,
-//   remoteSavePath: string,
-//   allowAutosave: boolean;
-//   /* If there are changes for that long then they will be saved automatically */
-//   autosaveInterval: number;
-//   allowBackup: boolean;
-//   backupInterval: number;
-// }
 
 interface UiData {
   workspaces: Array<Workspace>;
@@ -37,7 +21,6 @@ interface UiData {
 }
 
 interface Project {
-  // id: string;
   staticData: StaticData;
   entityBindings: EntityBindings;
   vocabulary: Vocabulary;
@@ -47,7 +30,6 @@ interface Project {
 interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
-  // projectConfigTemplate: ProjectConfig;
   projectUiDataMutated: boolean;
   projectStaticDataMutated: boolean;
   projectEntityBindingsMutated: boolean;
@@ -60,9 +42,6 @@ interface UIState {
   workspaceDeletionInProgress: boolean;
   selectedInputSourceTile: tileId;
   projectDataIsLoaded: boolean;
-
-  newProjectConfigurationInProgress: boolean;
-
   openingProjectInProgress: boolean;
   savingProjectInProgress: boolean;
   activeModal: modalTypes;

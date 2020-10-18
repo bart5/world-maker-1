@@ -1,24 +1,38 @@
 <template>
-  <div class="modal modal-wrapper">
-    <div class="config-modal">
-      <h4>Select Project</h4>
+  <div class="modal-overlay">
+    <div class="modal">
+      <h4>Open Project</h4>
       <hr>
       <h6>New project</h6>
-      <div class="new-project-button-wrapper">
-        <button @click="startNewProject">Start new project</button>
+      <div class="button-wrapper">
+        <button class="open-project-button major" @click="startNewProject">Start new project</button>
       </div>
       <hr>
       <h6>Open existing project</h6>
       <div class="input-wrapper">
         <div class="label">Project pact</div>
-        <input type="text" v-model="projectPath" @change="fetchProject">
-        <button class="file-dialog-button" @click="selectFileDialog">B</button>
+        <div class="input-box">
+          <input
+            :class="{ 'validating': validatingDefaultLocalPath }"
+            type="text"
+            v-model="projectPath"
+            @change="validateProjectPath"
+          >
+          <button class="file-dialog-button" @click="selectFileDialog">B</button>
+        </div>
       </div>
-      <div v-if="projectFileIsValid && !validatingProject">
-        <button class="project-button" @click="openProjectFromPath(projectPath)">Open project under: {{ projectPath }}</button>
+      <div class="button-wrapper major">
+        <button
+          class="open-project-button"
+          @click="openProjectFromPath(projectPath)"
+          :disabled="!projectFileIsValid || validatingProject"
+        >
+          Open project from: {{ projectPath }}
+        </button>
       </div>
-      <div class="modal-buttons">
-        <button @click="closeModal">Close</button>
+      <hr>
+      <div class="button-wrapper">
+        <button class="close-button" @click="closeModal">Close</button>
       </div>
     </div>
   </div>
@@ -39,20 +53,36 @@ export default class ProjectSelector extends Vue {
 
   validatingProject = false
 
+  validationTimeoutId = 0
+
   selectFileDialog() {
-    this.$store.dispatch('openSelectFileDialog')
+    this.$store.dispatch('openSelectFileDialog').then(({ canceled, path }) => {
+      if (canceled) return
+      this.projectPath = path
+    })
   }
 
-  fetchProject() {
+  validateProjectPath() {
+    if (this.validatingProject) {
+      window.clearTimeout(this.validationTimeoutId)
+    }
+
     this.validatingProject = true
-    this.$store.dispatch('asyncFetchProject', this.projectPath).then((project: Project) => {
-      this.projectFileIsValid = validateProjectDataKeys(project)
-    }).catch(() => {
-      console.warn('Could not load file from path')
-      this.projectFileIsValid = false
-    }).finally(() => {
-      this.validatingProject = false
-    })
+
+    const id = window.setTimeout(() => {
+      if (this.validationTimeoutId === id) {
+        this.$store.dispatch('asyncFetchProject', this.projectPath).then((project: Project) => {
+          this.projectFileIsValid = validateProjectDataKeys(project)
+        }).catch(() => {
+          console.warn('Could not load file from path')
+          this.projectFileIsValid = false
+        }).finally(() => {
+          this.validatingProject = false
+        })
+      }
+    }, 500)
+
+    this.validationTimeoutId = id
   }
 
   startNewProject() {
@@ -74,7 +104,7 @@ export default class ProjectSelector extends Vue {
 </script>
 
 <style lang="scss">
-.modal-wrapper {
+.modal-overlay {
   z-index: 1000;
   position: fixed;
   width: 100%;
@@ -85,7 +115,7 @@ export default class ProjectSelector extends Vue {
   align-items: center;
 }
 
-.config-modal {
+.modal {
   display: flex;
   flex-flow: column;
   justify-content: center;
@@ -99,6 +129,11 @@ export default class ProjectSelector extends Vue {
   h4 {
     user-select: none;
   }
+
+  hr {
+    margin-top: 24px;
+    margin-bottom: 12px;
+  }
 }
 
 .input-wrapper {
@@ -108,13 +143,23 @@ export default class ProjectSelector extends Vue {
   align-items: center;
 
   .label {
-    width: 150px;
+    font-size: 14px;
+    width: 100%;
     display: flex;
     justify-content: flex-start;
     user-select: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .input-box {
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: center;
   }
 
   input {
+    flex-grow: 1;
     &:not([type='checkbox']) {
       flex-grow: 1;
     }
@@ -122,31 +167,48 @@ export default class ProjectSelector extends Vue {
     &[type='checkbox']:hover {
       cursor: pointer;
     }
+
+    .invalid {
+      background: rgba(255,0,0,0.2);
+    }
+
+    &.validating {
+      position: relative;
+
+      &:before {
+        width: 10px;
+        height: 100%;
+        opacity: 0.5;
+        position: absolute;
+        background: linear-gradient(transparent 0px, lightblue 4px, blue 5px, lightblue 6px, transparent 10px);
+        animation: 1.2s ease-out 0s infinite alternate kit;
+
+        @keyframes kit {
+          from { transform: left(0); }
+          to   { transform: left(100%); }
+        }
+      }
+    }
   }
 }
 
-.modal-buttons {
-  margin-top: 25px;
+.button-wrapper {
   display: flex;
-  width: 50%;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  width: 100%;
+  margin-top: 25px;
 
   button {
     width: 120px;
     height: 26px;
     border: 1px solid darkgray;
   }
-}
 
-.project-button {
-  width: 70%;
-  height: 28px;
-  border: 1px solid;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 6px 0;
+  button.major {
+    width: 100%;
+    height: 34px;
+  }
 }
 
 h6 {
@@ -154,15 +216,5 @@ h6 {
   width: 100%;
   display: flex;
   justify-content: flex-start;
-}
-
-.new-project-button-wrapper {
-  display: flex;
-  justify-content: center;
-
-  button {
-    border: 1px solid gray;
-    height: 32px;
-  }
 }
 </style>

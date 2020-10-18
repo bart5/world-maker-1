@@ -5,6 +5,16 @@ const appDataDirectory = app.getPath('appData') + '/World-Maker'
 const appDataFile = 'applicationData.json'
 const defaultProjectsDirectory = appDataDirectory + '/projects'
 
+let applicationData = {} as ApplicationData
+
+const getDefaultProjectsDirectory = () => {
+  return applicationData.defaultLocalPath || defaultProjectsDirectory
+}
+
+const rememberCurrentApplicationData = (newApplicationData: ApplicationData) => {
+  applicationData = newApplicationData
+}
+
 /* It assumes that path leads to a file */
 function getFileNameFromPath(path: string) {
   return path.replace(/^.*\/+/, '')
@@ -144,6 +154,9 @@ export const emittersFactory = (contents: WebContents) => ({
   onOpenProject() {
     contents.send('openExistingProject')
   },
+  onOpenProjectDirectory() {
+    shell.openPath(applicationData.lastProjectPath)
+  },
   onSave() {
     contents.send('saveProject')
   },
@@ -151,7 +164,7 @@ export const emittersFactory = (contents: WebContents) => ({
     contents.send('saveProjectAs')
   },
   onConfiguration() {
-    contents.send('showCurrentProjectConfiguration')
+    contents.send('showApplicationConfiguration')
   },
   onClose() {
     contents.send('closeApplication')
@@ -163,7 +176,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
 
   const handlers: {[key in opType]: (data?: any) => Promise<any> } = {
     testPath(path) {
-      const testFile = 'testFile.test'
+      const testFile = `testFile${Date.now()}.test`
       return saveFile(path, testFile, '').then(() => deleteFile(`${path}/${testFile}`))
     },
     loadApplicationData() {
@@ -190,6 +203,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
             })
           }).then(() => {
             return saveFile(appDataDirectory, appDataFile, initialApplicationData).then(() => {
+              rememberCurrentApplicationData(initialApplicationData)
               return initialApplicationData
             })
           })
@@ -208,6 +222,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
         }).then((newData) => {
           if (newData) {
             return saveFile(appDataDirectory, appDataFile, data).then(() => {
+              rememberCurrentApplicationData(data)
               return data
             })
           }
@@ -215,8 +230,20 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
         })
       })
     },
-    updateApplicationData(payload) {
-      return saveFile(appDataDirectory, appDataFile, payload)
+    updateApplicationData(payload: ApplicationData) {
+      return new Promise((resolve) => {
+        /* Check for projects directory and potentially create it */
+        fs.readdir(payload.defaultLocalPath, (e) => {
+          if (e) {
+            fs.mkdir(payload.defaultLocalPath, { recursive: true }, (e1) => {
+              if (e1) getError('Could not create default projects directory,', e1)
+            })
+          }
+          resolve()
+        })
+      }).then(() => {
+        return saveFile(appDataDirectory, appDataFile, payload)
+      })
     },
     fetchProject(path: string) {
       return loadFile(path)
@@ -238,7 +265,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
       if (!win) return Promise.reject(getError('No browser window found.'))
 
       return dialog.showOpenDialog(win, {
-        defaultPath: payload.defaultPath || defaultProjectsDirectory,
+        defaultPath: payload.defaultPath || getDefaultProjectsDirectory(),
         properties: ['openDirectory', 'createDirectory'],
         buttonLabel: payload.buttonLabel || 'Select directory'
       }).then((data: { canceled: boolean, filePaths: string[] }) => {
@@ -251,7 +278,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
       if (!win) return Promise.reject(getError('No browser window found.'))
 
       return dialog.showOpenDialog(win, {
-        defaultPath: defaultProjectsDirectory,
+        defaultPath: getDefaultProjectsDirectory(),
         filters: [
           { name: 'JSON', extensions: ['json'] },
         ],
@@ -268,7 +295,7 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
 
       return dialog.showSaveDialog(win, {
         title: 'Save project',
-        defaultPath: defaultProjectsDirectory + '/project.json',
+        defaultPath: getDefaultProjectsDirectory() + '/project.json',
         filters: [
           { name: 'JSON', extensions: ['json'] },
         ],
@@ -284,10 +311,6 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
           return `${directory}/${fileName}`
         })
       })
-    },
-    openProjectFolder(path: string) {
-      shell.openPath(path)
-      return Promise.resolve()
     }
   }
 

@@ -45,8 +45,13 @@ function createWindow() {
           click() { emitters.onStartNewProject() }
         },
         {
-          label: 'Open Project',
+          label: 'Open',
           click() { emitters.onOpenProject() }
+        },
+        { type: 'separator' },
+        {
+          label: 'Open project folder',
+          click() { emitters.onOpenProjectDirectory() }
         },
         { type: 'separator' },
         {
