@@ -17,7 +17,7 @@ interface Ipc {
   rejectExchange: (reply: IpcReply) => void;
   initListener: (eventType: menuSignal | operationResponseType, handler: (data?: any) => void) => void;
   getExchangeListeners: () => Record<operationResponseType, (reply?: IpcReply) => void>;
-  getSignalListeners: (vm: Vue) => Record<menuSignal, (window?: string) => void>;
+  getSignalListeners: (vm: Vue) => Record<menuSignal, () => void>;
   initListeners: (vm: Vue) => void
 }
 

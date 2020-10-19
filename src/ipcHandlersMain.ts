@@ -70,10 +70,9 @@ const getError = (message: string, error?: Error | NodeJS.ErrnoException | null)
 }
 
 /*
-  It will create directory if they are not existent.
+  It will create directories if they are not existent.
   Overwriting happens in 3 steps: 1) create temp 2) delete old 3) rename temp.
-  When backuping will never overwrite.
-  When backuping establishes a unique fileName.
+  Backuping never overwrites.
 */
 function saveFile(directory: string, fileName: string, data: any = {}, isBackup?: boolean) {
   if (directory === '/') {

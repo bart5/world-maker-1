@@ -1,54 +1,54 @@
 <template>
-  <div class="modal-overlay">
-    <div class="modal">
-      <h4>App configuration</h4>
-      <hr>
-      <div class="input-wrapper">
-        <div class="input-box">
-          <div class="input-prefix">Default Projects path:</div>
-          <input
-            :class="{ 'validating': validatingDefaultLocalPath }"
-            type="text"
-            v-model="newApplicationData.defaultLocalPath"
-            @change="validateProjectsDirectory"
-          >
-          <button class="file-dialog-button" @click="openSelectDirectoryDialog">B</button>
-        </div>
-      </div>
-      <div class="input-wrapper">
-        <label class="inbox-prefix">Use autosaves
-          <input type="checkbox" v-model="newApplicationData.allowAutosave">
-        </label>
-      </div>
-      <div class="input-wrapper">
-        <label class="input-prefix">Autosave interval
-          <input type="number" v-model="newApplicationData.autosaveInterval">
-        </label>
-      </div>
-      <div class="input-wrapper">
-        <label class="input-prefix">Use backups
-          <input type="checkbox" v-model="newApplicationData.allowBackup">
-        </label>
-      </div>
-      <div class="input-wrapper">
-        <label class="input-prefix">Backup interval
-          <input type="number" v-model="newApplicationData.backupInterval">
-        </label>
-      </div>
-      <hr>
-      <div class="button-wrapper">
-        <button @click="setApplicationData" :disabled="!isDirty || !formIsValid">Save</button>
-        <button @click="closeModal">Close</button>
+  <ModalWrapper>
+    <h4>App configuration</h4>
+    <hr>
+    <div class="input-wrapper">
+      <div class="input-box">
+        <div class="input-prefix">Default Projects path:</div>
+        <input
+          :class="{ 'validating': validatingDefaultLocalPath }"
+          type="text"
+          v-model="newApplicationData.defaultLocalPath"
+          @change="validateProjectsDirectory"
+        >
+        <button class="file-dialog-button" @click="openSelectDirectoryDialog">B</button>
       </div>
     </div>
-  </div>
+    <div class="input-wrapper">
+      <label class="inbox-prefix">Use autosaves
+        <input type="checkbox" v-model="newApplicationData.allowAutosave">
+      </label>
+    </div>
+    <div class="input-wrapper">
+      <label class="input-prefix">Autosave interval
+        <input type="number" v-model="newApplicationData.autosaveInterval">
+      </label>
+    </div>
+    <div class="input-wrapper">
+      <label class="input-prefix">Use backups
+        <input type="checkbox" v-model="newApplicationData.allowBackup">
+      </label>
+    </div>
+    <div class="input-wrapper">
+      <label class="input-prefix">Backup interval
+        <input type="number" v-model="newApplicationData.backupInterval">
+      </label>
+    </div>
+    <hr>
+    <div class="button-wrapper">
+      <button @click="setApplicationData" :disabled="!isDirty || !formIsValid">Save</button>
+      <button @click="closeModal">Close</button>
+    </div>
+  </ModalWrapper>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
+import ModalWrapper from '@/views/ModalWrapper.vue'
 
 @Options({
   components: {
+    ModalWrapper,
   },
 })
 export default class ConfigModal extends Vue {
@@ -127,38 +127,6 @@ export default class ConfigModal extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.modal-overlay {
-  z-index: 1000;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  background: rgba(200,200,200,0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal {
-  display: flex;
-  flex-flow: column;
-  justify-content: center;
-  align-items: center;
-  border: 2px solid;
-  width: 700px;
-  max-height: 80%;
-  background: lightgray;
-  padding: 15px 30px;
-
-  h4 {
-    user-select: none;
-  }
-
-  hr {
-    margin-top: 24px;
-    margin-bottom: 12px;
-  }
-}
-
 .input-wrapper {
   display: flex;
   flex-flow: row wrap;

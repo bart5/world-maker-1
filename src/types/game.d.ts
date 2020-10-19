@@ -22,10 +22,10 @@ type spawnId = string
 type npcPartyId = string
 type landResourceId = string
 
-interface StaticData {
-  quests: QuestStore,
-  tasks: TaskStore,
-}
+// interface StaticData {
+//   quests: QuestStore,
+//   tasks: TaskStore,
+// }
 
 interface ActorMappings {}
 

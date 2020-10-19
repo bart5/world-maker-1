@@ -1,50 +1,50 @@
 <template>
-  <div class="modal-overlay">
-    <div class="modal">
-      <h4>Open Project</h4>
-      <hr>
-      <h6>New project</h6>
-      <div class="button-wrapper">
-        <button class="open-project-button major" @click="startNewProject">Start new project</button>
-      </div>
-      <hr>
-      <h6>Open existing project</h6>
-      <div class="input-wrapper">
-        <!-- <div class="label">Project path</div> -->
-        <div class="input-box">
-          <span class="input-prefix">path:</span>
-          <input
-            :class="{ 'validating': validatingDefaultLocalPath }"
-            type="text"
-            v-model="projectPath"
-            @change="validateProjectPath"
-          >
-          <button class="file-dialog-button" @click="selectFileDialog">B</button>
-        </div>
-      </div>
-      <div class="button-wrapper major">
-        <button
-          class="open-project-button major"
-          @click="openProjectFromPath(projectPath)"
-          :disabled="!projectFileIsValid || validatingProject"
+  <ModalWrapper>
+    <h4>Open Project</h4>
+    <hr>
+    <h6>New project</h6>
+    <div class="button-wrapper">
+      <button class="open-project-button major" @click="startNewProject">Start new project</button>
+    </div>
+    <hr>
+    <h6>Open existing project</h6>
+    <div class="input-wrapper">
+      <!-- <div class="label">Project path</div> -->
+      <div class="input-box">
+        <span class="input-prefix">path:</span>
+        <input
+          :class="{ 'validating': validatingDefaultLocalPath }"
+          type="text"
+          v-model="projectPath"
+          @change="validateProjectPath"
         >
-          Open project from: {{ projectPath }}
-        </button>
-      </div>
-      <hr>
-      <div class="button-wrapper">
-        <button class="close-button" @click="closeModal">Close</button>
+        <button class="file-dialog-button" @click="selectFileDialog">B</button>
       </div>
     </div>
-  </div>
+    <div class="button-wrapper major">
+      <button
+        class="open-project-button major"
+        @click="openProjectFromPath(projectPath)"
+        :disabled="!projectFileIsValid || validatingProject"
+      >
+        Open project from: {{ projectPath }}
+      </button>
+    </div>
+    <hr>
+    <div class="button-wrapper">
+      <button class="close-button" @click="closeModal">Close</button>
+    </div>
+  </ModalWrapper>
 </template>
 
 <script lang="ts">
 import { validateProjectDataKeys } from '@/store'
 import { Options, Vue } from 'vue-class-component'
+import ModalWrapper from '@/views/ModalWrapper.vue'
 
 @Options({
   components: {
+    ModalWrapper,
   },
 })
 export default class ProjectSelector extends Vue {
@@ -105,38 +105,6 @@ export default class ProjectSelector extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.modal-overlay {
-  z-index: 1000;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  background: rgba(200,200,200,0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal {
-  display: flex;
-  flex-flow: column;
-  justify-content: center;
-  align-items: center;
-  border: 2px solid;
-  width: 700px;
-  max-height: 80%;
-  background: lightgray;
-  padding: 15px 30px;
-
-  h4 {
-    user-select: none;
-  }
-
-  hr {
-    margin-top: 24px;
-    margin-bottom: 12px;
-  }
-}
-
 .input-wrapper {
   display: flex;
   flex-flow: row wrap;

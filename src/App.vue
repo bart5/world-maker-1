@@ -1,6 +1,7 @@
 <template>
   <AppLoader/>
   <ProjectLoader/>
+  <TypesManager v-if="showTypesManagerModal"/>
   <ConfigModal v-if="showConfigurationModal"/>
   <ProjectSelector v-if="showProjectSelectorModal"/>
   <Frame/>
@@ -31,6 +32,10 @@ export default class App extends Vue {
 
   get showProjectSelectorModal() {
     return this.$store.getters.activeModal === 'projectSelector'
+  }
+
+  get showTypesManagerModal() {
+    return this.$store.getters.activeModal === 'typesManager'
   }
 }
 </script>

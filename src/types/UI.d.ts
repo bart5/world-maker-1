@@ -22,9 +22,27 @@ interface UiData {
 
 interface Project {
   staticData: StaticData;
-  entityBindings: EntityBindings;
-  vocabulary: Vocabulary;
+  types: Types;
   uiData: UiData;
+}
+
+interface StaticData {
+  [type in Types]: Array<TypeDescriptor> | {[id: string]: TypeDescriptor}
+}
+
+interface Types {
+  [typeName: string]: TypeDescriptor
+}
+
+interface TypeDescriptor {
+  [propertName: string]: ValueDescriptor
+}
+
+interface ValueDescriptor {
+  type?: keyof Types,
+  value: any,
+  valueType: 'string' | 'uint' | 'int' | 'float' | 'bool' | 'object' | 'id',
+  container: 'object' | 'array',
 }
 
 interface ApplicationState {
@@ -106,4 +124,5 @@ interface Camera {
 type modalTypes =
   'configuration'
   | 'projectSelector'
+  | 'typesManager'
   | null
