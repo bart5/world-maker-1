@@ -26,25 +26,6 @@ interface Project {
   uiData: UiData;
 }
 
-interface StaticData {
-  [type in Types]: Array<TypeDescriptor> | {[id: string]: TypeDescriptor}
-}
-
-interface Types {
-  [typeName: string]: TypeDescriptor
-}
-
-interface TypeDescriptor {
-  [propertName: string]: ValueDescriptor
-}
-
-interface ValueDescriptor {
-  type?: keyof Types,
-  value: any,
-  valueType: 'string' | 'uint' | 'int' | 'float' | 'bool' | 'object' | 'id',
-  container: 'object' | 'array',
-}
-
 interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
@@ -126,3 +107,87 @@ type modalTypes =
   | 'projectSelector'
   | 'typesManager'
   | null
+
+interface Types {
+  [typeName: string]: TypeDescriptor
+}
+
+interface StaticData {
+  [type in Types]: Array<TypeDescriptor> | { [id: string]: TypeDescriptor }
+}
+
+interface TypeDescriptor {
+  [propertName: string]: ValueDescriptor
+}
+
+type ValueDescriptor = PrimitiveValue | PrimitiveValueContained | ObjectValue | ObjectValueContained | EnumValue
+
+type PrimitiveValue = CharValue | IntValue | BoolValue
+
+type PrimitiveValueContained = CharValueContained | IntValueContained | BoolValueContained
+
+interface CharValue {
+  value: string,
+  valueType: 'char',
+}
+
+interface IntValue {
+  value: number,
+  valueType: 'uint' | 'int' | 'float',
+}
+
+interface BoolValue {
+  value: boolean,
+  valueType: 'bool',
+}
+
+interface CharValueContained {
+  value: string[],
+  valueType: 'char',
+}
+
+interface IntValueContained {
+  value: number[],
+  valueType: 'uint' | 'int' | 'float',
+}
+
+interface BoolValueContained {
+  value: boolean[],
+  valueType: 'bool',
+}
+
+type ObjectValue = ObjectValueAsStruct | ObjectValueAsID
+
+interface ObjectValueAsStruct {
+  type: keyof Types,
+  value: { [k: string]: ValueDescriptor },
+  valueType: 'struct',
+}
+
+interface ObjectValueAsID {
+  type: keyof Types,
+  value: string,
+  valueType: 'id',
+}
+
+type ObjectValueContained = ObjectValueAsStructContained | ObjectValueAsIDContained
+
+interface ObjectValueAsStructContained {
+  type: keyof Types,
+  value: { [k: string]: { [k: string]: ValueDescriptor } } | Array<{ [k: string]: ValueDescriptor }>,
+  valueType: 'struct',
+  container: 'struct' | 'array'
+}
+
+interface ObjectValueAsIDContained {
+  type: keyof Types,
+  value: { [k: string]: string } | Array<string>,
+  valueType: 'id',
+  container: 'struct' | 'array'
+}
+
+interface EnumValue {
+  type: keyof Types,
+  value: string,
+  valueType: 'char',
+}
