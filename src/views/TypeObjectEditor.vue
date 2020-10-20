@@ -1,5 +1,8 @@
 <template>
-  <div>
+  <div class="object-wrapper">
+    <div class="properties">
+      <TypePropertyEditor />
+    </div>
   </div>
 </template>
 
@@ -12,7 +15,9 @@ import { Prop } from 'vue-property-decorator';
   },
 })
 export default class TypeObjectEditor extends Vue {
-@Prop() a!: number
+  @Prop({ default: false }) edited = false
+
+  properties: Property[] = []
 }
 </script>
 

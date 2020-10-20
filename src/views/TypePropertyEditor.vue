@@ -3,12 +3,14 @@
     <div class="property-box">
       <div class="name-field">
         <input
+          :disabled="!edited"
           type="text"
           v-model="name"
         >
       </div>
       <div class="type-field">
         <select
+          :disabled="!edited"
           class="selector type-selector"
           v-model="type"
         >
@@ -22,6 +24,7 @@
         </select>
         <select
           v-if="!!type.name"
+          :disabled="!edited"
           class="selector type-reference"
           v-model="type"
         >
@@ -37,28 +40,42 @@
     </div>
     <ObjectTypeEditor
       v-if="isContainer"
+      :edited="edited"
       :containerType="type"
-      @update-child="updateFromChild"
+      @update-from-child="updateFromChild"
     />
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator';
+import { Prop } from 'vue-property-decorator';
 
 @Options({
   components: {
   },
 })
 export default class TypePropertyEditor extends Vue {
-  name = ''
+  @Prop() edited!: boolean
 
-  type: PropertyTypeDescriptor | null = null
+  @Prop() propOrder!: number
 
-  childStruct: { [k: string]: PropertyTypeDescriptor} | null = null
+  property: Property | null = null
 
-  childArray: Array<PropertyTypeDescriptor> | null = null
+  name = 'New property'
+
+  type: PropertyTypeDescriptor = 'bool'
+
+  childProperties: Property[] | null = null
+
+  setProperty() {
+    this.property = {
+      name: this.name,
+      type: this.type,
+      order: this.propOrder,
+      ...this.childProperties ? { children: this.childProperties } : {},
+    }
+  }
 
   get basicTypes() {
     const typeRef = { name: 'typeRef', typeRef: ''}
@@ -76,23 +93,12 @@ export default class TypePropertyEditor extends Vue {
     return this.type === 'struct' || this.type === 'array'
   }
 
-  updateFromChild(childData: { [k: string]: PropertyTypeDescriptor} | Array<PropertyTypeDescriptor>) {
-    if (Array.isArray(childData)) {
-      this.childStruct = null
-      this.childArray = childData
-    } else {
-      this.childStruct = childData
-      this.childArray = null
-    }
+  updateFromChild(properties: Property[]) {
+    this.childProperties = properties
   }
 
   sendToParent() {
-    this.$emit('update-prop-type', {
-      key: this.name,
-      type: this.type,
-      ...this.childStruct ? { struct: this.childStruct } : {},
-      ...this.childArray ? { array: this.childArray } : {},
-    })
+    this.$emit('update-from-child', this.property)
   }
 }
 </script>
