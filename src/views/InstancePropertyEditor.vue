@@ -11,7 +11,7 @@ import { Prop } from 'vue-property-decorator';
   components: {
   },
 })
-export default class TypeEditor extends Vue {
+export default class InstancePropertyEditor extends Vue {
 @Prop() a!: number
 }
 </script>

@@ -109,34 +109,11 @@ type modalTypes =
   | null
 
 interface StaticData {
-  [type in Types]: Array<TypeDescriptor> | { [id: string]: TypeDescriptor }
+  [type in Types]: Array<InstanceValueDescriptor> | { [id: string]: InstanceValueDescriptor }
 }
 
 interface Types {
   [typeName: string]: TypeDescriptor
-}
-
-interface Types {
-  char: {
-    name: 'char';
-    instance: string;
-  };
-  uint: {
-    name: 'uint';
-    instance: number;
-  };
-  int: {
-    name: 'int';
-    instance: number;
-  };
-  float: {
-    name: 'float';
-    instance: number;
-  };
-  bool: {
-    name: 'bool';
-    instance: boolean;
-  };
 }
 
 type instanceID = string;
@@ -144,15 +121,30 @@ type instanceID = string;
 interface TypeDescriptor {
   name: keyof Types;
   extends?: keyof Types;
-  instance: InstanceDescriptor;
+  isEnum?: boolean;
+  instance: TypeInstanceDescriptor;
 }
 
-interface InstanceDescriptor {
+interface TypeInstanceDescriptor {
+  [propertName: string]: PropertyTypeDescriptor
+}
+
+type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | TypeRef | EnumRef | 'struct' | 'array'
+
+type TypeRef = {
+  typeRef: keyof Types
+}
+
+type EnumRef = {
+  typeRef: keyof Types
+}
+
+interface InstanceValueDescriptor {
   id: instanceID;
-  [propertName: string]: ValueDescriptor;
+  [propertName: string]: PropertyValueDescriptor;
 }
 
-type ValueDescriptor = PrimitiveTypeValue | TypeReference | EnumTypeValue | StructContainer | ArrayContainer
+type PropertyValueDescriptor = PrimitiveTypeValue | TypeReference | EnumTypeValue | StructContainer | ArrayContainer
 
 type PrimitiveTypeValue = CharValue | NumericValue | BoolValue
 
@@ -176,19 +168,17 @@ interface TypeReference {
   value: instanceID;
 }
 
-type enumKey = string
-
 interface EnumTypeValue {
   type: keyof Types;
-  value: enumKey;
+  value: string;
 }
 
 interface StructContainer {
   type: 'struct';
-  value: { [k: string]: ValueDescriptor };
+  value: { [k: string]: PropertyValueDescriptor };
 }
 
 interface ArrayContainer {
   type: 'array';
-  value: { [k: string]: ValueDescriptor };
+  value: Array<PropertyValueDescriptor>;
 }

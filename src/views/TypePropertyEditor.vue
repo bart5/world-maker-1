@@ -2,36 +2,61 @@
   <div class="property-wrapper">
     <div class="property-box">
       <div class="name-field">
-        <input :class="{ 'disabled': !inTypeEdition }" v-if="!inTypeEdition" type="text" v-model="_name" @change="updateName">
+        <input
+          :class="{ 'disabled': !inTypeEdition }"
+          :disabled="!inTypeEdition"
+          type="text"
+          v-model="name"
+          @change="updateName"
+        >
       </div>
       <div class="type-field">
-        <select class="type-selector">
-          <option v-for="type in availableTypes" :key="type.name" :value="type">
-            {{ containValue(type.name) }}
+        <select
+          :class="{ 'disabled': !inTypeEdition }"
+          :disabled="!inTypeEdition"
+          class="selector type-selector"
+          v-model="type"
+        >
+          <option
+            v-for="type in availableTypes"
+            :key="type.name"
+            :value="type"
+          >
+            {{ type.name }}
           </option>
         </select>
       </div>
-      <div v-if="!isContainer" class="value-field">
+      <!-- During type edition values does not exist -->
+      <div v-if="!isContainer && !inTypeEdition" class="value-field">
         <template v-if="isPrimitiveType">
           <input
             v-if="type.name !== 'bool'"
             v-bind="valueInputAttributes"
             :disabled="!isValueEditor"
             :class="{ 'disabled': !isValueEditor }"
+            v-model="value"
           >
           <select
             v-else-if="type.name === 'bool'"
             :disabled="!isValueEditor"
             :class="{ 'disabled': !isValueEditor }"
+            v-model="value"
           >
             <option value="true"></option>
             <option value="false"></option>
           </select>
         </template>
         <div v-else-if="isTypeReference">
-          <select class="type-selector">
+          <select class="selector instance-selector" v-model="value">
             <option v-for="typeInstance in availableTypeInstances" :key="typeInstance.id" :value="typeInstance">
               {{ typeInstance.id }}
+            </option>
+          </select>
+        </div>
+        <div v-else-if="isEnumType">
+          <select class="selector enum-value-selector" v-model="value">
+            <option v-for="value in enumValues" :key="value" :value="value">
+              {{ value }}
             </option>
           </select>
         </div>
@@ -49,7 +74,7 @@ import { Prop } from 'vue-property-decorator';
   components: {
   },
 })
-export default class PropertyEditor extends Vue {
+export default class TypePropertyEditor extends Vue {
   @Prop({ default: 'viewer' }) mode!: 'viewer' | 'valueEditor' | 'typeEditor'
 
   @Prop() property: any
@@ -66,50 +91,29 @@ export default class PropertyEditor extends Vue {
     return this.mode === 'viewer'
   }
 
-  get hasPrimitiveValue() {
+  get isPrimitiveType() {
     /*  */
   }
 
-  get hasObjectValue() {
+  get isTypeReference() {
     /*  */
   }
 
-  get hasEnumValue() {
+  get isEnumValue() {
     /*  */
   }
 
-  get isContained() {
-    return !!this._container
-  }
-
-  _name = 'New property'
-
-  _value: any = ''
-
-  _type: any = ''
-
-  _type.name: any = ''
-
-  _container: any = ''
-
-  get name() {
-    return this._name
-  }
-
-  updateName() {
+  get isContainer() {
     /*  */
   }
 
-  get value() {
-    return this._value
-  }
+  name = ''
 
-  get valueIsValid() {
-    /*  */
-  }
+  value: any = ''
 
-  updateValue() {
-    /*  */
+  type: ValueDescriptor = {
+    name: 'char',
+    value: 'asd'
   }
 
   get valueInputAttributes() {
@@ -133,58 +137,6 @@ export default class PropertyEditor extends Vue {
       ...this.type.name === 'float' ? float : {},
       ...this.type.name === 'char' ? char : {}
     }
-  }
-
-  get type.name() {
-    return this._type.name
-  }
-
-  updatetype.name() {
-    /*  */
-  }
-
-  get availabletype.names() {
-    /*  */
-  }
-
-  get type() {
-    return this._type
-  }
-
-  updateType() {
-    /*  */
-  }
-
-  get availableTypes() {
-    /*  */
-  }
-
-  get container() {
-    return this._container
-  }
-
-  updateContainer() {
-    /*  */
-  }
-
-  containValue(typeName: string) {
-    const prefix = this.container === 'struct'
-      ? '{ '
-      : '[ '
-    const affix = this.container === 'struct'
-      ? ' {'
-      : ' ]'
-    return prefix + typeName + affix
-  }
-
-  setProperty(property: any) {
-    this._name = property.name
-    this._value = property.value
-    this._type = property.type
-  }
-
-  mounted() {
-    if (this.property) this.setProperty(this.property)
   }
 }
 </script>
