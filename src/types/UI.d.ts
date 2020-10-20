@@ -122,21 +122,23 @@ interface TypeDescriptor {
   name: keyof Types;
   extends?: keyof Types;
   isEnum?: boolean;
-  instance: TypeInstanceDescriptor;
+  instance: InstanceTypeDescriptor;
 }
 
-interface TypeInstanceDescriptor {
+interface InstanceTypeDescriptor {
   [propertName: string]: PropertyTypeDescriptor
 }
 
 type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | TypeRef | EnumRef | 'struct' | 'array'
 
 type TypeRef = {
-  typeRef: keyof Types
+  name: 'typeRef';
+  typeRef: keyof Types;
 }
 
 type EnumRef = {
-  typeRef: keyof Types
+  name: 'enumRef';
+  enumRef: keyof Types;
 }
 
 interface InstanceValueDescriptor {
