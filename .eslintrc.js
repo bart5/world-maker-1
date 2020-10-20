@@ -29,6 +29,7 @@ module.exports = {
     'vars-on-top': 0,
     'no-alert': 0,
     'no-underscore-dangle': 0,
+    'no-nested-ternary': 0,
     // 'arrow-parens': 0,
     "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/member-delimiter-style": 0,
