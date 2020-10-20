@@ -108,19 +108,42 @@ type modalTypes =
   | 'typesManager'
   | null
 
+interface StaticData {
+  [type in Types]: Array<TypeDescriptor> | { [id: string]: TypeDescriptor }
+}
+
 interface Types {
   [typeName: string]: TypeDescriptor
 }
 
-interface StaticData {
-  [type in Types]: Array<TypeDescriptor> | { [id: string]: TypeDescriptor }
+interface Types {
+  char: {
+    name: 'char';
+    instance: string;
+  };
+  uint: {
+    name: 'uint';
+    instance: number;
+  };
+  int: {
+    name: 'int';
+    instance: number;
+  };
+  float: {
+    name: 'float';
+    instance: number;
+  };
+  bool: {
+    name: 'bool';
+    instance: boolean;
+  };
 }
 
 type instanceID = string;
 
 interface TypeDescriptor {
-  name: keyof StaticData;
-  extends?: keyof StaticData;
+  name: keyof Types;
+  extends?: keyof Types;
   instance: InstanceDescriptor;
 }
 
@@ -129,16 +152,16 @@ interface InstanceDescriptor {
   [propertName: string]: ValueDescriptor;
 }
 
-type ValueDescriptor = PrimitiveValue | ObjectValue | StructContainer | ArrayContainer
+type ValueDescriptor = PrimitiveTypeValue | TypeReference | EnumTypeValue | StructContainer | ArrayContainer
 
-type PrimitiveValue = CharValue | IntValue | BoolValue
+type PrimitiveTypeValue = CharValue | NumericValue | BoolValue
 
 interface CharValue {
   type: 'char';
   value: string;
 }
 
-interface IntValue {
+interface NumericValue {
   type: 'uint' | 'int' | 'float';
   value: number;
 }
@@ -148,14 +171,14 @@ interface BoolValue {
   value: boolean;
 }
 
-interface ObjectValue {
+interface TypeReference {
   type: keyof Types;
   value: instanceID;
 }
 
 type enumKey = string
 
-interface EnumValue {
+interface EnumTypeValue {
   type: keyof Types;
   value: enumKey;
 }

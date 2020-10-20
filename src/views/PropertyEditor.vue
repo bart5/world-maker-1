@@ -2,18 +2,25 @@
   <div class="property-wrapper">
     <div class="property-box">
       <div class="name-field">
-        <input :class="{ 'disabled': !isTypeEditor }" v-if="!isTypeEditor" type="text" v-model="_name" @change="updateName">
+        <input :class="{ 'disabled': !inTypeEdition }" v-if="!inTypeEdition" type="text" v-model="_name" @change="updateName">
       </div>
-      <div v-if="isViewer || isValueEditor" class="value-field">
-        <template v-if="hasPrimitiveValue">
+      <div class="type-field">
+        <select class="type-selector">
+          <option v-for="type in availableTypes" :key="type.name" :value="type">
+            {{ containValue(type.name) }}
+          </option>
+        </select>
+      </div>
+      <div v-if="!isContainer" class="value-field">
+        <template v-if="isPrimitiveType">
           <input
-            v-if="valueType !== 'bool'"
+            v-if="type.name !== 'bool'"
             v-bind="valueInputAttributes"
             :disabled="!isValueEditor"
             :class="{ 'disabled': !isValueEditor }"
           >
           <select
-            v-else-if="valueType === 'bool'"
+            v-else-if="type.name === 'bool'"
             :disabled="!isValueEditor"
             :class="{ 'disabled': !isValueEditor }"
           >
@@ -21,50 +28,16 @@
             <option value="false"></option>
           </select>
         </template>
-        <template v-if="isViewer">
-          <select
-            disabled
-            class="type-selector disabled"
-          >
-            <option value="" selected>
-              {{ containValue(type.name) }}
+        <div v-else-if="isTypeReference">
+          <select class="type-selector">
+            <option v-for="typeInstance in availableTypeInstances" :key="typeInstance.id" :value="typeInstance">
+              {{ typeInstance.id }}
             </option>
           </select>
-        </template>
-        <template v-else>
-          <select
-            class="type-selector"
-            :multiple="isContained"
-          >
-            <option v-for="typeInstance in availableTypeInstances" :key="typeInstance.id" :value="typeInstance.id">
-              {{ containValue(type.name) }}
-            </option>
-          </select>
-        </template>
-      </div>
-      <div v-else class="valueType-field">
-        <select
-          :disabled="!isTypeEditor"
-          :class="{ 'disabled': !isTypeEditor }"
-          class="type-selector"
-        >
-          <option v-for="valueType in availableValueTypes" :key="valueType" :value="valueType">
-            {{ containValue(valueType) }}
-          </option>
-        </select>
-      </div>
-      <div v-if="isTypeEditor" class="type-field">
-        <select
-          class="type-selector disabled"
-        >
-          <option v-for="type in availableTypes" :key="type.name" :value="type.name">
-            {{ containValue(type.name) }}
-          </option>
-      </div>
-      <div v-if="isTypeEditor" class="container-field">
-        <input type="text">
+        </div>
       </div>
     </div>
+    <ObjectEditor v-if="isContiner" :object="value" />
   </div>
 </template>
 
@@ -85,7 +58,7 @@ export default class PropertyEditor extends Vue {
     return this.mode === 'valueEditor'
   }
 
-  get isTypeEditor() {
+  get inTypeEdition() {
     return this.mode === 'typeEditor'
   }
 
@@ -115,7 +88,7 @@ export default class PropertyEditor extends Vue {
 
   _type: any = ''
 
-  _valueType: any = ''
+  _type.name: any = ''
 
   _container: any = ''
 
@@ -140,14 +113,14 @@ export default class PropertyEditor extends Vue {
   }
 
   get valueInputAttributes() {
-    const min = this.valueType === 'uint' ? '0'
-      : this.valueType === 'int' ? '-2000000000'
-        : this.valueType === 'float' ? '-2000000000' : ''
-    const max = this.valueType === 'uint' ? '4000000000'
-      : this.valueType === 'int' ? '2000000000'
-        : this.valueType === 'float' ? '2000000000' : ''
-    const step = this.valueType === 'uint' ? '1' : '1'
-    const type = this.valueType === 'char' ? 'text' : 'number'
+    const min = this.type.name === 'uint' ? '0'
+      : this.type.name === 'int' ? '-2000000000'
+        : this.type.name === 'float' ? '-2000000000' : ''
+    const max = this.type.name === 'uint' ? '4000000000'
+      : this.type.name === 'int' ? '2000000000'
+        : this.type.name === 'float' ? '2000000000' : ''
+    const step = this.type.name === 'uint' ? '1' : '1'
+    const type = this.type.name === 'char' ? 'text' : 'number'
 
     const uint = { min, max, step, type }
     const int = { min, max, step, type }
@@ -155,22 +128,22 @@ export default class PropertyEditor extends Vue {
     const char = { type }
 
     return {
-      ...this.valueType === 'uint' ? uint : {},
-      ...this.valueType === 'int' ? int : {},
-      ...this.valueType === 'float' ? float : {},
-      ...this.valueType === 'char' ? char : {}
+      ...this.type.name === 'uint' ? uint : {},
+      ...this.type.name === 'int' ? int : {},
+      ...this.type.name === 'float' ? float : {},
+      ...this.type.name === 'char' ? char : {}
     }
   }
 
-  get valueType() {
-    return this._valueType
+  get type.name() {
+    return this._type.name
   }
 
-  updateValueType() {
+  updatetype.name() {
     /*  */
   }
 
-  get availableValueTypes() {
+  get availabletype.names() {
     /*  */
   }
 
