@@ -116,78 +116,56 @@ interface StaticData {
   [type in Types]: Array<TypeDescriptor> | { [id: string]: TypeDescriptor }
 }
 
+type instanceID = string;
+
 interface TypeDescriptor {
-  [propertName: string]: ValueDescriptor
+  name: keyof StaticData;
+  extends?: keyof StaticData;
+  instance: InstanceDescriptor;
 }
 
-type ValueDescriptor = PrimitiveValue | PrimitiveValueContained | ObjectValue | ObjectValueContained | EnumValue
+interface InstanceDescriptor {
+  id: instanceID;
+  [propertName: string]: ValueDescriptor;
+}
+
+type ValueDescriptor = PrimitiveValue | ObjectValue | StructContainer | ArrayContainer
 
 type PrimitiveValue = CharValue | IntValue | BoolValue
 
-type PrimitiveValueContained = CharValueContained | IntValueContained | BoolValueContained
-
 interface CharValue {
-  value: string,
-  valueType: 'char',
+  type: 'char';
+  value: string;
 }
 
 interface IntValue {
-  value: number,
-  valueType: 'uint' | 'int' | 'float',
+  type: 'uint' | 'int' | 'float';
+  value: number;
 }
 
 interface BoolValue {
-  value: boolean,
-  valueType: 'bool',
+  type: 'bool';
+  value: boolean;
 }
 
-interface CharValueContained {
-  value: string[],
-  valueType: 'char',
+interface ObjectValue {
+  type: keyof Types;
+  value: instanceID;
 }
 
-interface IntValueContained {
-  value: number[],
-  valueType: 'uint' | 'int' | 'float',
-}
-
-interface BoolValueContained {
-  value: boolean[],
-  valueType: 'bool',
-}
-
-type ObjectValue = ObjectValueAsStruct | ObjectValueAsID
-
-interface ObjectValueAsStruct {
-  type: keyof Types,
-  value: { [k: string]: ValueDescriptor },
-  valueType: 'struct',
-}
-
-interface ObjectValueAsID {
-  type: keyof Types,
-  value: string,
-  valueType: 'id',
-}
-
-type ObjectValueContained = ObjectValueAsStructContained | ObjectValueAsIDContained
-
-interface ObjectValueAsStructContained {
-  type: keyof Types,
-  value: { [k: string]: { [k: string]: ValueDescriptor } } | Array<{ [k: string]: ValueDescriptor }>,
-  valueType: 'struct',
-  container: 'struct' | 'array'
-}
-
-interface ObjectValueAsIDContained {
-  type: keyof Types,
-  value: { [k: string]: string } | Array<string>,
-  valueType: 'id',
-  container: 'struct' | 'array'
-}
+type enumKey = string
 
 interface EnumValue {
-  type: keyof Types,
-  value: string,
-  valueType: 'char',
+  type: keyof Types;
+  value: enumKey;
+}
+
+interface StructContainer {
+  type: 'struct';
+  value: { [k: string]: ValueDescriptor };
+}
+
+interface ArrayContainer {
+  type: 'array';
+  value: { [k: string]: ValueDescriptor };
 }

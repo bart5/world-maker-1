@@ -2,31 +2,64 @@
   <div class="property-wrapper">
     <div class="property-box">
       <div class="name-field">
-        <input type="text">
+        <input :class="{ 'disabled': !isTypeEditor }" v-if="!isTypeEditor" type="text" v-model="_name" @change="updateName">
       </div>
-      <div v-if="!isTypeEditor" class="value-field">
+      <div v-if="isViewer || isValueEditor" class="value-field">
         <template v-if="hasPrimitiveValue">
           <input
             v-if="valueType !== 'bool'"
             v-bind="valueInputAttributes"
+            :disabled="!isValueEditor"
+            :class="{ 'disabled': !isValueEditor }"
           >
-          <select v-else-if="valueType === 'bool'">
+          <select
+            v-else-if="valueType === 'bool'"
+            :disabled="!isValueEditor"
+            :class="{ 'disabled': !isValueEditor }"
+          >
             <option value="true"></option>
             <option value="false"></option>
           </select>
         </template>
-        <select v-else>
-          <option v-for="type in availableTypes" :key="type.name" :value="type.name">
-            {{ getValueContained(type.name) }}
+        <template v-if="isViewer">
+          <select
+            disabled
+            class="type-selector disabled"
+          >
+            <option value="" selected>
+              {{ containValue(type.name) }}
+            </option>
+          </select>
+        </template>
+        <template v-else>
+          <select
+            class="type-selector"
+            :multiple="isContained"
+          >
+            <option v-for="typeInstance in availableTypeInstances" :key="typeInstance.id" :value="typeInstance.id">
+              {{ containValue(type.name) }}
+            </option>
+          </select>
+        </template>
+      </div>
+      <div v-else class="valueType-field">
+        <select
+          :disabled="!isTypeEditor"
+          :class="{ 'disabled': !isTypeEditor }"
+          class="type-selector"
+        >
+          <option v-for="valueType in availableValueTypes" :key="valueType" :value="valueType">
+            {{ containValue(valueType) }}
           </option>
         </select>
       </div>
-      <div class="valueType-field">
-        <input v-if="isTypeEditor" type="text">
-        <div v-if="isViewer"></div>
-      </div>
       <div v-if="isTypeEditor" class="type-field">
-        <input type="text">
+        <select
+          class="type-selector disabled"
+        >
+          <option v-for="type in availableTypes" :key="type.name" :value="type.name">
+            {{ containValue(type.name) }}
+          </option>
       </div>
       <div v-if="isTypeEditor" class="container-field">
         <input type="text">
@@ -72,6 +105,10 @@ export default class PropertyEditor extends Vue {
     /*  */
   }
 
+  get isContained() {
+    return !!this._container
+  }
+
   _name = 'New property'
 
   _value: any = ''
@@ -84,10 +121,6 @@ export default class PropertyEditor extends Vue {
 
   get name() {
     return this._name
-  }
-
-  get isNameEditable() {
-    return this.mode === 'typeEditor'
   }
 
   updateName() {
@@ -161,7 +194,7 @@ export default class PropertyEditor extends Vue {
     /*  */
   }
 
-  getValueContained(typeName: string) {
+  containValue(typeName: string) {
     const prefix = this.container === 'struct'
       ? '{ '
       : '[ '
