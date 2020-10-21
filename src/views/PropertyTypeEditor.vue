@@ -63,6 +63,8 @@ import ObjectDisplay from '@/views/ObjectDisplay.vue'
 export default class TypePropertyEditor extends Vue {
   @Prop() editable!: boolean
 
+  @Prop() tempID!: string
+
   @Prop() order!: number
 
   @Prop() property!: PropertyType
@@ -114,11 +116,11 @@ export default class TypePropertyEditor extends Vue {
   }
 
   sendToParent() {
-    this.$emit('update-property', this.localProperty)
+    this.$emit('update-property', { id: this.tempID, entity: this.localProperty})
   }
 
   selectProperty() {
-    this.$emit('select-property', this.order)
+    this.$emit('select-property', this.tempID)
   }
 }
 </script>

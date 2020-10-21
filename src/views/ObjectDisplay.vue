@@ -6,6 +6,7 @@
           v-for="keyedEntity in keyedEntities"
           :key="keyedEntity.id"
           :order="keyedEntity.order"
+          :tempID="keyedEntity.id"
           :property="keyedEntity.enitty"
           :editable="editable"
           @update-property="updateEntity"
@@ -97,7 +98,7 @@ export default class ObjectDisplay extends Vue {
     ])
   }
 
-  updateEntity(changedkeyedEntity: { id: string, order: string, entity: any}) {
+  updateEntity(changedkeyedEntity: { id: string, entity: any}) {
     const changedEntity = this.keyedEntities.find((ke) => ke.id === changedkeyedEntity.id)
     if (changedEntity) {
       this.updateEntities([
