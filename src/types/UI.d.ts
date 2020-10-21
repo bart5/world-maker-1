@@ -109,7 +109,7 @@ type modalTypes =
   | null
 
 interface StaticData {
-  [type in Types]: Array<InstanceValueDescriptor> | { [id: string]: InstanceValueDescriptor }
+  [type in Types]: Array<TypeInstance> | { [id: string]: TypeInstance }
 }
 
 interface Types {
@@ -132,7 +132,7 @@ interface PropertyType {
   children?: Array<PropertyType>;
 }
 
-interface PropertyType {
+interface PropertyInstance {
   name: string;
   type: PropertyTypeDescriptor;
   value: any;
@@ -150,46 +150,53 @@ type EnumRef = {
   enumRef: keyof Types;
 }
 
-interface InstanceValueDescriptor {
+interface TypeInstance {
   id: instanceID;
-  [propertName: string]: PropertyValueDescriptor;
+  [propertName: string]: PropertyInstance;
 }
 
-type PropertyValueDescriptor = PrimitiveTypeValue | TypeReference | EnumTypeValue | StructContainer | ArrayContainer
+type PropertyInstance = PrimitiveTypeValue | TypeReference | EnumTypeValue | StructContainer | ArrayContainer
 
 type PrimitiveTypeValue = CharValue | NumericValue | BoolValue
 
 interface CharValue {
+  name: string;
   type: 'char';
   value: string;
 }
 
 interface NumericValue {
+  name: string;
   type: 'uint' | 'int' | 'float';
   value: number;
 }
 
 interface BoolValue {
+  name: string;
   type: 'bool';
   value: boolean;
 }
 
 interface TypeReference {
+  name: string;
   type: keyof Types;
   value: instanceID;
 }
 
 interface EnumTypeValue {
+  name: string;
   type: keyof Types;
   value: string;
 }
 
 interface StructContainer {
+  name: string;
   type: 'struct';
   value: { [k: string]: PropertyValueDescriptor };
 }
 
 interface ArrayContainer {
+  name: string;
   type: 'array';
   value: Array<PropertyValueDescriptor>;
 }

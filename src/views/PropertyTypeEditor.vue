@@ -3,16 +3,18 @@
     <div class="property-box">
       <div class="name-field">
         <input
-          :disabled="!edited"
+          :disabled="!editable"
           type="text"
           v-model="localProperty.name"
+          @change="maybeSubmit"
         >
       </div>
       <div class="type-field">
         <select
-          :disabled="!edited"
+          :disabled="!editable"
           class="selector type-selector"
           v-model="localProperty.type"
+          @change="maybeSubmit"
         >
           <option
             v-for="type in basicTypes"
@@ -24,9 +26,10 @@
         </select>
         <select
           v-if="isTypeReference || isEnumReference"
-          :disabled="!edited"
+          :disabled="!editable"
           class="selector type-reference"
           v-model="localProperty.type[isTypeReference ? 'typeRef' : 'enumRef']"
+          @change="maybeSubmit"
         >
           <option
             v-for="type in definedTypes"
@@ -38,11 +41,11 @@
         </select>
       </div>
     </div>
-    <ObjectTypeEditor
+    <ObjectDisplay
       v-if="isContainer"
-      :edited="edited"
+      :editable="editable"
       :containerType="type"
-      @update-property="updateChildProperties"
+      @update-entity="updateChildProperties"
     />
   </div>
 </template>
@@ -50,25 +53,21 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator';
+import ObjectDisplay from '@/views/ObjectDisplay.vue'
 
 @Options({
   components: {
+    ObjectDisplay
   },
 })
 export default class TypePropertyEditor extends Vue {
-  @Prop() edited!: boolean
+  @Prop() editable!: boolean
 
   @Prop() order!: number
 
   @Prop() property!: PropertyType
 
   localProperty: PropertyType = { ...this.property }
-
-  getNewProperty() {
-    return {
-      ...this.localProperty
-    }
-  }
 
   get basicTypes() {
     const typeRef = { name: 'typeRef', typeRef: '' }
@@ -96,16 +95,26 @@ export default class TypePropertyEditor extends Vue {
     return this.localProperty.type === 'struct' || this.localProperty.type === 'array'
   }
 
+  get isDirty() {
+    return this.property.name !== this.localProperty.name
+      || this.property.type !== this.localProperty.type
+  }
+
+  maybeSubmit() {
+    if (this.isDirty) this.sendToParent()
+  }
+
   updateChildProperties(properties: PropertyType[]) {
     if (properties.length) {
       this.localProperty.children = [...properties]
+      this.sendToParent()
     } else {
       delete this.localProperty.children
     }
   }
 
   sendToParent() {
-    this.$emit('update-property', this.property)
+    this.$emit('update-property', this.localProperty)
   }
 
   selectProperty() {

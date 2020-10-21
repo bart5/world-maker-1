@@ -1,13 +1,27 @@
 <template>
   <div class="object-wrapper">
     <div class="properties">
-      <TypePropertyEditor
-        v-for="keyedEntity in keyedEntities"
-        :key="keyedEntity.id"
-        :property="keyedEntity.property"
-        @update-property="updateProperties"
-        @select-property="selectProperty"
-      />
+      <template v-if="entityType === 'type'">
+        <PropertyTypeEditor
+          v-for="keyedEntity in keyedEntities"
+          :key="keyedEntity.id"
+          :order="keyedEntity.order"
+          :property="keyedEntity.enitty"
+          :editable="editable"
+          @update-property="updateEntity"
+          @select-property="selectEntity"
+        />
+      </template>
+      <!-- <template v-else>
+        <PropertyInstanceEditor
+          v-for="keyedEntity in keyedEntities"
+          :key="keyedEntity.id"
+          :order="keyedEntity.order"
+          :property="keyedEntity.property"
+          @update-property="updateEntity"
+          @select-property="selectEntity"
+        />
+      </template> -->
     </div>
   </div>
 </template>
@@ -15,23 +29,26 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator';
+import PropertyTypeEditor from '@/views/PropertyTypeEditor.vue'
 
 @Options({
   components: {
+    PropertyTypeEditor
   },
 })
-export default class TypeObjectEditor extends Vue {
+export default class ObjectDisplay extends Vue {
   @Prop() getNewEntityTemplate!: () => any
-
-  @Prop() updateEntities!: (newEntities: any[]) => void
 
   @Prop() entities!: any[]
 
-  @Prop() entityType!: 'type' | 'value'
+  @Prop() entityType!: 'type' | 'instance'
 
-  @Prop() isEditor!: boolean
+  /* It is null when this is not top object */
+  @Prop({ default: null }) typeName!: string | null
 
-  @Prop() isTopObject!: boolean
+  @Prop() editable!: boolean
+
+  @Prop({ default: false }) isTopObject!: boolean
 
   selectedKeyedEntity: any | null = null
 
@@ -55,7 +72,17 @@ export default class TypeObjectEditor extends Vue {
     return keyedEntities.map((ke) => ke.entity)
   }
 
+  updateEntities(entities: any[]) {
+    if (this.isTopObject) {
+      if (this.entityType === 'type') this.$store.dispatch('updateType', { type: this.typeName, data: entities })
+      if (this.entityType === 'instance') this.$store.dispatch('updateTypeInstance', { type: this.typeName, data: entities })
+    } else {
+      this.$emit('update-entity', entities)
+    }
+  }
+
   addNewEntity() {
+    if (this.entityType === 'instance') return
     const newEntity = this.getNewEntityTemplate()
     this.updateEntities([
       ...this.entities,
@@ -64,6 +91,7 @@ export default class TypeObjectEditor extends Vue {
   }
 
   removeEntity(tempID: string) {
+    if (this.entityType === 'instance') return
     this.updateEntities([
       ...this.stripKeyed(this.keyedEntities.filter((ke) => ke.id !== tempID)),
     ])
@@ -81,6 +109,7 @@ export default class TypeObjectEditor extends Vue {
 
   /* Down means decrease order */
   moveEntityUp() {
+    if (this.entityType === 'instance') return
     const { entity } = this.selectedKeyedEntity
     if (!entity.order) return
     this.moveEntity(entity.order - 1)
@@ -88,6 +117,7 @@ export default class TypeObjectEditor extends Vue {
 
   /* Down means inrease order */
   moveEntityDown() {
+    if (this.entityType === 'instance') return
     const { entity } = this.selectedKeyedEntity
     if (!entity.order) return
     if (entity.order === (this.entities.length - 1)) return
@@ -95,8 +125,6 @@ export default class TypeObjectEditor extends Vue {
   }
 
   moveEntity(newOrder: number) {
-    /* You cannot reorder entities which have no order property */
-    if (!this.selectedKeyedEntity || !this.entities[0].order) return
     const currentOrder = this.selectedKeyedEntity.entity.order
     const moveDown = this.keyedEntities.filter((ke) => ke.order <= newOrder && ke.order > currentOrder)
     const moveUp = this.keyedEntities.filter((ke) => ke.order >= newOrder && ke.order < currentOrder)
@@ -109,7 +137,7 @@ export default class TypeObjectEditor extends Vue {
     ])
   }
 
-  selectProperty(tempID: string) {
+  selectEntity(tempID: string) {
     const keyedEntity = this.keyedEntities.find((kp) => kp.id === tempID)
     if (keyedEntity) {
       this.selectedKeyedEntity = keyedEntity
