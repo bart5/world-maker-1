@@ -62,7 +62,7 @@ import ObjectDisplay from '@/views/ObjectDisplay.vue'
     ObjectDisplay
   },
 })
-export default class TypePropertyEditor extends Vue {
+export default class PropertyTypeEditor extends Vue {
   @Prop() editable!: boolean
 
   @Prop() tempID!: string

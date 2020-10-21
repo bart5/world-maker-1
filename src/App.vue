@@ -15,6 +15,7 @@ import ConfigModal from '@/views/ConfigModal.vue';
 import ProjectSelector from '@/views/ProjectSelector.vue';
 import AppLoader from '@/views/AppLoader.vue';
 import ProjectLoader from '@/views/ProjectLoader.vue';
+import TypesManager from '@/views/TypesManager.vue';
 
 @Options({
   components: {
@@ -23,6 +24,7 @@ import ProjectLoader from '@/views/ProjectLoader.vue';
     ProjectSelector,
     AppLoader,
     ProjectLoader,
+    TypesManager
   },
 })
 export default class App extends Vue {

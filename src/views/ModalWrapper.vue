@@ -32,11 +32,12 @@ export default class ModalWrapper extends Vue {
 .modal {
   display: flex;
   flex-flow: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   border: 2px solid;
   width: 700px;
   max-height: 80%;
+  overflow-y: scroll;
   background: lightgray;
   padding: 15px 30px;
 

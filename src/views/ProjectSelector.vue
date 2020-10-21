@@ -13,7 +13,6 @@
       <div class="input-box">
         <span class="input-prefix">path:</span>
         <input
-          :class="{ 'validating': validatingDefaultLocalPath }"
           type="text"
           v-model="projectPath"
           @change="validateProjectPath"

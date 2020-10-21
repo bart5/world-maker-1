@@ -7,7 +7,7 @@
           :key="keyedEntity.id"
           :order="keyedEntity.order"
           :tempID="keyedEntity.id"
-          :property="keyedEntity.enitty"
+          :property="keyedEntity.entity"
           :editable="editable"
           @update-property="updateEntity"
           @select-property="selectEntity"
