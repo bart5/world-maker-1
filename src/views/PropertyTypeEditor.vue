@@ -118,7 +118,7 @@ export default class TypePropertyEditor extends Vue {
   }
 
   sendToParent() {
-    this.$emit('update-property', { id: this.tempID, entity: this.localProperty})
+    this.$emit('update-property', { id: this.tempID, entity: this.localProperty })
   }
 
   selectProperty() {

@@ -46,11 +46,77 @@ const getNewProjectUiData = () => {
   return uiData
 }
 
+const getMockedTypes = (): Types => {
+  return {
+    typeA: {
+      name: 'typeA',
+      instance: [
+        { name: 'A Char Prop', type: 'char', order: 1 },
+        { name: 'A Uint Prop', type: 'uint', order: 2 },
+        { name: 'A Int Prop', type: 'int', order: 3 },
+        { name: 'A Float Prop', type: 'float', order: 4 },
+        { name: 'A Bool Prop', type: 'bool', order: 5 },
+      ]
+    },
+    typeB: {
+      name: 'typeB',
+      instance: [
+        { name: 'B Ref to C', type: { name: 'typeRef', typeRef: 'typeC' }, order: 1 },
+        { name: 'B Char prop', type: 'char', order: 2 },
+        { name: 'B Ref to A', type: { name: 'typeRef', typeRef: 'typeA' }, order: 3 },
+        { name: 'B Float prop', type: 'float', order: 4 },
+      ]
+    },
+    typeC: {
+      name: 'typeC',
+      instance: [
+        { name: 'C Char Prop 1', type: 'char', order: 1 },
+        { name: 'C Char Prop 2', type: 'char', order: 2 },
+        { name: 'C Float Prop 1', type: 'float', order: 3 },
+        { name: 'C Float Prop 2', type: 'float', order: 4 },
+      ]
+    },
+    typeD: {
+      name: 'typeD',
+      instance: [
+        { name: 'D Char Prop 1', type: 'char', order: 1 },
+        {
+          name: 'D Struct Prop 1',
+          type: 'struct',
+          children: [
+            { name: 'D Struct Child 1', type: 'char', order: 1 },
+            { name: 'D Struct Child 2', type: 'bool', order: 2 },
+            { name: 'D Struct Child 3', type: { name: 'typeRef', typeRef: 'typeA' }, order: 2 },
+            { name: 'D Struct Child 4', type: 'float', order: 3 },
+          ],
+          order: 2
+        },
+        { name: 'Prop3', type: 'float', order: 3 },
+        { name: 'Prop4', type: 'float', order: 4 },
+      ]
+    },
+    typeE: {
+      name: 'typeE',
+      instance: [
+        {
+          name: 'E Array Prop 1',
+          type: 'array',
+          children: [
+            { name: 'D Struct Child 3', type: { name: 'typeRef', typeRef: 'typeA' }, order: 1 },
+            { name: 'D Struct Child 3', type: { name: 'typeRef', typeRef: 'typeC' }, order: 2 },
+          ],
+          order: 1
+        },
+        { name: 'E Char Prop 1', type: 'char', order: 2 },
+      ]
+    },
+  }
+}
+
 const getNewProjectTemplate = () => {
   const project: Project = {
     staticData: {} as StaticData,
-    entityBindings: {},
-    vocabulary: {},
+    types: getMockedTypes(),
     uiData: {
       ...getNewProjectUiData()
     }

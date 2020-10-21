@@ -1,12 +1,9 @@
-
-
 const valueObject = {
   type: '',
   value: '',
   valueType: '',
   container: null,
 }
-
 
 const task = {
   id: {
