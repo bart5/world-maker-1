@@ -5,14 +5,14 @@
         <input
           :disabled="!edited"
           type="text"
-          v-model="name"
+          v-model="localProperty.name"
         >
       </div>
       <div class="type-field">
         <select
           :disabled="!edited"
           class="selector type-selector"
-          v-model="type"
+          v-model="localProperty.type"
         >
           <option
             v-for="type in basicTypes"
@@ -23,10 +23,10 @@
           </option>
         </select>
         <select
-          v-if="!!type.name"
+          v-if="isTypeReference || isEnumReference"
           :disabled="!edited"
           class="selector type-reference"
-          v-model="type"
+          v-model="localProperty.type[isTypeReference ? 'typeRef' : 'enumRef']"
         >
           <option
             v-for="type in definedTypes"
@@ -42,7 +42,7 @@
       v-if="isContainer"
       :edited="edited"
       :containerType="type"
-      @update-from-child="updateFromChild"
+      @update-property="updateChildProperties"
     />
   </div>
 </template>
@@ -58,28 +58,21 @@ import { Prop } from 'vue-property-decorator';
 export default class TypePropertyEditor extends Vue {
   @Prop() edited!: boolean
 
-  @Prop() propOrder!: number
+  @Prop() order!: number
 
-  property: Property | null = null
+  @Prop() property!: Property
 
-  name = 'New property'
+  localProperty: Property = { ...this.property }
 
-  type: PropertyTypeDescriptor = 'bool'
-
-  childProperties: Property[] | null = null
-
-  setProperty() {
-    this.property = {
-      name: this.name,
-      type: this.type,
-      order: this.propOrder,
-      ...this.childProperties ? { children: this.childProperties } : {},
+  getNewProperty() {
+    return {
+      ...this.localProperty
     }
   }
 
   get basicTypes() {
-    const typeRef = { name: 'typeRef', typeRef: ''}
-    const enumRef = { name: 'enumRef', enumRef: ''}
+    const typeRef = { name: 'typeRef', typeRef: '' }
+    const enumRef = { name: 'enumRef', enumRef: '' }
     return [
       'char', 'uint', 'int', 'float', 'bool', typeRef, enumRef, 'struct', 'array'
     ]
@@ -89,16 +82,34 @@ export default class TypePropertyEditor extends Vue {
     return this.$store.getters.types
   }
 
-  get isContainer() {
-    return this.type === 'struct' || this.type === 'array'
+  get isTypeReference() {
+    const name = typeof this.localProperty.type === 'object' ? this.localProperty.type.name : undefined
+    return name ? name === 'typeRef' : false
   }
 
-  updateFromChild(properties: Property[]) {
-    this.childProperties = properties
+  get isEnumReference() {
+    const name = typeof this.localProperty.type === 'object' ? this.localProperty.type.name : undefined
+    return name ? name === 'enumRef' : false
+  }
+
+  get isContainer() {
+    return this.localProperty.type === 'struct' || this.localProperty.type === 'array'
+  }
+
+  updateChildProperties(properties: Property[]) {
+    if (properties.length) {
+      this.localProperty.children = [...properties]
+    } else {
+      delete this.localProperty.children
+    }
   }
 
   sendToParent() {
-    this.$emit('update-from-child', this.property)
+    this.$emit('update-property', this.property)
+  }
+
+  selectProperty() {
+    this.$emit('select-property', this.order)
   }
 }
 </script>
