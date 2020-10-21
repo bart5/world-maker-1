@@ -1,5 +1,5 @@
 <template>
-  <div class="property-wrapper">
+  <div class="property-wrapper" :style="style">
     <div class="property-box">
       <div class="name-field">
         <input
@@ -13,8 +13,8 @@
         <select
           :disabled="!editable"
           class="selector type-selector"
-          v-model="localProperty.type"
-          @change="maybeSubmit"
+          v-model="selectedType"
+          @change="updateLocalProperty(); maybeSubmit()"
         >
           <option
             v-for="type in basicTypes"
@@ -25,28 +25,26 @@
           </option>
         </select>
         <select
-          v-if="isTypeReference || isEnumReference"
+          v-if="isTypeReference"
           :disabled="!editable"
           class="selector type-reference"
-          v-model="localProperty.type[isTypeReference ? 'typeRef' : 'enumRef']"
+          v-model="localProperty.type.typeRef"
           @change="maybeSubmit"
         >
           <option
-            v-for="type in definedTypes"
+            v-for="type in projectTypes"
             :key="type.name || type"
-            :value="type"
+            :value="type.name"
           >
             {{ type.name }}
           </option>
         </select>
       </div>
     </div>
-    <ObjectDisplay
+    <component
       v-if="isContainer"
-      :entities="localProperty.children"
-      :entityType="'type'"
-      :editable="editable"
-      :containerType="localProperty.type"
+      v-bind:is="objectDisplay"
+      v-bind="displayProps"
       @update-entity="updateChildProperties"
     />
   </div>
@@ -58,9 +56,7 @@ import { Prop } from 'vue-property-decorator';
 import ObjectDisplay from '@/views/ObjectDisplay.vue'
 
 @Options({
-  components: {
-    ObjectDisplay
-  },
+  components: {},
 })
 export default class PropertyTypeEditor extends Vue {
   @Prop() editable!: boolean
@@ -73,26 +69,43 @@ export default class PropertyTypeEditor extends Vue {
 
   localProperty: PropertyType = { ...this.property }
 
+  objectDisplay = ObjectDisplay
+
+  get displayProps() {
+    return {
+      entities: this.localProperty.children,
+      entityType: 'type',
+      editable: this.editable,
+      containerType: this.localProperty.type,
+    }
+  }
+
+  selectedType = typeof this.localProperty.type === 'string' ? this.localProperty.type : this.localProperty.type.name
+
+  updateLocalProperty() {
+    console.log('updating local property')
+    if (this.selectedType === 'typeRef') {
+      this.localProperty.type = {
+        name: this.selectedType,
+        typeRef: Object.entries(this.projectTypes)[0][0]
+      }
+    } else {
+      this.localProperty.type = this.selectedType
+    }
+  }
+
   get basicTypes() {
-    const typeRef = { name: 'typeRef', typeRef: '' }
-    const enumRef = { name: 'enumRef', enumRef: '' }
     return [
-      'char', 'uint', 'int', 'float', 'bool', typeRef, enumRef, 'struct', 'array'
+      'char', 'uint', 'int', 'float', 'bool', 'typeRef', 'struct', 'array'
     ]
   }
 
-  get definedTypes() {
-    return this.$store.getters.types
+  get projectTypes() {
+    return this.$store.getters.projectTypes
   }
 
   get isTypeReference() {
-    const name = typeof this.localProperty.type === 'object' ? this.localProperty.type.name : undefined
-    return name ? name === 'typeRef' : false
-  }
-
-  get isEnumReference() {
-    const name = typeof this.localProperty.type === 'object' ? this.localProperty.type.name : undefined
-    return name ? name === 'enumRef' : false
+    return this.selectedType === 'typeRef'
   }
 
   get isContainer() {
@@ -102,6 +115,12 @@ export default class PropertyTypeEditor extends Vue {
   get isDirty() {
     return this.property.name !== this.localProperty.name
       || this.property.type !== this.localProperty.type
+  }
+
+  get style() {
+    return {
+      order: this.order
+    }
   }
 
   maybeSubmit() {
@@ -130,6 +149,8 @@ export default class PropertyTypeEditor extends Vue {
 <style lang="scss" scoped>
 .property-wrapper {
   width: 100%;
+  display: flex;
+  flex-flow: column nowrap;
 }
 
 .property-box {

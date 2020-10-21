@@ -16,10 +16,10 @@
       v-if="!!selectedType"
       :entities="selectedType.instance"
       :entityType="'type'"
-      :typeName="selectType.name"
+      :typeName="selectedType.name"
       :isTopObject="true"
       :editable="true"
-      :containerType="struct"
+      :containerType="'struct'"
     />
     <hr>
     <div>Placeholder for instance (JSON and visual presentation)</div>
@@ -47,8 +47,6 @@ export default class TypesManager extends Vue {
   selectedType: TypeDescriptor | null = null
 
   get projectTypes() {
-    // const types = this.$store.getters.projectTypes
-    // return Object.keys(types).map((name) => types[name])
     return this.$store.getters.projectTypes
   }
 

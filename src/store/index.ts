@@ -153,9 +153,9 @@ const minTileSize = {
 const registerUiDataMutation = (state: ApplicationState) => {
   state.projectUiDataMutated = true
 }
-// const registerStaticDataMutation = (state: ApplicationState) => {
-//   state.projectStaticDataMutated = true
-// }
+const registerStaticDataMutation = (state: ApplicationState) => {
+  state.projectStaticDataMutated = true
+}
 // const registerEntityBindingsMutation = (state: ApplicationState) => {
 //   state.projectEntityBindingsMutated = true
 // }
@@ -409,6 +409,12 @@ export default createStore({
       activeWorkspace.configuration.lastSessionCamera = camera
     },
     /* =========== PROJECT STATIC DATA MUTATIONS =========== */
+    UPDATE_TYPE(state, descriptor: TypeDescriptor) {
+      registerStaticDataMutation(state)
+      console.log('descriptor: ', descriptor)
+
+      state.project.types[descriptor.name] = descriptor
+    },
     /* =========== PROJECT ENTITY BINDING MUTATIONS =========== */
     /* =========== APPLICATION DATA MUTATIONS =========== */
     SET_APPLICATION_DATA(state, data) {
@@ -698,6 +704,9 @@ export default createStore({
     },
     saveCurrentWorkspaceCamera() {
       this.commit('SET_CURRENT_WORKSPACE_CAMERA')
+    },
+    updateType(state, descriptor: TypeDescriptor) {
+      this.commit('UPDATE_TYPE', descriptor)
     },
   },
   modules: {

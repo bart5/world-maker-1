@@ -119,13 +119,11 @@ export default class ObjectDisplay extends Vue {
   }
 
   updateEntity(changedkeyedEntity: { id: string, entity: any}) {
-    const changedEntity = this.keyedEntities.find((ke) => ke.id === changedkeyedEntity.id)
-    if (changedEntity) {
-      this.updateEntities([
-        ...this.entities,
-        ...changedEntity.entity,
-      ])
-    }
+    // const changedEntity = this.keyedEntities.find((ke) => ke.id === changedkeyedEntity.id)
+    this.updateEntities([
+      ...this.stripKeyed(this.keyedEntities.filter((ke) => ke.id !== changedkeyedEntity.id)),
+      ...[changedkeyedEntity.entity],
+    ])
   }
 
   /* Down means decrease order */
@@ -172,6 +170,12 @@ export default class ObjectDisplay extends Vue {
   display: flex;
   flex-flow: column;
   width: 100%;
+
+  .properties {
+    display: flex;
+    flex-flow: column;
+    width: 100%;
+  }
 }
 
 </style>

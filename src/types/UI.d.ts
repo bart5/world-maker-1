@@ -138,16 +138,11 @@ interface PropertyInstance {
   value: any;
 }
 
-type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | TypeRef | EnumRef | 'struct' | 'array'
+type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | TypeRef | 'struct' | 'array'
 
 type TypeRef = {
   name: 'typeRef';
   typeRef: keyof Types;
-}
-
-type EnumRef = {
-  name: 'enumRef';
-  enumRef: keyof Types;
 }
 
 interface TypeInstance {
