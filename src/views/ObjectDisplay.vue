@@ -79,8 +79,9 @@ export default class ObjectDisplay extends Vue {
 
   updateEntities(entities: any[]) {
     if (this.isTopObject) {
-      if (this.entityType === 'type') this.$store.dispatch('updateType', { type: this.typeName, data: entities })
-      if (this.entityType === 'instance') this.$store.dispatch('updateTypeInstance', { type: this.typeName, data: entities })
+      const descriptor: TypeDescriptor = { name: this.typeName as string, instance: entities, isEnum: false, extends: undefined }
+      if (this.entityType === 'type') this.$store.dispatch('updateType', descriptor)
+      if (this.entityType === 'instance') this.$store.dispatch('updateTypeInstance', descriptor)
     } else {
       this.$emit('update-entity', entities)
     }
@@ -167,4 +168,10 @@ export default class ObjectDisplay extends Vue {
 </script>
 
 <style lang="scss" scoped>
+.object-wrapper {
+  display: flex;
+  flex-flow: column;
+  width: 100%;
+}
+
 </style>

@@ -106,6 +106,9 @@ export const ipc: Ipc = {
           window.close()
         })
       },
+      showTypesEditor() {
+        vm.$store.dispatch('openModal', 'typesManager')
+      },
     }
   },
   initListeners(vm: Vue) {

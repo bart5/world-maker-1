@@ -128,4 +128,14 @@ export default class TypePropertyEditor extends Vue {
 </script>
 
 <style lang="scss" scoped>
+.property-wrapper {
+  width: 100%;
+}
+
+.property-box {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
 </style>

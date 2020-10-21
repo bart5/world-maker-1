@@ -171,6 +171,9 @@ export const emittersFactory = (contents: WebContents) => ({
   onClose() {
     contents.send('closeApplication')
   },
+  onShowTypesEditor() {
+    contents.send('showTypesEditor')
+  },
 })
 
 export default function setupCommunicaton(getWindow: () => BrowserWindow | null) {

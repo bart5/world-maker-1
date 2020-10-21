@@ -695,6 +695,9 @@ export default class Frame extends Vue {
         case 's':
           this.$store.dispatch('asyncSaveProject', true)
           break;
+        case 't':
+          this.$store.dispatch('openModal', 'typesManager')
+          break;
         default:
           break;
       }

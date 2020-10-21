@@ -18,6 +18,7 @@ type menuSignal =
   | 'saveProjectAs'
   | 'showApplicationConfiguration'
   | 'closeApplication'
+  | 'showTypesEditor'
 
 interface IpcReply {
   opType: opType;

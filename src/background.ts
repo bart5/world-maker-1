@@ -75,6 +75,15 @@ function createWindow() {
       ]
     },
     {
+      label: 'Edit',
+      submenu: [
+        {
+          label: 'Edit Types',
+          click() { emitters.onShowTypesEditor() }
+        }
+      ]
+    },
+    {
       role: 'viewMenu',
     },
     {

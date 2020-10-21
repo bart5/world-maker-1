@@ -221,6 +221,9 @@ export default createStore({
     },
     lastProjectLoadTime: (state) => {
       return state.ui.lastProjectLoadTime
+    },
+    projectTypes: (state) => {
+      return state.project.types
     }
   },
   mutations: {
