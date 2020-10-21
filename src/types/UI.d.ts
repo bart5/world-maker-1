@@ -122,14 +122,20 @@ interface TypeDescriptor {
   name: keyof Types;
   extends?: keyof Types;
   isEnum?: boolean;
-  instance: Array<Property>;
+  instance: Array<PropertyType>;
 }
 
-interface Property {
+interface PropertyType {
   name: string;
   type: PropertyTypeDescriptor;
   order: number;
-  children?: Array<Property>;
+  children?: Array<PropertyType>;
+}
+
+interface PropertyType {
+  name: string;
+  type: PropertyTypeDescriptor;
+  value: any;
 }
 
 type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | TypeRef | EnumRef | 'struct' | 'array'

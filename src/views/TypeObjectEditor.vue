@@ -2,6 +2,9 @@
   <div class="object-wrapper">
     <div class="properties">
       <TypePropertyEditor
+        v-for="keyedEntity in keyedEntities"
+        :key="keyedEntity.id"
+        :property="keyedEntity.property"
         @update-property="updateProperties"
         @select-property="selectProperty"
       />
@@ -18,49 +21,99 @@ import { Prop } from 'vue-property-decorator';
   },
 })
 export default class TypeObjectEditor extends Vue {
-  @Prop({ default: false }) edited = false
+  @Prop() getNewEntityTemplate!: () => any
 
-  properties: Property[] = []
+  @Prop() updateEntities!: (newEntities: any[]) => void
 
-  keyedProperties: { [k: string]: Property } = {}
+  @Prop() entities!: any[]
 
-  selectedPropertyOrder: number | null = null
+  @Prop() entityType!: 'type' | 'value'
 
-  beforeMount() {
-    this.keyedProperties = this.getKeyedProperties()
+  @Prop() isEditor!: boolean
+
+  @Prop() isTopObject!: boolean
+
+  selectedKeyedEntity: any | null = null
+
+  get keyedEntities(): Array<{ id: string, order: number, entity: any }> {
+    return this.entities.reduce((acc, e, i) => {
+      return [
+        ...acc,
+        this.getKeyedEntity(e, i)]
+    }, [] as Array<{id: string, order: number, entity: any}>)
   }
 
-  getKeyedProperties() {
-    return this.properties.reduce((acc, v) => ({ ...acc, [`${Date.now()}_${Math.random()}`]: v }), {})
-  }
-
-  addNewProperty() {
-    this.properties.push(this.getNewPropertyTemplate())
-  }
-
-  getNewPropertyTemplate(): Property {
+  getKeyedEntity(entity: any, fallbackOrder: number) {
     return {
-      name: 'New property',
-      type: 'bool',
-      order: this.properties.length
+      id: `${Date.now()}_${Math.random()}`,
+      order: entity.order || fallbackOrder,
+      entity
     }
   }
 
-  updateProperties(property: Property) {
-
+  stripKeyed(keyedEntities: Array<{ id: string, order: number, entity: any }>) {
+    return keyedEntities.map((ke) => ke.entity)
   }
 
-  moveProperty(newOrder: number) {
-    if (!this.selectedPropertyOrder) return
-    const moveDown = this.properties.filter((p) => p.order <= newOrder && p.order > (this.selectedPropertyOrder as number))
-    const moveUp = this.properties.filter((p) => p.order >= newOrder && p.order < (this.selectedPropertyOrder as number))
-
-    moveDown.forEach((p) => { p.order -= 1 })
-    moveUp.forEach((p) => { p.order += 1 })
+  addNewEntity() {
+    const newEntity = this.getNewEntityTemplate()
+    this.updateEntities([
+      ...this.entities,
+      newEntity
+    ])
   }
 
-  selectProperty(order: number) {
-    this.selectedPropertyOrder = order
+  removeEntity(tempID: string) {
+    this.updateEntities([
+      ...this.stripKeyed(this.keyedEntities.filter((ke) => ke.id !== tempID)),
+    ])
+  }
+
+  updateEntity(changedkeyedEntity: { id: string, order: string, entity: any}) {
+    const changedEntity = this.keyedEntities.find((ke) => ke.id === changedkeyedEntity.id)
+    if (changedEntity) {
+      this.updateEntities([
+        ...this.entities,
+        ...changedEntity.entity,
+      ])
+    }
+  }
+
+  /* Down means decrease order */
+  moveEntityUp() {
+    const { entity } = this.selectedKeyedEntity
+    if (!entity.order) return
+    this.moveEntity(entity.order - 1)
+  }
+
+  /* Down means inrease order */
+  moveEntityDown() {
+    const { entity } = this.selectedKeyedEntity
+    if (!entity.order) return
+    if (entity.order === (this.entities.length - 1)) return
+    this.moveEntity(entity.order + 1)
+  }
+
+  moveEntity(newOrder: number) {
+    /* You cannot reorder entities which have no order property */
+    if (!this.selectedKeyedEntity || !this.entities[0].order) return
+    const currentOrder = this.selectedKeyedEntity.entity.order
+    const moveDown = this.keyedEntities.filter((ke) => ke.order <= newOrder && ke.order > currentOrder)
+    const moveUp = this.keyedEntities.filter((ke) => ke.order >= newOrder && ke.order < currentOrder)
+
+    moveDown.forEach((ke) => { ke.order -= 1 })
+    moveUp.forEach((ke) => { ke.order += 1 })
+
+    this.updateEntities([
+      ...this.stripKeyed([...moveDown, ...moveUp])
+    ])
+  }
+
+  selectProperty(tempID: string) {
+    const keyedEntity = this.keyedEntities.find((kp) => kp.id === tempID)
+    if (keyedEntity) {
+      this.selectedKeyedEntity = keyedEntity
+    }
   }
 }
 </script>

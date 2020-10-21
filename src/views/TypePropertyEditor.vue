@@ -60,9 +60,9 @@ export default class TypePropertyEditor extends Vue {
 
   @Prop() order!: number
 
-  @Prop() property!: Property
+  @Prop() property!: PropertyType
 
-  localProperty: Property = { ...this.property }
+  localProperty: PropertyType = { ...this.property }
 
   getNewProperty() {
     return {
@@ -96,7 +96,7 @@ export default class TypePropertyEditor extends Vue {
     return this.localProperty.type === 'struct' || this.localProperty.type === 'array'
   }
 
-  updateChildProperties(properties: Property[]) {
+  updateChildProperties(properties: PropertyType[]) {
     if (properties.length) {
       this.localProperty.children = [...properties]
     } else {
