@@ -192,11 +192,11 @@ interface EnumTypeValue {
 interface StructContainer {
   name: string;
   type: 'struct';
-  value: { [k: string]: PropertyValueDescriptor };
+  value: { [k: string]: PropertyInstance };
 }
 
 interface ArrayContainer {
   name: string;
   type: 'array';
-  value: Array<PropertyValueDescriptor>;
+  value: Array<PropertyInstance>;
 }

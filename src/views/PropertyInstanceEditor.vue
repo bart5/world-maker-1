@@ -14,11 +14,13 @@
               :disabled="!editable"
               v-bind="valueInputAttributes"
               v-model="localProperty.value"
+              @change="maybeSubmit"
             >
             <select
               v-else
               :disabled="!editable"
               v-model="localProperty.value"
+              @change="maybeSubmit"
             >
               <option value="true" ><option/>
               <option value="false" ><option/>
@@ -27,11 +29,13 @@
               {{ localProperty.type }}
             </div>
           </div>
+          <!-- References to types and enums -->
           <div v-else>
             <select
               :disabled="!editable"
               class="selector type-instance"
               v-model="localProperty.value"
+              @change="maybeSubmit"
             >
               <option
                 v-for="instance in typeInstances"
@@ -47,8 +51,10 @@
     </div>
     <ObjectDisplay
       v-if="isContainer"
+      :entities="children"
+      :entityType="'instance'"
       :editable="editable"
-      :containerType="type"
+      :containerType="localProperty.type"
       @update-entity="updateChildProperties"
     />
   </div>
@@ -117,6 +123,45 @@ export default class TypePropertyEditor extends Vue {
       ...propType === 'char' ? char : {}
     }
   }
+
+  get children() {
+    if (!this.isContainer) return []
+    if (this.localProperty.type === 'struct') {
+      return Object.keys(this.localProperty.value).map((k) => {
+        return this.localProperty.value[k]
+      })
+    }
+    return this.localProperty.value
+  }
+
+  get typeInstances() {
+    return this.$store.getters.typeInstances({ type: this.localProperty.type })
+  }
+
+  get isDirty() {
+    return this.property.value !== this.localProperty.value
+  }
+
+  maybeSubmit() {
+    if (this.isDirty) this.sendToParent()
+  }
+
+  updateChildProperties(properties: PropertyInstance[]) {
+    if (!this.isContainer) return
+    if (this.localProperty.type === 'struct') {
+      properties.forEach((p) => {
+        this.localProperty.value[p.name] = p
+      })
+    } else {
+      this.localProperty.value = properties
+    }
+    this.sendToParent()
+  }
+
+  sendToParent() {
+    this.$emit('update-property', { id: this.tempID, entity: this.localProperty})
+  }
+
 }
 </script>
 

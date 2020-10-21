@@ -43,8 +43,10 @@
     </div>
     <ObjectDisplay
       v-if="isContainer"
+      :entities="localProperty.children"
+      :entityType="'type'"
       :editable="editable"
-      :containerType="type"
+      :containerType="localProperty.type"
       @update-entity="updateChildProperties"
     />
   </div>

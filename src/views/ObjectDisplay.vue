@@ -38,18 +38,22 @@ import PropertyTypeEditor from '@/views/PropertyTypeEditor.vue'
   },
 })
 export default class ObjectDisplay extends Vue {
-  @Prop() getNewEntityTemplate!: () => any
-
   @Prop() entities!: any[]
 
+  /* Whether we show type structure or instance structure */
   @Prop() entityType!: 'type' | 'instance'
 
-  /* It is null when this is not top object */
+  /* null for not-top objects */
+  /* It's the name of non-primitive type this whole structure describes */
   @Prop({ default: null }) typeName!: string | null
 
   @Prop() editable!: boolean
 
   @Prop({ default: false }) isTopObject!: boolean
+
+  /* Defines way in which contained endities are organized. */
+  /* Struct has it's entities keyed; array is a plain list. */
+  @Prop({ default: 'struct' }) containerType!: 'struct' | 'array'
 
   selectedKeyedEntity: any | null = null
 
@@ -79,6 +83,21 @@ export default class ObjectDisplay extends Vue {
       if (this.entityType === 'instance') this.$store.dispatch('updateTypeInstance', { type: this.typeName, data: entities })
     } else {
       this.$emit('update-entity', entities)
+    }
+  }
+
+  getNewEntityTemplate(): PropertyType | PropertyInstance {
+    if (this.entityType === 'type') {
+      return {
+        name: 'New Property',
+        type: 'bool',
+        order: this.entities.length
+      }
+    }
+    return {
+      name: 'New Property',
+      type: 'bool',
+      value: 'true'
     }
   }
 
