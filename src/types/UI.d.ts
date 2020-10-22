@@ -136,6 +136,7 @@ interface PropertyInstance {
   name: string;
   type: PropertyTypeDescriptor;
   value: any;
+  isEnum?: boolean;
 }
 
 type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | TypeRef | 'struct' | 'array'
@@ -143,6 +144,11 @@ type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | TypeR
 type TypeRef = {
   name: 'typeRef';
   typeRef: keyof Types;
+}
+
+type ArrayType = {
+  name: 'arrayType',
+  type: PropertyTypeDescriptor,
 }
 
 interface TypeInstance {
@@ -193,5 +199,6 @@ interface StructContainer {
 interface ArrayContainer {
   name: string;
   type: 'array';
+  innerType: PropertyInstance;
   value: Array<PropertyInstance>;
 }

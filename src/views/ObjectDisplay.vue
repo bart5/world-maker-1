@@ -44,14 +44,14 @@ export default class ObjectDisplay extends Vue {
   @Prop() entityType!: 'type' | 'instance'
 
   /* null for not-top objects */
-  /* It's the name of non-primitive type this whole structure describes */
+  /* It's the name of non-primitive type this structure describes */
   @Prop({ default: null }) typeName!: string | null
 
   @Prop() editable!: boolean
 
   @Prop({ default: false }) isTopObject!: boolean
 
-  /* Defines way in which contained endities are organized. */
+  /* Defines way in which contained entities are organized. */
   /* Struct has it's entities keyed; array is a plain list. */
   @Prop({ default: 'struct' }) containerType!: 'struct' | 'array'
 

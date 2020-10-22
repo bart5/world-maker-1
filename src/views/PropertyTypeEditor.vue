@@ -73,7 +73,7 @@ export default class PropertyTypeEditor extends Vue {
 
   get displayProps() {
     return {
-      entities: this.localProperty.children,
+      entities: this.localProperty.children || [],
       entityType: 'type',
       editable: this.editable,
       containerType: this.localProperty.type,

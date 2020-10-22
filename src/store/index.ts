@@ -46,48 +46,205 @@ const getNewProjectUiData = () => {
   return uiData
 }
 
+const getMockedStaticData = (): StaticData => {
+  return {
+    /* Plain type with couple properties with primitive values */
+    typeA: {
+      'typeAinstanceID123': {
+        id: 'typeAinstanceID123',
+        'ACharProp': {
+          name: 'ACharProp',
+          type: 'char',
+          value: 'Some text',
+        },
+        'AUintProp': {
+          name: 'AUintProp',
+          type: 'uint',
+          value: 12345,
+        },
+        'AIntProp': {
+          name: 'AIntProp',
+          type: 'int',
+          value: -4567,
+        },
+        'AFloatProp': {
+          name: 'AFloatProp',
+          type: 'float',
+          value: 12.4578,
+        },
+        'ABoolProp': {
+          name: 'ABoolProp',
+          type: 'bool',
+          value: 'false',
+        }
+      },
+    },
+    /* Type with properties referencing other types */
+    typeB: {
+      'typeBinstanceID234': {
+        id: 'typeBinstanceID234',
+        'BReftoC': {
+          name: 'BReftoC',
+          type: { name: 'typeRef', typeRef: 'typeC' },
+          value: 'typeCinstanceID435',
+        },
+        'BCharprop': {
+          name: 'BCharprop',
+          type: 'char',
+          value: 'Whoaa',
+        },
+        'BReftoA': {
+          name: 'BReftoA',
+          type: { name: 'typeRef', typeRef: 'typeA' },
+          value: 'typeAinstanceID123',
+        },
+        'BFloatprop': {
+          name: 'BFloatprop',
+          type: 'float',
+          value: 12.5,
+        }
+      }
+    },
+    /* Simple type for reference for other types */
+    typeC: {
+      'typeCinstanceID435': {
+        id: 'typeCinstanceID435',
+        'ACharProp': {
+          name: 'ACharProp',
+          type: 'char',
+          value: 'Some text',
+        },
+        'AUintProp': {
+          name: 'AUintProp',
+          type: 'uint',
+          value: 12345,
+        },
+      }
+    },
+    /* Type with struct nested under one of it's properties */
+    typeD: {
+      'typeDInstance213': {
+        id: 'typeDInstance213',
+        'DCharProp1': {
+          name: 'DCharProp1',
+          type: 'char',
+          value: 'harharhar',
+        },
+        'DStructProp1': {
+          name: 'DStructProp1',
+          type: 'struct',
+          value: {
+            'DStructChild1': {
+              name: 'DStructChild1',
+              type: 'char',
+              value: 'harharhar',
+            },
+            'DStructChild2': {
+              name: 'DStructChild2',
+              type: 'bool',
+              value: 'true',
+            },
+            'DStructChild3': {
+              name: 'DStructChild3',
+              /*
+                If type names would be assured to newer clash with 'struct' 'array'
+                and primitive types, then I could get rid of the object and use
+                just referenced type name.
+              */
+              type: { name: 'typeRef', typeRef: 'typeA' },
+              value: 'typeAinstanceID123',
+            },
+            'DStructChild4': {
+              name: 'DStructChild4',
+              type: 'float',
+              value: 1.245,
+            }
+          }
+        }
+      }
+    },
+    /* Enum type */
+    /* Enums have 1 and only 1 instance */
+    /* They also don't have an id */
+    /* Values are always strings and match their keys, so structure can be simplified */
+    typeEENUM: {
+      isEnum: true,
+      'typeEENUM': {
+        'Case1': 'Case1',
+        'Case2': 'Case2',
+        'Case3': 'Case3',
+        'Case4': 'Case4',
+      }
+    },
+    /* Type with props containing arrays */
+    typeF: {
+      'typeFInstanceID389': {
+        'EArrayProp1': {
+          name: 'EArrayProp1',
+          type: 'array',
+          innerType: {
+            name: 'typeRef',
+            typeRef: 'typeC'
+          },
+          value: [
+            'typeCinstanceID435'
+          ]
+        },
+        'EArrayProp2': {
+          name: 'EArrayProp2',
+          type: 'array',
+          innerType: 'int',
+          value: [
+            '123', '214214124', '65344'
+          ]
+        }
+      }
+    }
+  }
+}
+
 const getMockedTypes = (): Types => {
   return {
     typeA: {
       name: 'typeA',
       instance: [
-        { name: 'A Char Prop', type: 'char', order: 1 },
-        { name: 'A Uint Prop', type: 'uint', order: 2 },
-        { name: 'A Int Prop', type: 'int', order: 3 },
-        { name: 'A Float Prop', type: 'float', order: 4 },
-        { name: 'A Bool Prop', type: 'bool', order: 5 },
+        { name: 'ACharProp', type: 'char', order: 1 },
+        { name: 'AUintProp', type: 'uint', order: 2 },
+        { name: 'AIntProp', type: 'int', order: 3 },
+        { name: 'AFloatProp', type: 'float', order: 4 },
+        { name: 'ABoolProp', type: 'bool', order: 5 },
       ]
     },
     typeB: {
       name: 'typeB',
       instance: [
-        { name: 'B Ref to C', type: { name: 'typeRef', typeRef: 'typeC' }, order: 1 },
-        { name: 'B Char prop', type: 'char', order: 2 },
-        { name: 'B Ref to A', type: { name: 'typeRef', typeRef: 'typeA' }, order: 3 },
-        { name: 'B Float prop', type: 'float', order: 4 },
+        { name: 'BReftoC', type: { name: 'typeRef', typeRef: 'typeC' }, order: 1 },
+        { name: 'BCharprop', type: 'char', order: 2 },
+        { name: 'BReftoA', type: { name: 'typeRef', typeRef: 'typeA' }, order: 3 },
+        { name: 'BFloatprop', type: 'float', order: 4 },
       ]
     },
     typeC: {
       name: 'typeC',
       instance: [
-        { name: 'C Char Prop 1', type: 'char', order: 1 },
-        { name: 'C Char Prop 2', type: 'char', order: 2 },
-        { name: 'C Float Prop 1', type: 'float', order: 3 },
-        { name: 'C Float Prop 2', type: 'float', order: 4 },
+        { name: 'CCharProp1', type: 'char', order: 1 },
+        { name: 'CCharProp2', type: 'char', order: 2 },
+        { name: 'CFloatProp1', type: 'float', order: 3 },
+        { name: 'CFloatProp2', type: 'float', order: 4 },
       ]
     },
     typeD: {
       name: 'typeD',
       instance: [
-        { name: 'D Char Prop 1', type: 'char', order: 1 },
+        { name: 'DCharProp1', type: 'char', order: 1 },
         {
-          name: 'D Struct Prop 1',
+          name: 'DStructProp1',
           type: 'struct',
           children: [
-            { name: 'D Struct Child 1', type: 'char', order: 1 },
-            { name: 'D Struct Child 2', type: 'bool', order: 2 },
-            { name: 'D Struct Child 3', type: { name: 'typeRef', typeRef: 'typeA' }, order: 2 },
-            { name: 'D Struct Child 4', type: 'float', order: 3 },
+            { name: 'DStructChild1', type: 'char', order: 1 },
+            { name: 'DStructChild2', type: 'bool', order: 2 },
+            { name: 'DStructChild3', type: { name: 'typeRef', typeRef: 'typeA' }, order: 2 },
+            { name: 'DStructChild4', type: 'float', order: 3 },
           ],
           order: 2
         },
@@ -95,19 +252,38 @@ const getMockedTypes = (): Types => {
         { name: 'Prop4', type: 'float', order: 4 },
       ]
     },
-    typeE: {
-      name: 'typeE',
+    typeEENUM: {
+      name: 'typeEENUM',
+      isEnum: true,
+      instance: [
+        { name: 'Case1', type: 'char', order: 1 },
+        { name: 'Case2', type: 'char', order: 2 },
+        { name: 'Case3', type: 'char', order: 3 },
+        { name: 'Case4', type: 'char', order: 4 },
+      ]
+    },
+    typeF: {
+      name: 'typeF',
       instance: [
         {
-          name: 'E Array Prop 1',
+          name: 'EArrayProp1',
           type: 'array',
+          innerType: 'typeC',
           children: [
-            { name: 'D Struct Child 3', type: { name: 'typeRef', typeRef: 'typeA' }, order: 1 },
-            { name: 'D Struct Child 3', type: { name: 'typeRef', typeRef: 'typeC' }, order: 2 },
+            { name: 'EArrayChild1', type: { name: 'typeRef', typeRef: 'typeC' }, order: 1 },
+            { name: 'EArrayChild2', type: { name: 'typeRef', typeRef: 'typeC' }, order: 2 },
           ],
           order: 1
         },
-        { name: 'E Char Prop 1', type: 'char', order: 2 },
+        {
+          name: 'EArrayProp1',
+          type: 'array',
+          children: [
+            { name: 'EArrayChild1', type: { name: 'typeRef', typeRef: 'typeC' }, order: 1 },
+            { name: 'EArrayChild2', type: { name: 'typeRef', typeRef: 'typeC' }, order: 2 },
+          ],
+          order: 1
+        },
       ]
     },
   }

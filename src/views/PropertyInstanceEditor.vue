@@ -1,5 +1,5 @@
 <template>
-  <div class="property-wrapper">
+  <div class="property-wrapper"  :style="style">
     <div class="property-box">
       <div class="name-field">
         <div class="name">
@@ -9,6 +9,7 @@
       <div class="value-field">
         <template v-if="!isContainer">
           <div v-if="isPrimitiveType" class="value">
+            <!-- Non-boolean -->
             <input
               v-if="localProperty.type !== 'bool'"
               :disabled="!editable"
@@ -16,6 +17,7 @@
               v-model="localProperty.value"
               @change="maybeSubmit"
             >
+            <!-- Boolean -->
             <select
               v-else
               :disabled="!editable"
@@ -25,11 +27,12 @@
               <option value="true" ><option/>
               <option value="false" ><option/>
             </select>
+            <!-- Type info -->
             <div class="type">
               {{ localProperty.type }}
             </div>
           </div>
-          <!-- References to types and enums -->
+          <!-- Reference to types -->
           <div v-else>
             <select
               :disabled="!editable"
@@ -49,12 +52,10 @@
         </template>
       </div>
     </div>
-    <ObjectDisplay
+    <component
       v-if="isContainer"
-      :entities="children"
-      :entityType="'instance'"
-      :editable="editable"
-      :containerType="localProperty.type"
+      v-bind:is="objectDisplay"
+      v-bind="displayProps"
       @update-entity="updateChildProperties"
     />
   </div>
@@ -66,9 +67,7 @@ import { Prop } from 'vue-property-decorator';
 import ObjectDisplay from '@/views/ObjectDisplay.vue'
 
 @Options({
-  components: {
-    ObjectDisplay
-  },
+  components: {},
 })
 export default class TypePropertyEditor extends Vue {
   @Prop() editable!: boolean
@@ -81,6 +80,17 @@ export default class TypePropertyEditor extends Vue {
 
   localProperty: PropertyInstance = { ...this.property }
 
+  objectDisplay = ObjectDisplay
+
+  get displayProps() {
+    return {
+      entities: this.children || [],
+      entityType: 'instance',
+      editable: this.editable,
+      containerType: this.localProperty.type,
+    }
+  }
+
   get isPrimitiveType() {
     return typeof this.localProperty.type === 'string'
       && ['char', 'uint', 'int', 'float', 'bool'].includes(this.localProperty.type)
@@ -89,11 +99,6 @@ export default class TypePropertyEditor extends Vue {
   get isTypeReference() {
     const name = typeof this.localProperty.type === 'object' ? this.localProperty.type.name : undefined
     return name ? name === 'typeRef' : false
-  }
-
-  get isEnumReference() {
-    const name = typeof this.localProperty.type === 'object' ? this.localProperty.type.name : undefined
-    return name ? name === 'enumRef' : false
   }
 
   get isContainer() {
@@ -142,6 +147,12 @@ export default class TypePropertyEditor extends Vue {
     return this.property.value !== this.localProperty.value
   }
 
+  get style() {
+    return {
+      order: this.order
+    }
+  }
+
   maybeSubmit() {
     if (this.isDirty) this.sendToParent()
   }
@@ -165,4 +176,16 @@ export default class TypePropertyEditor extends Vue {
 </script>
 
 <style lang="scss" scoped>
+.property-wrapper {
+  width: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+.property-box {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
 </style>
