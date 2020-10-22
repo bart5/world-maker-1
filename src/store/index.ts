@@ -51,6 +51,7 @@ const getMockedStaticData = (): StaticData => {
     /* Plain type with couple properties with primitive values */
     typeA: {
       'typeAinstanceID123': {
+        /* Type cannot not have an id unless it's an enum */
         id: 'typeAinstanceID123',
         'ACharProp': {
           name: 'ACharProp',
@@ -218,9 +219,9 @@ const getMockedTypes = (): Types => {
     typeB: {
       name: 'typeB',
       instance: [
-        { name: 'BReftoC', type: { name: 'typeRef', typeRef: 'typeC' }, order: 1 },
+        { name: 'BReftoC', type: 'typeRef', innerType: 'typeC', order: 1 },
         { name: 'BCharprop', type: 'char', order: 2 },
-        { name: 'BReftoA', type: { name: 'typeRef', typeRef: 'typeA' }, order: 3 },
+        { name: 'BReftoA', type: 'typeRef', innerType: 'typeA', order: 3 },
         { name: 'BFloatprop', type: 'float', order: 4 },
       ]
     },
@@ -243,8 +244,8 @@ const getMockedTypes = (): Types => {
           children: [
             { name: 'DStructChild1', type: 'char', order: 1 },
             { name: 'DStructChild2', type: 'bool', order: 2 },
-            { name: 'DStructChild3', type: { name: 'typeRef', typeRef: 'typeA' }, order: 2 },
-            { name: 'DStructChild4', type: 'float', order: 3 },
+            { name: 'DStructChild3', type: 'typeRef', innerType: 'typeA', order: 3 },
+            { name: 'DStructChild4', type: 'float', order: 4 },
           ],
           order: 2
         },
@@ -268,20 +269,16 @@ const getMockedTypes = (): Types => {
         {
           name: 'EArrayProp1',
           type: 'array',
+          /* Array type doesn't have to specify anything about the children beyond their type */
           innerType: 'typeC',
-          children: [
-            { name: 'EArrayChild1', type: { name: 'typeRef', typeRef: 'typeC' }, order: 1 },
-            { name: 'EArrayChild2', type: { name: 'typeRef', typeRef: 'typeC' }, order: 2 },
-          ],
+          // children: [],
           order: 1
         },
         {
           name: 'EArrayProp1',
           type: 'array',
-          children: [
-            { name: 'EArrayChild1', type: { name: 'typeRef', typeRef: 'typeC' }, order: 1 },
-            { name: 'EArrayChild2', type: { name: 'typeRef', typeRef: 'typeC' }, order: 2 },
-          ],
+          innerType: 'int',
+          // children: [],
           order: 1
         },
       ]

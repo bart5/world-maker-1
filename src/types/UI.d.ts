@@ -129,6 +129,7 @@ interface PropertyType {
   name: string;
   type: PropertyTypeDescriptor;
   order: number;
+  innerType?: PropertyInnerTypeDescriptor | TypeRef;
   children?: Array<PropertyType>;
 }
 
@@ -139,12 +140,10 @@ interface PropertyInstance {
   isEnum?: boolean;
 }
 
-type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | TypeRef | 'struct' | 'array'
+type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | 'typeRef' | 'struct' | 'array'
+type PropertyInnerTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | 'typeRef'
 
-type TypeRef = {
-  name: 'typeRef';
-  typeRef: keyof Types;
-}
+type TypeRef = Extract<keyof Types, string>
 
 type ArrayType = {
   name: 'arrayType',
