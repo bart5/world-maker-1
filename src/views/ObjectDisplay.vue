@@ -12,7 +12,6 @@
           @revert-property="revertProp"
           @select-property="selectProp"
         />
-          <!-- :tempId="item[0]" -->
       </template>
       <!-- <template v-else>
         <PropertyInstanceEditor

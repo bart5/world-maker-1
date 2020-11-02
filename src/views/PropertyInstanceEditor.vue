@@ -53,10 +53,9 @@
       </div>
     </div>
     <component
-      v-if="isContainer"
+      v-if="isRef && showRefTarget"
       v-bind:is="objectDisplay"
       v-bind="displayProps"
-      @update-entity="updateChildProperties"
     />
   </div>
 </template>
@@ -70,9 +69,9 @@ import ObjectDisplay from '@/views/ObjectDisplay.vue'
   components: {},
 })
 export default class TypePropertyEditor extends Vue {
-  @Prop() editable!: boolean
-
   @Prop() prop!: InstanceProp
+
+  @Prop() editable!: boolean
 
   @Prop() typeName!: string
 
