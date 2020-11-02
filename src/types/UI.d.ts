@@ -22,7 +22,7 @@ interface UiData {
 
 interface Project {
   staticData: StaticData;
-  types: Types;
+  types: TypesDefinitions;
   uiData: UiData;
 }
 

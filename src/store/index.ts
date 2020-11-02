@@ -46,13 +46,6 @@ const getNewProjectUiData = () => {
   return uiData
 }
 
-const getMockedTypes = (): Types => {
-  return {
-    type1: 0,
-    type2: 1,
-  }
-}
-
 function getInstanceProp(
   valueType: 'int32' | 'string' | 'flt' | 'bool', name: string, values: Array<number | string | boolean>, isArray?: boolean
 ): InstanceProp {
@@ -185,15 +178,10 @@ const getMockedStaticData = (): StaticData => {
   }
 }
 
-const getMockedTypes = (): Types => {
-  return {
-  }
-}
-
 const getNewProjectTemplate = () => {
   const project: Project = {
-    staticData: {} as StaticData,
-    types: getMockedTypes(),
+    staticData: getMockedStaticData(),
+    types: getMockedTypesDefinitions(),
     uiData: {
       ...getNewProjectUiData()
     }

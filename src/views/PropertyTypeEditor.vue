@@ -16,27 +16,19 @@
           v-model="selectedType"
           @change="updateLocalProperty(); maybeSubmit()"
         >
-          <option
-            v-for="type in basicTypes"
-            :key="type.name || type"
-            :value="type"
-          >
-            {{ type.name || type }}
+          <option v-for="type in basicTypes" :key="type" :value="type">
+            {{ type }}
           </option>
         </select>
         <select
-          v-if="isTypeReference"
+          v-if="isRef"
           :disabled="!editable"
           class="selector type-reference"
-          v-model="localProperty.type.typeRef"
+          v-model="refTarget"
           @change="maybeSubmit"
         >
-          <option
-            v-for="type in projectTypes"
-            :key="type.name || type"
-            :value="type.name"
-          >
-            {{ type.name }}
+          <option v-for="type in projectTypes" :key="type" :value="type">
+            {{ type }}
           </option>
         </select>
       </div>
@@ -45,7 +37,6 @@
       v-if="isContainer"
       v-bind:is="objectDisplay"
       v-bind="displayProps"
-      @update-entity="updateChildProperties"
     />
   </div>
 </template>
@@ -65,9 +56,11 @@ export default class PropertyTypeEditor extends Vue {
 
   @Prop() order!: number
 
-  @Prop() property!: PropertyType
+  @Prop() property!: PropDefinition
 
-  localProperty: PropertyType = { ...this.property }
+  localProperty: PropDefinition = { ...this.property }
+
+  refTarget = '';
 
   objectDisplay = ObjectDisplay
 
@@ -80,7 +73,8 @@ export default class PropertyTypeEditor extends Vue {
     }
   }
 
-  selectedType = typeof this.localProperty.type === 'string' ? this.localProperty.type : this.localProperty.type.name
+  // selectedType = typeof this.localProperty.valueType === 'string' ? this.localProperty.type : this.localProperty.type.name
+  selectedType = typeof this.localProperty.valueType
 
   updateLocalProperty() {
     console.log('updating local property')
@@ -96,25 +90,26 @@ export default class PropertyTypeEditor extends Vue {
 
   get basicTypes() {
     return [
-      'char', 'uint', 'int', 'float', 'bool', 'typeRef', 'struct', 'array'
+      'uint32', 'flt', 'string', 'bool'
     ]
   }
 
   get projectTypes() {
-    return this.$store.getters.projectTypes
+    return Object.keys(this.$store.getters.projectTypes)
   }
 
-  get isTypeReference() {
-    return this.selectedType === 'typeRef'
+  get isRef() {
+    return this.localProperty.name.includes('ref_')
   }
 
-  get isContainer() {
-    return this.localProperty.type === 'struct' || this.localProperty.type === 'array'
+  get isArray() {
+    return this.localProperty.isArray
   }
 
   get isDirty() {
     return this.property.name !== this.localProperty.name
-      || this.property.type !== this.localProperty.type
+      || this.property.valueType !== this.localProperty.valueType
+      || this.property.isArray !== this.localProperty.isArray
   }
 
   get style() {
@@ -124,15 +119,8 @@ export default class PropertyTypeEditor extends Vue {
   }
 
   maybeSubmit() {
-    if (this.isDirty) this.sendToParent()
-  }
-
-  updateChildProperties(properties: PropertyType[]) {
-    if (properties.length) {
-      this.localProperty.children = [...properties]
+    if (this.isDirty) {
       this.sendToParent()
-    } else {
-      delete this.localProperty.children
     }
   }
 
