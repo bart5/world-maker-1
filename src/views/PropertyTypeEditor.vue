@@ -5,7 +5,7 @@
         <input
           :disabled="!editable"
           type="text"
-          v-model="localProperty.name"
+          v-model="localProp.name"
           @change="maybeSubmit"
         >
       </div>
@@ -14,7 +14,7 @@
           :disabled="!editable"
           class="selector type-selector"
           v-model="selectedType"
-          @change="updateLocalProperty(); maybeSubmit()"
+          @change="updatelocalProp(); maybeSubmit()"
         >
           <option v-for="type in basicTypes" :key="type" :value="type">
             {{ type }}
@@ -36,7 +36,7 @@
         <input
           :disabled="!editable"
           type="checkbox"
-          v-model="localProperty.isArray"
+          v-model="localProp.isArray"
           @change="maybeSubmit"
         >
       </div>
@@ -61,15 +61,11 @@ import ObjectDisplay from '@/views/ObjectDisplay.vue'
   components: {},
 })
 export default class PropertyTypeEditor extends Vue {
+  @Prop() prop!: PropDefinition
+
   @Prop() editable!: boolean
 
-  @Prop() tempID!: string
-
-  @Prop() order!: number
-
-  @Prop() property!: PropDefinition
-
-  localProperty: PropDefinition = { ...this.property }
+  localProp: PropDefinition = { ...this.prop }
 
   refTarget = '';
 
@@ -85,7 +81,7 @@ export default class PropertyTypeEditor extends Vue {
     }
   }
 
-  selectedType: ValueType | 'ref' = this.localProperty.valueType
+  selectedType: ValueType | 'ref' = this.localProp.valueType
 
   setRefTarget() {
     // eslint-disable-next-line prefer-destructuring
@@ -96,13 +92,13 @@ export default class PropertyTypeEditor extends Vue {
     this.showRefTarget = !this.showRefTarget
   }
 
-  updateLocalProperty() {
+  updatelocalProp() {
     console.log('updating local property')
     if (this.selectedType === 'ref') {
-      this.localProperty.valueType = 'int32'
+      this.localProp.valueType = 'int32'
       this.setRefTarget()
     } else {
-      this.localProperty.valueType = this.selectedType
+      this.localProp.valueType = this.selectedType
     }
   }
 
@@ -117,23 +113,17 @@ export default class PropertyTypeEditor extends Vue {
   }
 
   get isRef() {
-    return this.localProperty.name.includes('ref_')
+    return this.localProp.name.includes('ref_')
   }
 
   get isArray() {
-    return this.localProperty.isArray
+    return this.localProp.isArray
   }
 
   get isDirty() {
-    return this.property.name !== this.localProperty.name
-      || this.property.valueType !== this.localProperty.valueType
-      || this.property.isArray !== this.localProperty.isArray
-  }
-
-  get style() {
-    return {
-      order: this.order
-    }
+    return this.prop.name !== this.localProp.name
+      || this.prop.valueType !== this.localProp.valueType
+      || this.prop.isArray !== this.localProp.isArray
   }
 
   maybeSubmit() {
@@ -143,11 +133,11 @@ export default class PropertyTypeEditor extends Vue {
   }
 
   sendToParent() {
-    this.$emit('update-property', { id: this.tempID, entity: this.localProperty, refTarget: this.refTarget })
+    this.$emit('update-property', { ...this.localProp })
   }
 
   selectProperty() {
-    this.$emit('select-property', this.tempID)
+    this.$emit('select-property', this.prop.name)
   }
 }
 </script>

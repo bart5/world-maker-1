@@ -142,16 +142,16 @@ interface StaticData {
 }
 
 interface InstancesList {
-  [instanceId: number]: TypeInstance;
+  [instanceId: number]: TypesInstances;
 }
 
-interface TypeBasics {
+interface InstanceBasics {
   id: InstanceProp;
   meta_typeId: InstanceProp;
   meta_isBound: InstanceProp;
 }
 
-interface TypeInstance extends TypeBasics {
+interface TypesInstances extends InstanceBasics {
   [propName: string]: InstanceProp;
 }
 

@@ -1,13 +1,16 @@
 <template>
   <div class="object-wrapper">
+    <button :disabled="isDirty" @click="submitChanges">Submit changes</button>
     <div class="properties">
       <template v-if="entityType === 'type'">
         <PropertyTypeEditor
           v-for="prop in props"
+          :prop="prop"
           :key="prop.name"
           :editable="editable"
-          @update-property="updateEntity"
-          @select-property="selectEntity"
+          @update-property="updateProp"
+          @revert-property="revertProp"
+          @select-property="selectProp"
         />
       </template>
       <!-- <template v-else>
@@ -46,19 +49,25 @@ export default class ObjectDisplay extends Vue {
   selectedName = ''
 
   get props() {
-    return this.typeDefinition || this.typeInstnace
+    return this.typeDefinition || this.typeInstnace as TypeDefinition | TypesInstances
+  }
+
+  localProps: any = {}
+
+  get isDirty() {
+    return Object.keys(this.localProps).length > 0
   }
 
   get selectedProp(): PropDefinition | InstanceProp {
     return Object.keys(this.props).filter((k) => this.props[k].name === this.selectedName).map((k) => this.props[k])[0]
   }
 
-  get typeDefinition(): TypeDefinition {
+  get typeDefinition(): TypeDefinition | null {
     return this.typeName ? this.$store.getters.getTypeDefinition(this.typeName) : null
   }
 
-  get typeInstnace(): TypeInstance | null {
-    return this.instanceId ? this.$store.getters.getTypeInstance(this.instanceId) : null
+  get typeInstnace(): TypesInstances | null {
+    return this.instanceId ? this.$store.getters.getTypesInstances(this.instanceId) : null
   }
 
   get entityType() {
@@ -70,22 +79,7 @@ export default class ObjectDisplay extends Vue {
       this.$store.dispatch('updateType', this.props)
     }
     if (this.entityType === 'instance') {
-      this.$store.dispatch('updateTypeInstance', this.props)
-    }
-  }
-
-  getNewEntityTemplate(): PropertyType | PropertyInstance {
-    if (this.entityType === 'type') {
-      return {
-        name: 'New Property',
-        type: 'bool',
-        order: this.entities.length
-      }
-    }
-    return {
-      name: 'New Property',
-      type: 'bool',
-      value: 'true'
+      this.$store.dispatch('updateTypesInstances', this.props)
     }
   }
 
@@ -99,19 +93,30 @@ export default class ObjectDisplay extends Vue {
     this.$store.dispatch('removeTypeProp', { typeName: this.typeName, propName })
   }
 
-  updateProp(newProp: Partial<PropDefinition | InstanceProp>) {
-    if (this.entityType === 'type') {
-      this.$store.dispatch('updateTypeProperty', newProp)
-    } else if (this.entityType === 'instance') {
-      this.$store.dispatch('updateInstanceProperty', newProp)
+  updateProp(newProp: PropDefinition | InstanceProp) {
+    this.localProps[newProp.name] = {
+      ...newProp
     }
   }
 
-  selectEntity(tempID: string) {
-    const keyedEntity = this.keyedEntities.find((kp) => kp.id === tempID)
-    if (keyedEntity) {
-      this.selectedKeyedEntity = keyedEntity
+  revertProp(newProp: PropDefinition | InstanceProp) {
+    if (newProp.name in this.localProps) {
+      delete this.localProps[newProp.name]
     }
+  }
+
+  submitChanges() {
+    Object.entries(this.localProps).forEach((p) => {
+      if (this.entityType === 'type') {
+        this.$store.dispatch('updateTypeProperty', p[1])
+      } else if (this.entityType === 'instance') {
+        this.$store.dispatch('updateInstanceProperty', p[1])
+      }
+    })
+  }
+
+  selectProp(propName: string) {
+    this.selectedName = propName
   }
 }
 </script>

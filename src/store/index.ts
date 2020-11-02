@@ -46,6 +46,7 @@ const getNewProjectUiData = () => {
   return uiData
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getInstanceProp(
   valueType: 'int32' | 'string' | 'flt' | 'bool', name: string, values: Array<number | string | boolean>, isArray?: boolean
 ): InstanceProp {
@@ -92,7 +93,7 @@ const getMockedTypesDefinitions = (): TypesDefinitions => {
   }
 }
 
-function getMockedTypeInstance(typeName: string, typeId: number, types?: TypesDefinitions): TypeInstance {
+function getMockedTypesInstances(typeName: string, typeId: number, types?: TypesDefinitions): TypesInstances {
   const id = Date.now().toString().substring(4)
   const assignValues = (prop: PropDefinition): InstanceProp => {
     const getValues = (valueType: ValueType, isArray?: boolean) => {
@@ -143,19 +144,19 @@ function getMockedTypeInstance(typeName: string, typeId: number, types?: TypesDe
   }
 
   const props = types ? types[typeName] : getMockedTypesDefinitions()[typeName]
-  const typeInstance: TypeInstance = Object.keys(props).reduce((acc, k) => {
+  const TypesInstances: TypesInstances = Object.keys(props).reduce((acc, k) => {
     return {
       ...acc,
       [props[k].name]: assignValues(props[k])
     }
-  }, {} as TypeInstance)
+  }, {} as TypesInstances)
 
-  return typeInstance
+  return TypesInstances
 }
 
 const getMockedStaticData = (): StaticData => {
   const getType = (typeName: string, typeId: number) => {
-    const instance = getMockedTypeInstance(typeName, typeId)
+    const instance = getMockedTypesInstances(typeName, typeId)
     return {
       [(instance.id as InstanceProp).values[0] as number]: {
         ...instance
@@ -770,7 +771,14 @@ export default createStore({
     saveCurrentWorkspaceCamera() {
       this.commit('SET_CURRENT_WORKSPACE_CAMERA')
     },
-    updateType(state, descriptor: TypeDescriptor) {
+    /** ==============================================================
+     *  TYPES ACTIONS
+     *  ==============================================================
+     */
+    updateTypeProperty(state, descriptor: TypeDescriptor) {
+      this.commit('UPDATE_TYPE', descriptor)
+    },
+    updateInstanceProperty(state, descriptor: TypeDescriptor) {
       this.commit('UPDATE_TYPE', descriptor)
     },
   },

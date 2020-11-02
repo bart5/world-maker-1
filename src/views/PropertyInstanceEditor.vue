@@ -41,7 +41,7 @@
               @change="maybeSubmit"
             >
               <option
-                v-for="instance in typeInstances"
+                v-for="instance in TypesInstancess"
                 :key="instance.id"
                 :value="instance.id"
               >
@@ -139,8 +139,8 @@ export default class TypePropertyEditor extends Vue {
     return this.localProperty.value
   }
 
-  get typeInstances() {
-    return this.$store.getters.typeInstances({ type: this.localProperty.type })
+  get TypesInstancess() {
+    return this.$store.getters.TypesInstancess({ type: this.localProperty.type })
   }
 
   get isDirty() {
