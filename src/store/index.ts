@@ -99,11 +99,17 @@ const getMockedTypesDefinitions = (): TypesDefinitions => {
   }
 }
 
-function getMockedTypeInstance(typeName: string, types?: TypesDefinitions): TypeInstance {
+function getMockedTypeInstance(typeName: string, typeId: number, types?: TypesDefinitions): TypeInstance {
+  const id = Date.now().toString().substring(4)
   const assignValues = (prop: PropDefinition): InstanceProp => {
     const getValues = (valueType: ValueType, isArray?: boolean) => {
       const getValue = (vT: ValueType) => {
         if (vT === 'int32') {
+          if (prop.name === 'id') {
+            return id
+          } else if (prop.name === 'meta_typeId') {
+            return typeId
+          }
           return Math.round(Math.random() * 100)
         } else if (vT === 'flt') {
           return (Math.random() * 100).toFixed(5)
@@ -126,9 +132,8 @@ function getMockedTypeInstance(typeName: string, types?: TypesDefinitions): Type
           }
 
           return getSentence()
-        } else if (vT === 'bool') {
-          return Boolean(Math.round(Math.random()))
         }
+        return Boolean(Math.round(Math.random()))
       }
 
       const length = isArray ? (Math.round(Math.random() * 4)) : 1;
@@ -145,268 +150,43 @@ function getMockedTypeInstance(typeName: string, types?: TypesDefinitions): Type
   }
 
   const props = types ? types[typeName] : getMockedTypesDefinitions()[typeName]
-  Object.entries(props).forEach((p) => {
-    props[p[0]] = assignValues(props[p[0]])
-  })
+  const typeInstance: TypeInstance = Object.keys(props).reduce((acc, k) => {
+    return {
+      ...acc,
+      [props[k].name]: assignValues(props[k])
+    }
+  }, {} as TypeInstance)
 
-  return props as TypeInstance
+  return typeInstance
 }
 
 const getMockedStaticData = (): StaticData => {
-  return {
-    type1: {
-      15457: {
-        id: {
-          valueType: 'int32',
-          name: 'id',
-          values: [15457],
-        },
-        id: {
-          valueType: 'int32',
-          name: 'id',
-          values: [15457],
-        },
-        id: {
-          valueType: 'int32',
-          name: 'id',
-          values: [15457],
-        },
-      }
-    },
-    typeA: {
-      'typeAinstanceID123': {
-        /* Type cannot not have an id unless it's an enum */
-        id: 'typeAinstanceID123',
-        'ACharProp': {
-          name: 'ACharProp',
-          type: 'char',
-          value: 'Some text',
-        },
-        'AUintProp': {
-          name: 'AUintProp',
-          type: 'uint',
-          value: 12345,
-        },
-        'AIntProp': {
-          name: 'AIntProp',
-          type: 'int',
-          value: -4567,
-        },
-        'AFloatProp': {
-          name: 'AFloatProp',
-          type: 'float',
-          value: 12.4578,
-        },
-        'ABoolProp': {
-          name: 'ABoolProp',
-          type: 'bool',
-          value: 'false',
-        }
-      },
-    },
-    /* Type with properties referencing other types */
-    typeB: {
-      'typeBinstanceID234': {
-        id: 'typeBinstanceID234',
-        'BReftoC': {
-          name: 'BReftoC',
-          type: { name: 'typeRef', typeRef: 'typeC' },
-          value: 'typeCinstanceID435',
-        },
-        'BCharprop': {
-          name: 'BCharprop',
-          type: 'char',
-          value: 'Whoaa',
-        },
-        'BReftoA': {
-          name: 'BReftoA',
-          type: { name: 'typeRef', typeRef: 'typeA' },
-          value: 'typeAinstanceID123',
-        },
-        'BFloatprop': {
-          name: 'BFloatprop',
-          type: 'float',
-          value: 12.5,
-        }
-      }
-    },
-    /* Simple type for reference for other types */
-    typeC: {
-      'typeCinstanceID435': {
-        id: 'typeCinstanceID435',
-        'ACharProp': {
-          name: 'ACharProp',
-          type: 'char',
-          value: 'Some text',
-        },
-        'AUintProp': {
-          name: 'AUintProp',
-          type: 'uint',
-          value: 12345,
-        },
-      }
-    },
-    /* Type with struct nested under one of it's properties */
-    typeD: {
-      'typeDInstance213': {
-        id: 'typeDInstance213',
-        'DCharProp1': {
-          name: 'DCharProp1',
-          type: 'char',
-          value: 'harharhar',
-        },
-        'DStructProp1': {
-          name: 'DStructProp1',
-          type: 'struct',
-          value: {
-            'DStructChild1': {
-              name: 'DStructChild1',
-              type: 'char',
-              value: 'harharhar',
-            },
-            'DStructChild2': {
-              name: 'DStructChild2',
-              type: 'bool',
-              value: 'true',
-            },
-            'DStructChild3': {
-              name: 'DStructChild3',
-              /*
-                If type names would be assured to newer clash with 'struct' 'array'
-                and primitive types, then I could get rid of the object and use
-                just referenced type name.
-              */
-              type: { name: 'typeRef', typeRef: 'typeA' },
-              value: 'typeAinstanceID123',
-            },
-            'DStructChild4': {
-              name: 'DStructChild4',
-              type: 'float',
-              value: 1.245,
-            }
-          }
-        }
-      }
-    },
-    /* Enum type */
-    /* Enums have 1 and only 1 instance */
-    /* They also don't have an id */
-    /* Values are always strings and match their keys, so structure can be simplified */
-    typeEENUM: {
-      isEnum: true,
-      'typeEENUM': {
-        'Case1': 'Case1',
-        'Case2': 'Case2',
-        'Case3': 'Case3',
-        'Case4': 'Case4',
-      }
-    },
-    /* Type with props containing arrays */
-    typeF: {
-      'typeFInstanceID389': {
-        'EArrayProp1': {
-          name: 'EArrayProp1',
-          type: 'array',
-          innerType: {
-            name: 'typeRef',
-            typeRef: 'typeC'
-          },
-          value: [
-            'typeCinstanceID435'
-          ]
-        },
-        'EArrayProp2': {
-          name: 'EArrayProp2',
-          type: 'array',
-          innerType: 'int',
-          value: [
-            '123', '214214124', '65344'
-          ]
-        }
+  const getType = (typeName: string, typeId: number) => {
+    const instance = getMockedTypeInstance(typeName, typeId)
+    return {
+      [(instance.id as InstanceProp).values[0] as number]: {
+        ...instance
       }
     }
+  }
+  return {
+    type1: {
+      ...getType('type1', 0),
+      ...getType('type1', 0),
+      ...getType('type1', 0),
+      ...getType('type1', 0)
+    },
+    type2: {
+      ...getType('type2', 1),
+      ...getType('type2', 1),
+      ...getType('type2', 1),
+      ...getType('type2', 1)
+    },
   }
 }
 
 const getMockedTypes = (): Types => {
   return {
-    typeA: {
-      name: 'typeA',
-      instance: [
-        { name: 'ACharProp', type: 'char', order: 1 },
-        { name: 'AUintProp', type: 'uint', order: 2 },
-        { name: 'AIntProp', type: 'int', order: 3 },
-        { name: 'AFloatProp', type: 'float', order: 4 },
-        { name: 'ABoolProp', type: 'bool', order: 5 },
-      ]
-    },
-    typeB: {
-      name: 'typeB',
-      instance: [
-        { name: 'BReftoC', type: 'typeRef', innerType: 'typeC', order: 1 },
-        { name: 'BCharprop', type: 'char', order: 2 },
-        { name: 'BReftoA', type: 'typeRef', innerType: 'typeA', order: 3 },
-        { name: 'BFloatprop', type: 'float', order: 4 },
-      ]
-    },
-    typeC: {
-      name: 'typeC',
-      instance: [
-        { name: 'CCharProp1', type: 'char', order: 1 },
-        { name: 'CCharProp2', type: 'char', order: 2 },
-        { name: 'CFloatProp1', type: 'float', order: 3 },
-        { name: 'CFloatProp2', type: 'float', order: 4 },
-      ]
-    },
-    typeD: {
-      name: 'typeD',
-      instance: [
-        { name: 'DCharProp1', type: 'char', order: 1 },
-        {
-          name: 'DStructProp1',
-          type: 'struct',
-          children: [
-            { name: 'DStructChild1', type: 'char', order: 1 },
-            { name: 'DStructChild2', type: 'bool', order: 2 },
-            { name: 'DStructChild3', type: 'typeRef', innerType: 'typeA', order: 3 },
-            { name: 'DStructChild4', type: 'float', order: 4 },
-          ],
-          order: 2
-        },
-        { name: 'Prop3', type: 'float', order: 3 },
-        { name: 'Prop4', type: 'float', order: 4 },
-      ]
-    },
-    typeEENUM: {
-      name: 'typeEENUM',
-      isEnum: true,
-      instance: [
-        { name: 'Case1', type: 'char', order: 1 },
-        { name: 'Case2', type: 'char', order: 2 },
-        { name: 'Case3', type: 'char', order: 3 },
-        { name: 'Case4', type: 'char', order: 4 },
-      ]
-    },
-    typeF: {
-      name: 'typeF',
-      instance: [
-        {
-          name: 'EArrayProp1',
-          type: 'array',
-          /* Array type doesn't have to specify anything about the children beyond their type */
-          innerType: 'typeC',
-          // children: [],
-          order: 1
-        },
-        {
-          name: 'EArrayProp1',
-          type: 'array',
-          innerType: 'int',
-          // children: [],
-          order: 1
-        },
-      ]
-    },
   }
 }
 
