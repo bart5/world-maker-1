@@ -106,98 +106,41 @@ type modalTypes =
   'configuration'
   | 'projectSelector'
   | 'typesManager'
-  | null
+  | null;
+
+// ===================
+
+enum ValueTypes {
+  int32 = 0,
+  string,
+  flt,
+  bool
+}
+
+enum TypeNames {
+  type1 = 0, // type1 is a name and it's numeric value is type index
+}
 
 interface StaticData {
-  [type in Types]: Array<TypeInstance> | { [id: string]: TypeInstance }
+  [typeName in TypeNames]: InstancesList;
 }
 
-interface Types {
-  [typeName: string]: TypeDescriptor
+interface InstancesList {
+  [instanceId: number]: TypeInstance;
 }
 
-type instanceID = string;
-
-interface TypeDescriptor {
-  name: keyof Types;
-  extends?: keyof Types;
-  isEnum?: boolean;
-  instance: Array<PropertyType>;
+interface TypeBasics {
+  id: number;
+  meta_isBound: boolean;
 }
 
-interface PropertyType {
+interface TypeInstance extends TypeBasics {
+  [propName: string]: InstanceProp;
+}
+
+interface InstanceProp {
   name: string;
-  type: PropertyTypeDescriptor;
-  order: number;
-  innerType?: PropertyInnerTypeDescriptor | TypeRef;
-  children?: Array<PropertyType>;
-}
-
-interface PropertyInstance {
-  name: string;
-  type: PropertyTypeDescriptor;
-  value: any;
-  isEnum?: boolean;
-}
-
-type PropertyTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | 'typeRef' | 'struct' | 'array'
-type PropertyInnerTypeDescriptor = 'char' | 'uint' | 'int' | 'float' | 'bool' | 'typeRef'
-
-type TypeRef = Extract<keyof Types, string>
-
-type ArrayType = {
-  name: 'arrayType',
-  type: PropertyTypeDescriptor,
-}
-
-interface TypeInstance {
-  id: instanceID;
-  [propertName: string]: PropertyInstance;
-}
-
-type PropertyInstance = PrimitiveTypeValue | TypeReference | EnumTypeValue | StructContainer | ArrayContainer
-
-type PrimitiveTypeValue = CharValue | NumericValue | BoolValue
-
-interface CharValue {
-  name: string;
-  type: 'char';
-  value: string;
-}
-
-interface NumericValue {
-  name: string;
-  type: 'uint' | 'int' | 'float';
-  value: number;
-}
-
-interface BoolValue {
-  name: string;
-  type: 'bool';
-  value: boolean;
-}
-
-interface TypeReference {
-  name: string;
-  type: keyof Types;
-  value: instanceID;
-}
-
-interface EnumTypeValue {
-  name: string;
-  type: keyof Types;
-  value: string;
-}
-
-interface StructContainer {
-  name: string;
-  type: 'struct';
-  value: { [k: string]: PropertyInstance };
-}
-
-interface ArrayContainer {
-  name: string;
-  type: 'array';
-  innerType: PropertyInstance;
-  value: Array<PropertyInstance>;
+  valueType: ValueTypes;
+  isArray: bool;
+  values: Array<string>;
 }
