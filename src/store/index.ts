@@ -46,9 +46,133 @@ const getNewProjectUiData = () => {
   return uiData
 }
 
+const getMockedTypes = (): Types => {
+  return {
+    type1: 0,
+    type2: 1,
+  }
+}
+
+function getInstanceProp(
+  valueType: 'int32' | 'string' | 'flt' | 'bool', name: string, values: Array<number | string | boolean>, isArray?: boolean
+): InstanceProp {
+  return getProp(valueType, name, values, isArray) as InstanceProp;
+}
+function getTypeDefProp(
+  valueType: 'int32' | 'string' | 'flt' | 'bool', name: string, isArray?: boolean
+): PropDefinition {
+  return getProp(valueType, name, null, isArray);
+}
+function getProp(
+  valueType: 'int32' | 'string' | 'flt' | 'bool', name: string, values?: Array<number | string | boolean> | null, isArray?: boolean
+): InstanceProp | PropDefinition {
+  return {
+    valueType,
+    name,
+    ...(values || []),
+    ...(isArray ? { isArray } : {})
+  }
+}
+
+const getMockedTypesDefinitions = (): TypesDefinitions => {
+  return {
+    type1: {
+      id: getTypeDefProp('int32', 'id'),
+      meta_isBound: getTypeDefProp('bool', 'meta_isBound'),
+      meta_typeId: getTypeDefProp('int32', 'meta_typeId'),
+      prop1: getTypeDefProp('int32', 'prop1'),
+      prop2: getTypeDefProp('int32', 'prop2')
+    },
+    type2: {
+      id: getTypeDefProp('int32', 'id'),
+      meta_isBound: getTypeDefProp('bool', 'meta_isBound'),
+      meta_typeId: getTypeDefProp('int32', 'meta_typeId'),
+      prop1: getTypeDefProp('int32', 'prop1'),
+      prop2: getTypeDefProp('flt', 'prop2'),
+      prop3: getTypeDefProp('string', 'prop3'),
+      prop4: getTypeDefProp('bool', 'prop4'),
+      prop5: getTypeDefProp('int32', 'prop5', true),
+      prop6: getTypeDefProp('flt', 'prop6', true),
+      prop7: getTypeDefProp('string', 'prop7', true),
+      prop8: getTypeDefProp('bool', 'prop8', true),
+    },
+  }
+}
+
+function getMockedTypeInstance(typeName: string, types?: TypesDefinitions): TypeInstance {
+  const assignValues = (prop: PropDefinition): InstanceProp => {
+    const getValues = (valueType: ValueType, isArray?: boolean) => {
+      const getValue = (vT: ValueType) => {
+        if (vT === 'int32') {
+          return Math.round(Math.random() * 100)
+        } else if (vT === 'flt') {
+          return (Math.random() * 100).toFixed(5)
+        } else if (vT === 'string') {
+          const pieces = ['qe', 'ra', 'lok', 'nu', 've', 'zis', 'foc', 'wam', 'kud', 'ryx', 'kor'];
+          const getWord = () => {
+            return new Array(Math.round(Math.random() * 5)).map((t) => {
+              t = pieces[Math.round(Math.random() * pieces.length)]
+              return t
+            }).join()
+          }
+
+          const getSentence = () => {
+            return (new Array(Math.round(Math.random() * 7)).map((w, i) => {
+              w = (i === 0
+                ? getWord().split('').map((l, li) => ((li === 0) ? l.toUpperCase() : l))
+                : getWord()) + (Math.random() < 0.2 ? ',' : '')
+              return w
+            }).join(' ') + '.')
+          }
+
+          return getSentence()
+        } else if (vT === 'bool') {
+          return Boolean(Math.round(Math.random()))
+        }
+      }
+
+      const length = isArray ? (Math.round(Math.random() * 4)) : 1;
+
+      return Array(length).map(() => getValue(valueType)) as ValueType[]
+    }
+
+    return {
+      valueType: prop.valueType,
+      name: prop.name,
+      ...(prop.isArray ? { isArray: true } : {}),
+      values: getValues(prop.valueType, prop.isArray),
+    }
+  }
+
+  const props = types ? types[typeName] : getMockedTypesDefinitions()[typeName]
+  Object.entries(props).forEach((p) => {
+    props[p[0]] = assignValues(props[p[0]])
+  })
+
+  return props as TypeInstance
+}
+
 const getMockedStaticData = (): StaticData => {
   return {
-    /* Plain type with couple properties with primitive values */
+    type1: {
+      15457: {
+        id: {
+          valueType: 'int32',
+          name: 'id',
+          values: [15457],
+        },
+        id: {
+          valueType: 'int32',
+          name: 'id',
+          values: [15457],
+        },
+        id: {
+          valueType: 'int32',
+          name: 'id',
+          values: [15457],
+        },
+      }
+    },
     typeA: {
       'typeAinstanceID123': {
         /* Type cannot not have an id unless it's an enum */

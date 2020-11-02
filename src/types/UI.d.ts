@@ -110,19 +110,35 @@ type modalTypes =
 
 // ===================
 
-enum ValueTypes {
-  int32 = 0,
-  string,
-  flt,
-  bool
+type ValueType = 'int32' | 'flt' | 'string' | 'bool'
+
+// It is suppsed to resemble enum with list of Types
+interface Types {
+  [typeName: string]: number;
 }
 
-enum TypeNames {
-  type1 = 0, // type1 is a name and it's numeric value is type index
+interface TypesDefinitions {
+  [typeName: string]: TypeDefinition;
+}
+
+interface TypeBasics {
+  id: PropDefinition;
+  meta_typeId: PropDefinition;
+  meta_isBound: PropDefinition;
+}
+
+interface TypeDefinition extends TypeBasics {
+  [propName: string]: PropDefinition;
+}
+
+interface PropDefinition {
+  valueType: ValueType;
+  name: string;
+  isArray?: bool;
 }
 
 interface StaticData {
-  [typeName in TypeNames]: InstancesList;
+  [typeName in Types]: InstancesList;
 }
 
 interface InstancesList {
@@ -130,8 +146,9 @@ interface InstancesList {
 }
 
 interface TypeBasics {
-  id: number;
-  meta_isBound: boolean;
+  id: InstanceProp;
+  meta_isBound: InstanceProp;
+  meta_typeId: InstanceProp;
 }
 
 interface TypeInstance extends TypeBasics {
@@ -139,8 +156,8 @@ interface TypeInstance extends TypeBasics {
 }
 
 interface InstanceProp {
+  valueType: ValueType;
   name: string;
-  valueType: ValueTypes;
-  isArray: bool;
-  values: Array<string>;
+  isArray?: bool;
+  values: Array<string | number | boolean>;
 }
