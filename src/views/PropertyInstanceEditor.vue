@@ -80,16 +80,18 @@ export default class TypePropertyEditor extends Vue {
 
   objectDisplay = ObjectDisplay
 
+  selectedRef = ''
+
   get propDef(): PropDefinition {
     return this.$store.getters.getTypeDefinition(this.typeName, this.prop.name)
   }
 
   get displayProps() {
     return {
-      entities: this.children || [],
+      typeName: this.propDef.refTargetType,
+      instanceId: this.selectedRef,
       entityType: 'instance',
       editable: this.editable,
-      containerType: this.localProperty.type,
     }
   }
 
@@ -119,8 +121,8 @@ export default class TypePropertyEditor extends Vue {
     }
   }
 
-  get TypesInstancess() {
-    return this.$store.getters.TypesInstancess({ type: this.localProperty.type })
+  get TypeInstances() {
+    return this.$store.getters.TypeInstances({ type: this.propDef.refTargetType })
   }
 
   get isDirty() {

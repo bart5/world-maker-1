@@ -4,7 +4,7 @@
     <hr>
     <button
       class="type"
-      v-for="typeName in projectTypesNames"
+      v-for="typeName in projectTypes"
       :key="typeName"
       @click="selectType(typeName)"
     >
@@ -15,12 +15,28 @@
     <ObjectDisplay
       v-if="!!selectedType"
       :typeName="selectedTypeName"
-      :entityType="'type'"
       :editable="true"
     />
       <!-- :instanceId="instanceId" -->
     <hr>
-    <div>Placeholder for instance (JSON and visual presentation)</div>
+    <h3>Type instances</h3>
+    <button
+      class="type"
+      v-for="instanceId in selectedTypeInstances"
+      :key="instanceId"
+      @click="selectInstance(instanceId)"
+    >
+      {{ instanceId }}
+    </button>
+    <hr>
+    <h3>Selected instance details</h3>
+    <ObjectDisplay
+      v-if="!!selectedType"
+      :typeName="selectedTypeName"
+      :instanceId="selectedInstanceId"
+      :editable="true"
+    />
+    <hr>
     <hr>
     <h3>Raw selected type:</h3>
     {{ selectedType }}
@@ -44,6 +60,8 @@ import ObjectDisplay from '@/views/ObjectDisplay.vue'
 export default class TypesManager extends Vue {
   selectedTypeName = ''
 
+  selectedInstanceId = ''
+
   get projectTypes() {
     return this.$store.getters.projectTypes
   }
@@ -52,8 +70,8 @@ export default class TypesManager extends Vue {
     return this.projectTypes[this.selectedTypeName] || null
   }
 
-  get projectTypesNames() {
-    return Object.keys(this.projectTypes)
+  get selectedTypeInstances() {
+    return this.$store.getters.typeInstances(this.selectedTypeName)
   }
 
   createNewType() {
