@@ -15,10 +15,10 @@
     <ObjectDisplay
       v-if="!!selectedType"
       :typeName="selectedTypeName"
-      :instanceId="instanceId"
       :entityType="'type'"
       :editable="true"
     />
+      <!-- :instanceId="instanceId" -->
     <hr>
     <div>Placeholder for instance (JSON and visual presentation)</div>
     <hr>
@@ -42,10 +42,14 @@ import ObjectDisplay from '@/views/ObjectDisplay.vue'
   },
 })
 export default class TypesManager extends Vue {
-  selectedType = ''
+  selectedTypeName = ''
 
   get projectTypes() {
     return this.$store.getters.projectTypes
+  }
+
+  get selectedType() {
+    return this.projectTypes[this.selectedTypeName] || null
   }
 
   get projectTypesNames() {
@@ -54,7 +58,7 @@ export default class TypesManager extends Vue {
 
   selectType(typeName: string) {
     console.log('selecting type: ', typeName)
-    this.selectedType = typeName
+    this.selectedTypeName = typeName
   }
 }
 </script>

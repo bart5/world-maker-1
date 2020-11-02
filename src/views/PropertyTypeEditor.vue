@@ -1,5 +1,5 @@
 <template>
-  <div class="property-wrapper" :style="style">
+  <div class="property-wrapper">
     <div class="property-box">
       <div class="name-field">
         <input
@@ -16,7 +16,7 @@
           v-model="selectedType"
           @change="updatelocalProp(); maybeSubmit()"
         >
-          <option v-for="type in basicTypes" :key="type" :value="type">
+          <option v-for="type in basicTypes" :key="type">
             {{ type }}
           </option>
         </select>
@@ -27,7 +27,7 @@
           v-model="refTarget"
           @change="maybeSubmit"
         >
-          <option v-for="type in projectTypes" :key="type" :value="type">
+          <option v-for="type in projectTypes" :key="type">
             {{ type }}
           </option>
         </select>
@@ -104,7 +104,7 @@ export default class PropertyTypeEditor extends Vue {
 
   get basicTypes() {
     return [
-      'uint32', 'flt', 'string', 'bool', 'ref'
+      'int32', 'flt', 'string', 'bool', 'ref'
     ]
   }
 
@@ -133,7 +133,7 @@ export default class PropertyTypeEditor extends Vue {
   }
 
   sendToParent() {
-    this.$emit('update-property', { ...this.localProp })
+    this.$emit('update-property', { oldPropName: this.prop.name, newProp: { ...this.localProp } })
   }
 
   selectProperty() {

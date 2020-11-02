@@ -138,11 +138,11 @@ interface PropDefinition {
 }
 
 interface StaticData {
-  [typeName in Types]: InstancesList;
+  [typeName: string]: InstancesList;
 }
 
 interface InstancesList {
-  [instanceId: number]: TypesInstances;
+  [instanceId: string]: TypesInstances;
 }
 
 interface InstanceBasics {

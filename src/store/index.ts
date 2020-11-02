@@ -290,7 +290,13 @@ export default createStore({
     },
     projectTypes: (state) => {
       return state.project.types
-    }
+    },
+    getTypeDefinition: (state) => (typeName: string) => {
+      return state.project.types[typeName]
+    },
+    getTypeInstance: (state) => (payload: { typeName: string, instanceId: string }) => {
+      return state.project.staticData[payload.typeName][payload.instanceId]
+    },
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
@@ -475,11 +481,21 @@ export default createStore({
       activeWorkspace.configuration.lastSessionCamera = camera
     },
     /* =========== PROJECT STATIC DATA MUTATIONS =========== */
-    UPDATE_TYPE(state, descriptor: TypeDescriptor) {
+    UPDATE_TYPE_PROPERTY(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
       registerStaticDataMutation(state)
-      console.log('descriptor: ', descriptor)
+      console.log('new type prop: ', payload.newProp)
 
-      state.project.types[descriptor.name] = descriptor
+      state.project.types[payload.typeName][payload.oldPropName] = {
+        ...payload.newProp
+      }
+    },
+    UPDATE_INSTANCE_PROPERTY(state, payload: { newProp: InstanceProp, typeName: string, instanceId: string }) {
+      registerStaticDataMutation(state)
+      console.log('new instance prop: ', payload.newProp)
+
+      state.project.staticData[payload.typeName][payload.instanceId][payload.newProp.name] = {
+        ...payload.newProp
+      }
     },
     /* =========== PROJECT ENTITY BINDING MUTATIONS =========== */
     /* =========== APPLICATION DATA MUTATIONS =========== */
@@ -775,11 +791,11 @@ export default createStore({
      *  TYPES ACTIONS
      *  ==============================================================
      */
-    updateTypeProperty(state, descriptor: TypeDescriptor) {
-      this.commit('UPDATE_TYPE', descriptor)
+    updateTypeProperty(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+      this.commit('UPDATE_TYPE_PROPERTY', payload)
     },
-    updateInstanceProperty(state, descriptor: TypeDescriptor) {
-      this.commit('UPDATE_TYPE', descriptor)
+    updateInstanceProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
+      this.commit('UPDATE_INSTANCE_PROPERTY', payload)
     },
   },
   modules: {

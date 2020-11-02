@@ -1,17 +1,18 @@
 <template>
   <div class="object-wrapper">
-    <button :disabled="isDirty" @click="submitChanges">Submit changes</button>
+    <button class="button" :disabled="!isDirty" @click="submitChanges">Submit changes</button>
     <div class="properties">
       <template v-if="entityType === 'type'">
         <PropertyTypeEditor
           v-for="prop in props"
           :prop="prop"
-          :key="prop.name"
+          :key="typeName + prop.name"
           :editable="editable"
           @update-property="updateProp"
           @revert-property="revertProp"
           @select-property="selectProp"
         />
+          <!-- :tempId="item[0]" -->
       </template>
       <!-- <template v-else>
         <PropertyInstanceEditor
@@ -48,14 +49,18 @@ export default class ObjectDisplay extends Vue {
 
   selectedName = ''
 
+  // get items() {
+  //   return Object.entries(this.props).map((tuple) => [Date.now().toString().substring(5), ...tuple])
+  // }
+
   get props() {
     return this.typeDefinition || this.typeInstnace as TypeDefinition | TypesInstances
   }
 
-  localProps: any = {}
+  modifiedProps: any = {}
 
   get isDirty() {
-    return Object.keys(this.localProps).length > 0
+    return Object.keys(this.modifiedProps).length > 0
   }
 
   get selectedProp(): PropDefinition | InstanceProp {
@@ -63,11 +68,11 @@ export default class ObjectDisplay extends Vue {
   }
 
   get typeDefinition(): TypeDefinition | null {
-    return this.typeName ? this.$store.getters.getTypeDefinition(this.typeName) : null
+    return this.instanceId ? null : this.$store.getters.getTypeDefinition(this.typeName)
   }
 
   get typeInstnace(): TypesInstances | null {
-    return this.instanceId ? this.$store.getters.getTypesInstances(this.instanceId) : null
+    return this.instanceId ? this.$store.getters.getTypeInstance(this.instanceId) : null
   }
 
   get entityType() {
@@ -93,26 +98,27 @@ export default class ObjectDisplay extends Vue {
     this.$store.dispatch('removeTypeProp', { typeName: this.typeName, propName })
   }
 
-  updateProp(newProp: PropDefinition | InstanceProp) {
-    this.localProps[newProp.name] = {
-      ...newProp
+  updateProp(p: { oldPropName: string, newProp: PropDefinition | InstanceProp, tempId: string }) {
+    this.modifiedProps[p.oldPropName] = {
+      ...p.newProp,
     }
   }
 
-  revertProp(newProp: PropDefinition | InstanceProp) {
-    if (newProp.name in this.localProps) {
-      delete this.localProps[newProp.name]
+  revertProp(oldPropName: string) {
+    if (oldPropName in this.modifiedProps) {
+      delete this.modifiedProps[oldPropName]
     }
   }
 
   submitChanges() {
-    Object.entries(this.localProps).forEach((p) => {
+    Object.entries(this.modifiedProps).forEach((tuple) => {
       if (this.entityType === 'type') {
-        this.$store.dispatch('updateTypeProperty', p[1])
+        this.$store.dispatch('updateTypeProperty', { oldPropName: tuple[0], typeName: this.typeName, newProp: tuple[1] })
       } else if (this.entityType === 'instance') {
-        this.$store.dispatch('updateInstanceProperty', p[1])
+        this.$store.dispatch('updateInstanceProperty', { typeName: this.typeName, instanceId: this.instanceId, newProp: tuple[1] })
       }
     })
+    this.modifiedProps = {};
   }
 
   selectProp(propName: string) {
