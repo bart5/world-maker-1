@@ -30,7 +30,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop } from 'vue-property-decorator';
+import { Prop, Watch } from 'vue-property-decorator';
 import PropertyTypeEditor from '@/views/PropertyTypeEditor.vue'
 
 @Options({
@@ -49,9 +49,10 @@ export default class ObjectDisplay extends Vue {
 
   selectedName = ''
 
-  // get items() {
-  //   return Object.entries(this.props).map((tuple) => [Date.now().toString().substring(5), ...tuple])
-  // }
+  @Watch('typeName')
+  handle() {
+    this.modifiedProps = {}
+  }
 
   get props() {
     return this.typeDefinition || this.typeInstnace as TypeDefinition | TypesInstances
@@ -123,6 +124,10 @@ export default class ObjectDisplay extends Vue {
 
   selectProp(propName: string) {
     this.selectedName = propName
+  }
+
+  createNewProperty() {
+    this.$store.dispatch('createNewProperty', { typeName: this.typeName })
   }
 }
 </script>

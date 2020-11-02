@@ -1,6 +1,15 @@
 <template>
   <div class="property-wrapper">
     <div class="property-box">
+      <div class="isRef-field">
+        <input
+          :disabled="!editable"
+          type="checkbox"
+          :checked="isRef"
+          @click="toggleRef"
+          @change="maybeSubmit"
+        >
+      </div>
       <div class="name-field">
         <input
           :disabled="!editable"
@@ -24,7 +33,7 @@
           v-if="isRef"
           :disabled="!editable"
           class="selector type-reference"
-          v-model="refTarget"
+          v-model="localProp.refTargetType"
           @change="maybeSubmit"
         >
           <option v-for="type in projectTypes" :key="type">
@@ -40,8 +49,8 @@
           @change="maybeSubmit"
         >
       </div>
-      <div class="show-ref-target button">
-        <button @click="toggleShowRefTarget"></button>
+      <div v-if="isRef" class="show-ref-target button">
+        <button @click="toggleShowRefTarget">Show ref</button>
       </div>
     </div>
     <component
@@ -75,13 +84,24 @@ export default class PropertyTypeEditor extends Vue {
 
   get displayProps() {
     return {
-      typeName: this.refTarget,
+      typeName: this.localProp.refTargetType,
       entityType: 'type',
       editable: this.editable,
     }
   }
 
   selectedType: ValueType | 'ref' = this.localProp.valueType
+
+  toggleRef() {
+    if (this.localProp.name.startsWith('ref_')) {
+      this.localProp.name = this.localProp.name.replace('ref_', '')
+      this.localProp.isRef = false
+    } else {
+      this.localProp.name = 'ref_' + this.localProp.name
+      this.localProp.isRef = true
+      this.localProp.valueType = 'int32'
+    }
+  }
 
   setRefTarget() {
     // eslint-disable-next-line prefer-destructuring
@@ -104,7 +124,7 @@ export default class PropertyTypeEditor extends Vue {
 
   get basicTypes() {
     return [
-      'int32', 'flt', 'string', 'bool', 'ref'
+      'int32', 'flt', 'string', 'bool'
     ]
   }
 
@@ -113,7 +133,7 @@ export default class PropertyTypeEditor extends Vue {
   }
 
   get isRef() {
-    return this.localProp.name.includes('ref_')
+    return this.localProp.isRef
   }
 
   get isArray() {

@@ -135,6 +135,9 @@ interface PropDefinition {
   valueType: ValueType;
   name: string;
   isArray?: bool;
+  isRef?: boolean;
+  refTargetType?: string,
+  order?: number;
 }
 
 interface StaticData {

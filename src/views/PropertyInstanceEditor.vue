@@ -72,15 +72,17 @@ import ObjectDisplay from '@/views/ObjectDisplay.vue'
 export default class TypePropertyEditor extends Vue {
   @Prop() editable!: boolean
 
-  @Prop() tempID!: string
+  @Prop() prop!: InstanceProp
 
-  @Prop() order!: number
+  @Prop() typeName!: string
 
-  @Prop() property!: PropertyInstance
-
-  localProperty: PropertyInstance = { ...this.property }
+  localProperty: InstanceProp = { ...this.prop }
 
   objectDisplay = ObjectDisplay
+
+  get propDef(): PropDefinition {
+    return this.$store.getters.getTypeDefinition(this.typeName, this.prop.name)
+  }
 
   get displayProps() {
     return {
@@ -91,52 +93,30 @@ export default class TypePropertyEditor extends Vue {
     }
   }
 
-  get isPrimitiveType() {
-    return typeof this.localProperty.type === 'string'
-      && ['char', 'uint', 'int', 'float', 'bool'].includes(this.localProperty.type)
+  get isRef() {
+    return this.localProperty
   }
 
-  get isTypeReference() {
-    const name = typeof this.localProperty.type === 'object' ? this.localProperty.type.name : undefined
-    return name ? name === 'typeRef' : false
-  }
-
-  get isContainer() {
-    return this.localProperty.type === 'struct' || this.localProperty.type === 'array'
+  get isArray() {
+    return this.prop.isArray
   }
 
   get valueInputAttributes() {
-    const propType = this.localProperty.type
-    const min = propType === 'uint' ? '0'
-      : propType === 'int' ? '-2000000000'
-        : propType === 'float' ? '-2000000000' : ''
-    const max = propType === 'uint' ? '4000000000'
-      : propType === 'int' ? '2000000000'
-        : propType === 'float' ? '2000000000' : ''
-    const step = propType === 'uint' ? '1' : '1'
-    const type = propType === 'char' ? 'text' : 'number'
+    const propType = this.prop.valueType
+    const min = propType === 'int32' ? '-2000000000' : propType === 'flt' ? '-2000000000' : ''
+    const max = propType === 'int32' ? '2000000000' : propType === 'flt' ? '2000000000' : ''
+    const step = propType === 'int32' ? '1' : propType === 'flt' ? '0.00001' : '1'
+    const type = propType === 'string' ? 'text' : 'number'
 
-    const uint = { min, max, step, type }
-    const int = { min, max, step, type }
+    const int32 = { min, max, step, type }
     const float = { min, max, type }
-    const char = { type }
+    const string = { type }
 
     return {
-      ...propType === 'uint' ? uint : {},
-      ...propType === 'int' ? int : {},
-      ...propType === 'float' ? float : {},
-      ...propType === 'char' ? char : {}
+      ...propType === 'int32' ? int32 : {},
+      ...propType === 'flt' ? float : {},
+      ...propType === 'string' ? string : {}
     }
-  }
-
-  get children() {
-    if (!this.isContainer) return []
-    if (this.localProperty.type === 'struct') {
-      return Object.keys(this.localProperty.value).map((k) => {
-        return this.localProperty.value[k]
-      })
-    }
-    return this.localProperty.value
   }
 
   get TypesInstancess() {
@@ -144,12 +124,12 @@ export default class TypePropertyEditor extends Vue {
   }
 
   get isDirty() {
-    return this.property.value !== this.localProperty.value
+    return this.prop.values.some((v) => this.prop.values.every((pv) => String(pv) !== String(v)))
   }
 
   get style() {
     return {
-      order: this.order
+      order: this.propDef.order || 0
     }
   }
 
@@ -157,20 +137,8 @@ export default class TypePropertyEditor extends Vue {
     if (this.isDirty) this.sendToParent()
   }
 
-  updateChildProperties(properties: PropertyInstance[]) {
-    if (!this.isContainer) return
-    if (this.localProperty.type === 'struct') {
-      properties.forEach((p) => {
-        this.localProperty.value[p.name] = p
-      })
-    } else {
-      this.localProperty.value = properties
-    }
-    this.sendToParent()
-  }
-
   sendToParent() {
-    this.$emit('update-property', { id: this.tempID, entity: this.localProperty })
+    this.$emit('update-property', { entity: this.localProperty })
   }
 }
 </script>

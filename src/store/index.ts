@@ -294,6 +294,9 @@ export default createStore({
     getTypeDefinition: (state) => (typeName: string) => {
       return state.project.types[typeName]
     },
+    getPropDefinition: (state) => (typeName: string, propName: string) => {
+      return state.project.types[typeName][propName]
+    },
     getTypeInstance: (state) => (payload: { typeName: string, instanceId: string }) => {
       return state.project.staticData[payload.typeName][payload.instanceId]
     },
