@@ -4,22 +4,20 @@
     <hr>
     <button
       class="type"
-      v-for="type in projectTypes"
-      :key="type.name"
-      @click="selectType(type)"
+      v-for="typeName in projectTypesNames"
+      :key="typeName"
+      @click="selectType(typeName)"
     >
-      {{ type.name }}
+      {{ typeName }}
     </button>
     <hr>
     <h3 v-if="selectedType">Selected type: {{ selectedType.name }}</h3>
     <ObjectDisplay
       v-if="!!selectedType"
-      :entities="selectedType.instance"
+      :typeName="selectedTypeName"
+      :instanceId="instanceId"
       :entityType="'type'"
-      :typeName="selectedType.name"
-      :isTopObject="true"
       :editable="true"
-      :containerType="'struct'"
     />
     <hr>
     <div>Placeholder for instance (JSON and visual presentation)</div>
@@ -44,15 +42,19 @@ import ObjectDisplay from '@/views/ObjectDisplay.vue'
   },
 })
 export default class TypesManager extends Vue {
-  selectedType: TypeDescriptor | null = null
+  selectedType = ''
 
   get projectTypes() {
     return this.$store.getters.projectTypes
   }
 
-  selectType(type: TypeDescriptor) {
-    console.log('selecting type: ', type)
-    this.selectedType = type
+  get projectTypesNames() {
+    return Object.keys(this.projectTypes)
+  }
+
+  selectType(typeName: string) {
+    console.log('selecting type: ', typeName)
+    this.selectedType = typeName
   }
 }
 </script>

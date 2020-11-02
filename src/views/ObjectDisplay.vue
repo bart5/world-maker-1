@@ -3,11 +3,8 @@
     <div class="properties">
       <template v-if="entityType === 'type'">
         <PropertyTypeEditor
-          v-for="keyedEntity in keyedEntities"
-          :key="keyedEntity.id"
-          :order="keyedEntity.order"
-          :tempID="keyedEntity.id"
-          :property="keyedEntity.entity"
+          v-for="prop in props"
+          :key="prop.name"
           :editable="editable"
           @update-property="updateEntity"
           @select-property="selectEntity"
@@ -38,52 +35,42 @@ import PropertyTypeEditor from '@/views/PropertyTypeEditor.vue'
   },
 })
 export default class ObjectDisplay extends Vue {
-  @Prop() entities!: any[]
-
-  /* Whether we show type structure or instance structure */
-  @Prop() entityType!: 'type' | 'instance'
-
-  /* null for not-top objects */
-  /* It's the name of non-primitive type this structure describes */
   @Prop({ default: null }) typeName!: string | null
+
+  @Prop({ default: null }) instanceId!: string | null
 
   @Prop() editable!: boolean
 
-  @Prop({ default: false }) isTopObject!: boolean
-
-  /* Defines way in which contained entities are organized. */
-  /* Struct has it's entities keyed; array is a plain list. */
-  @Prop({ default: 'struct' }) containerType!: 'struct' | 'array'
-
   selectedKeyedEntity: any | null = null
 
-  get keyedEntities(): Array<{ id: string, order: number, entity: any }> {
-    return this.entities.reduce((acc, e, i) => {
-      return [
-        ...acc,
-        this.getKeyedEntity(e, i)]
-    }, [] as Array<{id: string, order: number, entity: any}>)
+  selectedName = ''
+
+  get props() {
+    return this.typeDefinition || this.typeInstnace
   }
 
-  getKeyedEntity(entity: any, fallbackOrder: number) {
-    return {
-      id: `${Date.now()}_${Math.random()}`,
-      order: entity.order || fallbackOrder,
-      entity
+  get selectedProp(): PropDefinition | InstanceProp {
+    return Object.keys(this.props).filter((k) => this.props[k].name === this.selectedName).map((k) => this.props[k])[0]
+  }
+
+  get typeDefinition(): TypeDefinition {
+    return this.typeName ? this.$store.getters.getTypeDefinition(this.typeName) : null
+  }
+
+  get typeInstnace(): TypeInstance | null {
+    return this.instanceId ? this.$store.getters.getTypeInstance(this.instanceId) : null
+  }
+
+  get entityType() {
+    return this.instanceId ? 'instance' : 'type'
+  }
+
+  updateEntities() {
+    if (this.entityType === 'type') {
+      this.$store.dispatch('updateType', this.props)
     }
-  }
-
-  stripKeyed(keyedEntities: Array<{ id: string, order: number, entity: any }>) {
-    return keyedEntities.map((ke) => ke.entity)
-  }
-
-  updateEntities(entities: any[]) {
-    if (this.isTopObject) {
-      const descriptor: TypeDescriptor = { name: this.typeName as string, instance: entities, isEnum: false, extends: undefined }
-      if (this.entityType === 'type') this.$store.dispatch('updateType', descriptor)
-      if (this.entityType === 'instance') this.$store.dispatch('updateTypeInstance', descriptor)
-    } else {
-      this.$emit('update-entity', entities)
+    if (this.entityType === 'instance') {
+      this.$store.dispatch('updateTypeInstance', this.props)
     }
   }
 
@@ -102,58 +89,22 @@ export default class ObjectDisplay extends Vue {
     }
   }
 
-  addNewEntity() {
+  addProp() {
     if (this.entityType === 'instance') return
-    const newEntity = this.getNewEntityTemplate()
-    this.updateEntities([
-      ...this.entities,
-      newEntity
-    ])
+    this.$store.dispatch('addNewTypeProperty', { typeName: this.typeName })
   }
 
-  removeEntity(tempID: string) {
+  removeProp(propName: string) {
     if (this.entityType === 'instance') return
-    this.updateEntities([
-      ...this.stripKeyed(this.keyedEntities.filter((ke) => ke.id !== tempID)),
-    ])
+    this.$store.dispatch('removeTypeProp', { typeName: this.typeName, propName })
   }
 
-  updateEntity(changedkeyedEntity: { id: string, entity: any}) {
-    // const changedEntity = this.keyedEntities.find((ke) => ke.id === changedkeyedEntity.id)
-    this.updateEntities([
-      ...this.stripKeyed(this.keyedEntities.filter((ke) => ke.id !== changedkeyedEntity.id)),
-      ...[changedkeyedEntity.entity],
-    ])
-  }
-
-  /* Down means decrease order */
-  moveEntityUp() {
-    if (this.entityType === 'instance') return
-    const { entity } = this.selectedKeyedEntity
-    if (!entity.order) return
-    this.moveEntity(entity.order - 1)
-  }
-
-  /* Down means inrease order */
-  moveEntityDown() {
-    if (this.entityType === 'instance') return
-    const { entity } = this.selectedKeyedEntity
-    if (!entity.order) return
-    if (entity.order === (this.entities.length - 1)) return
-    this.moveEntity(entity.order + 1)
-  }
-
-  moveEntity(newOrder: number) {
-    const currentOrder = this.selectedKeyedEntity.entity.order
-    const moveDown = this.keyedEntities.filter((ke) => ke.order <= newOrder && ke.order > currentOrder)
-    const moveUp = this.keyedEntities.filter((ke) => ke.order >= newOrder && ke.order < currentOrder)
-
-    moveDown.forEach((ke) => { ke.order -= 1 })
-    moveUp.forEach((ke) => { ke.order += 1 })
-
-    this.updateEntities([
-      ...this.stripKeyed([...moveDown, ...moveUp])
-    ])
+  updateProp(newProp: Partial<PropDefinition | InstanceProp>) {
+    if (this.entityType === 'type') {
+      this.$store.dispatch('updateTypeProperty', newProp)
+    } else if (this.entityType === 'instance') {
+      this.$store.dispatch('updateInstanceProperty', newProp)
+    }
   }
 
   selectEntity(tempID: string) {

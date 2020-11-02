@@ -32,9 +32,20 @@
           </option>
         </select>
       </div>
+      <div class="isArray-field">
+        <input
+          :disabled="!editable"
+          type="checkbox"
+          v-model="localProperty.isArray"
+          @change="maybeSubmit"
+        >
+      </div>
+      <div class="show-ref-target button">
+        <button @click="toggleShowRefTarget"></button>
+      </div>
     </div>
     <component
-      v-if="isContainer"
+      v-if="isRef && showRefTarget"
       v-bind:is="objectDisplay"
       v-bind="displayProps"
     />
@@ -62,35 +73,42 @@ export default class PropertyTypeEditor extends Vue {
 
   refTarget = '';
 
+  showRefTarget = false;
+
   objectDisplay = ObjectDisplay
 
   get displayProps() {
     return {
-      entities: this.localProperty.children || [],
+      typeName: this.refTarget,
       entityType: 'type',
       editable: this.editable,
-      containerType: this.localProperty.type,
     }
   }
 
-  // selectedType = typeof this.localProperty.valueType === 'string' ? this.localProperty.type : this.localProperty.type.name
-  selectedType = typeof this.localProperty.valueType
+  selectedType: ValueType | 'ref' = this.localProperty.valueType
+
+  setRefTarget() {
+    // eslint-disable-next-line prefer-destructuring
+    this.refTarget = this.projectTypes[0]
+  }
+
+  toggleShowRefTarget() {
+    this.showRefTarget = !this.showRefTarget
+  }
 
   updateLocalProperty() {
     console.log('updating local property')
-    if (this.selectedType === 'typeRef') {
-      this.localProperty.type = {
-        name: this.selectedType,
-        typeRef: Object.entries(this.projectTypes)[0][0]
-      }
+    if (this.selectedType === 'ref') {
+      this.localProperty.valueType = 'int32'
+      this.setRefTarget()
     } else {
-      this.localProperty.type = this.selectedType
+      this.localProperty.valueType = this.selectedType
     }
   }
 
   get basicTypes() {
     return [
-      'uint32', 'flt', 'string', 'bool'
+      'uint32', 'flt', 'string', 'bool', 'ref'
     ]
   }
 
@@ -125,7 +143,7 @@ export default class PropertyTypeEditor extends Vue {
   }
 
   sendToParent() {
-    this.$emit('update-property', { id: this.tempID, entity: this.localProperty })
+    this.$emit('update-property', { id: this.tempID, entity: this.localProperty, refTarget: this.refTarget })
   }
 
   selectProperty() {

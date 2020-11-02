@@ -147,8 +147,8 @@ interface InstancesList {
 
 interface TypeBasics {
   id: InstanceProp;
-  meta_isBound: InstanceProp;
   meta_typeId: InstanceProp;
+  meta_isBound: InstanceProp;
 }
 
 interface TypeInstance extends TypeBasics {
