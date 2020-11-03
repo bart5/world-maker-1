@@ -1,5 +1,5 @@
 import { ipc } from '@/game/data/ipcHandlersRenderer';
-import { createStore, Payload } from 'vuex';
+import { createStore } from 'vuex';
 
 /* Shallow */
 export const validateProjectDataKeys = (data: any) => {
@@ -114,7 +114,7 @@ const getNewInstanceData = (state: ApplicationState, typeName: string, uid: stri
     return {
       ...acc,
       [tuple[0]]: getInstanceProp(
-          tuple[1].valueType, tuple[1].name, getInitialPropValues(tuple[1]), tuple[1].isArray
+        tuple[1].valueType, tuple[1].name, getInitialPropValues(tuple[1]), tuple[1].isArray
       ),
     }
   }, {})
@@ -122,7 +122,7 @@ const getNewInstanceData = (state: ApplicationState, typeName: string, uid: stri
     ...instance,
     id: getInstanceProp('int32', 'id', [uid]),
     meta_isBound: getInstanceProp('bool', 'meta_isBound', [false]),
-    meta_typeName: getInstanceProp('string', 'meta_typeId', [typeName]),
+    meta_typeName: getInstanceProp('string', 'meta_typeName', [typeName]),
   }
 }
 
@@ -152,14 +152,14 @@ const getMockedTypesDefinitions = (): TypesDefinitions => {
     type1: {
       id: getTypeDefProp('int32', 'id'),
       meta_isBound: getTypeDefProp('bool', 'meta_isBound'),
-      meta_typeName: getTypeDefProp('string', 'meta_typeId'),
+      meta_typeName: getTypeDefProp('string', 'meta_typeName'),
       prop1: getTypeDefProp('int32', 'prop1'),
       prop2: getTypeDefProp('int32', 'prop2')
     },
     type2: {
       id: getTypeDefProp('int32', 'id'),
       meta_isBound: getTypeDefProp('bool', 'meta_isBound'),
-      meta_typeName: getTypeDefProp('string', 'meta_typeId'),
+      meta_typeName: getTypeDefProp('string', 'meta_typeName'),
       prop1: getTypeDefProp('int32', 'prop1'),
       prop2: getTypeDefProp('flt', 'prop2'),
       prop3: getTypeDefProp('string', 'prop3'),
@@ -380,10 +380,10 @@ export default createStore({
     getPropDefinition: (state) => (typeName: string, propName: string) => {
       return state.project.types[typeName][propName]
     },
-    getTypeInstance: (state) => (typeName: string, instanceId: string ) => {
+    getTypeInstance: (state) => (typeName: string, instanceId: string) => {
       return state.project.staticData[typeName][instanceId]
     },
-    getAllTypeInstances: (state) => (typeName: string ) => {
+    getAllTypeInstances: (state) => (typeName: string) => {
       return state.project.staticData[typeName]
     },
   },
@@ -577,6 +577,21 @@ export default createStore({
       state.project.types[uniqueName] = getNewTypeData()
       state.project.staticData[uniqueName] = {}
     },
+    RENAME_TYPE(state, payload: { oldTypeName: string, newTypeName: string }) {
+      registerStaticDataMutation(state)
+      // const uniqueName = getUniqueTypeName(state)
+
+      state.project.types[payload.newTypeName] = {
+        ...state.project.types[payload.oldTypeName]
+      }
+
+      Object.entries(state.project.staticData[payload.newTypeName]).forEach((tuple) => {
+        const instance = tuple[1]
+        instance.meta_typeName.values = [payload.newTypeName]
+      })
+
+      delete state.project.types[payload.oldTypeName]
+    },
     REMOVE_TYPE(state, typeName: string) {
       registerStaticDataMutation(state)
 
@@ -621,29 +636,24 @@ export default createStore({
       }
 
       // Updating prop in all instances
-      // Need to update prop in all instances
       const getNewValues = (oldValues: Array<string | number | boolean>) => {
-        const newValueType = payload.newProp.valueType
-        if (isValueTypeChange) {
-          if (newValueType === 'int32') return [0]
-          if (newValueType === 'flt') return [0]
-          if (newValueType === 'string') return ['placeholder']
-          if (newValueType === 'bool') return [false]
+        if (isValueTypeChange || isRefChange || isRefTargetChange) {
+          return getInitialPropValues(payload.newProp)
         }
         if (isArrayChange) {
           return [oldValues[0]]
         }
-        if (isRefChange)
+        return oldValues
       }
       Object.entries(state.project.staticData[payload.typeName]).forEach((tuple) => {
         const instance = tuple[1]
         const oldPropInst = instance[payload.oldPropName]
-        const newPropInst = instance[payload.newProp.name]
 
         instance[payload.newProp.name] = {
           ...payload.newProp,
-          values: [...oldPropInst.values]
+          values: getNewValues(oldPropInst.values)
         }
+
         if (isRename) {
           delete instance[payload.oldPropName]
         }
@@ -673,9 +683,8 @@ export default createStore({
     UPDATE_INSTANCE_PROPERTY(state, payload: { newProp: InstanceProp, typeName: string, instanceId: string }) {
       registerStaticDataMutation(state)
 
-      state.project.staticData[payload.typeName][payload.instanceId][payload.newProp.name] = {
-        ...payload.newProp
-      }
+      const prop = state.project.staticData[payload.typeName][payload.instanceId][payload.newProp.name]
+      prop.values = payload.newProp.values
     },
     REMOVE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
       registerStaticDataMutation(state)
@@ -976,12 +985,11 @@ export default createStore({
      *  TYPES ACTIONS
      *  ==============================================================
      */
-    updateInstanceProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-      this.commit('UPDATE_INSTANCE_PROPERTY', payload)
-    },
-    //
     createType() {
       this.commit('CREATE_TYPE')
+    },
+    renameType(state, payload: { oldTypeName: string, newTypeName: string }) {
+      this.commit('RENAME_TYPE', payload)
     },
     removeType(state, typeName: string) {
       this.commit('REMOVE_TYPE', typeName)
@@ -995,17 +1003,20 @@ export default createStore({
     removeTypeProperty(state, payload: { newProp: PropDefinition, typeName: string }) {
       this.commit('REMOVE_TYPE_PROPERTY', payload)
     },
+    createTypeInstance(state, typeName: string) {
+      this.commit('CREATE_TYPE_INSTANCE', typeName)
+    },
+    updateInstanceProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
+      this.commit('UPDATE_INSTANCE_PROPERTY', payload)
+    },
+    removeTypeInstance(state, payload: { typeName: string, instanceId: string }) {
+      this.commit('REMOVE_TYPE_INSTANCE', payload)
+    },
     moveTypePropertyUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
       this.commit('MOVE_TYPE_PROPERTY_UP', payload)
     },
     moveTypePropertyDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
       this.commit('MOVE_TYPE_PROPERTY_DOWN', payload)
-    },
-    createTypeInstance(state, typeName: string) {
-      this.commit('CREATE_TYPE_INSTANCE', typeName)
-    },
-    removeTypeInstance(state, payload: { typeName: string, instanceId: string }) {
-      this.commit('REMOVE_TYPE_INSTANCE', payload)
     },
   },
   modules: {
