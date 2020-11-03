@@ -1,5 +1,5 @@
 import { ipc } from '@/game/data/ipcHandlersRenderer';
-import { createStore } from 'vuex';
+import { createStore, Payload } from 'vuex';
 
 /* Shallow */
 export const validateProjectDataKeys = (data: any) => {
@@ -94,15 +94,38 @@ const getNewTypeData = (): TypeDefinition => {
   }
 }
 
-const getNewInstanceData = (typeName: string, uid: string): TypeInstance => {
+const getInitialPropValues = (propDef: PropDefinition) => {
+  if (propDef.valueType === 'int32') {
+    if (propDef.isRef) {
+      return []
+    }
+    return [0]
+  }
+  if (propDef.valueType === 'flt') return [0]
+  if (propDef.valueType === 'string') return ['placeholder']
+  return [false]
+}
+
+const getNewInstanceData = (state: ApplicationState, typeName: string, uid: string): TypeInstance => {
+  const instance = Object.entries(state.project.types[typeName]).reduce((acc, tuple) => {
+    if (tuple[0] === 'id' || tuple[0] === 'meta_isBound' || tuple[0] === 'meta_typeName') {
+      return acc
+    }
+    return {
+      ...acc,
+      [tuple[0]]: getInstanceProp(
+          tuple[1].valueType, tuple[1].name, getInitialPropValues(tuple[1]), tuple[1].isArray
+      ),
+    }
+  }, {})
   return {
+    ...instance,
     id: getInstanceProp('int32', 'id', [uid]),
     meta_isBound: getInstanceProp('bool', 'meta_isBound', [false]),
     meta_typeName: getInstanceProp('string', 'meta_typeId', [typeName]),
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getInstanceProp(
   valueType: 'int32' | 'string' | 'flt' | 'bool', name: string, values: Array<number | string | boolean>, isArray?: boolean
 ): InstanceProp {
@@ -549,34 +572,94 @@ export default createStore({
     /* =========== PROJECT STATIC DATA MUTATIONS =========== */
     CREATE_TYPE(state) {
       registerStaticDataMutation(state)
+      const uniqueName = getUniqueTypeName(state)
 
-      state.project.types[getUniqueTypeName(state)] = getNewTypeData()
+      state.project.types[uniqueName] = getNewTypeData()
+      state.project.staticData[uniqueName] = {}
     },
     REMOVE_TYPE(state, typeName: string) {
       registerStaticDataMutation(state)
 
+      delete state.project.types[typeName]
       delete state.project.staticData[typeName]
     },
     CREATE_TYPE_PROPERTY(state, typeName: string) {
       registerStaticDataMutation(state)
       const uniquePropName = getUniquePropName(state, typeName)
 
+      // Adding prop to type definition
       state.project.types[typeName] = {
         ...state.project.types[typeName],
         [uniquePropName]: getTypeDefProp('int32', uniquePropName)
       }
+
+      // Adding prop to all instances
+      Object.entries(state.project.staticData[typeName]).forEach((tuple) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        let instance = tuple[1]
+        instance = {
+          ...instance,
+          uniquePropName: getInstanceProp('int32', uniquePropName, [0])
+        }
+      })
     },
     UPDATE_TYPE_PROPERTY(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
       registerStaticDataMutation(state)
+      const oldProp = state.project.types[payload.typeName][payload.oldPropName]
+      const isRename = payload.oldPropName !== payload.newProp.name
+      const isValueTypeChange = oldProp.valueType !== payload.newProp.valueType
+      const isArrayChange = oldProp.isArray !== payload.newProp.isArray
+      const isRefChange = oldProp.isRef !== payload.newProp.isRef
+      const isRefTargetChange = oldProp.refTargetType !== payload.newProp.refTargetType
 
-      state.project.types[payload.typeName][payload.oldPropName] = {
+      // Updating prop in type definition
+      state.project.types[payload.typeName][payload.newProp.name] = {
         ...payload.newProp
       }
+      if (isRename) {
+        delete state.project.types[payload.typeName][payload.oldPropName]
+      }
+
+      // Updating prop in all instances
+      // Need to update prop in all instances
+      const getNewValues = (oldValues: Array<string | number | boolean>) => {
+        const newValueType = payload.newProp.valueType
+        if (isValueTypeChange) {
+          if (newValueType === 'int32') return [0]
+          if (newValueType === 'flt') return [0]
+          if (newValueType === 'string') return ['placeholder']
+          if (newValueType === 'bool') return [false]
+        }
+        if (isArrayChange) {
+          return [oldValues[0]]
+        }
+        if (isRefChange)
+      }
+      Object.entries(state.project.staticData[payload.typeName]).forEach((tuple) => {
+        const instance = tuple[1]
+        const oldPropInst = instance[payload.oldPropName]
+        const newPropInst = instance[payload.newProp.name]
+
+        instance[payload.newProp.name] = {
+          ...payload.newProp,
+          values: [...oldPropInst.values]
+        }
+        if (isRename) {
+          delete instance[payload.oldPropName]
+        }
+      })
     },
     REMOVE_TYPE_PROPERTY(state, payload: { newProp: PropDefinition, typeName: string }) {
       registerStaticDataMutation(state)
 
-      delete state.project.staticData[payload.typeName][payload.newProp.name]
+      // Remove prop from type definition
+      delete state.project.types[payload.typeName][payload.newProp.name]
+
+      // Remove prop from all instances
+      Object.entries(state.project.staticData[payload.typeName]).forEach((tuple) => {
+        const instance = tuple[1]
+        delete instance[payload.newProp.name]
+      })
     },
     CREATE_TYPE_INSTANCE(state, typeName: string) {
       registerStaticDataMutation(state)
@@ -584,7 +667,7 @@ export default createStore({
 
       state.project.staticData[typeName] = {
         ...state.project.staticData[typeName],
-        [uniqueInstanceId]: getNewInstanceData(typeName, uniqueInstanceId)
+        [uniqueInstanceId]: getNewInstanceData(state, typeName, uniqueInstanceId)
       }
     },
     UPDATE_INSTANCE_PROPERTY(state, payload: { newProp: InstanceProp, typeName: string, instanceId: string }) {
@@ -593,6 +676,11 @@ export default createStore({
       state.project.staticData[payload.typeName][payload.instanceId][payload.newProp.name] = {
         ...payload.newProp
       }
+    },
+    REMOVE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
+      registerStaticDataMutation(state)
+
+      delete state.project.staticData[payload.typeName][payload.instanceId]
     },
     /* =========== PROJECT ENTITY BINDING MUTATIONS =========== */
     /* =========== APPLICATION DATA MUTATIONS =========== */

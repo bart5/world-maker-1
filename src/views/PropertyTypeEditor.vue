@@ -90,22 +90,19 @@ export default class PropertyTypeEditor extends Vue {
     }
   }
 
-  selectedType: ValueType | 'ref' = this.localProp.valueType
+  selectedType: ValueType = this.localProp.valueType
 
   toggleRef() {
     if (this.localProp.name.startsWith('ref_')) {
       this.localProp.name = this.localProp.name.replace('ref_', '')
       this.localProp.isRef = false
+      delete this.localProp.refTargetType
     } else {
       this.localProp.name = 'ref_' + this.localProp.name
       this.localProp.isRef = true
       this.localProp.valueType = 'int32'
+      this.localProp.refTargetType = this.projectTypes[0]
     }
-  }
-
-  setRefTarget() {
-    // eslint-disable-next-line prefer-destructuring
-    this.refTarget = this.projectTypes[0]
   }
 
   toggleShowRefTarget() {
@@ -114,12 +111,10 @@ export default class PropertyTypeEditor extends Vue {
 
   updatelocalProp() {
     console.log('updating local property')
-    if (this.selectedType === 'ref') {
-      this.localProp.valueType = 'int32'
-      this.setRefTarget()
-    } else {
-      this.localProp.valueType = this.selectedType
+    if (this.isRef && this.selectedType !== 'int32') {
+      this.toggleRef()
     }
+    this.localProp.valueType = this.selectedType
   }
 
   get basicTypes() {
