@@ -579,7 +579,11 @@ export default createStore({
     },
     RENAME_TYPE(state, payload: { oldTypeName: string, newTypeName: string }) {
       registerStaticDataMutation(state)
-      // const uniqueName = getUniqueTypeName(state)
+
+      if (payload.newTypeName in state.project.types) {
+        console.error('Tried to rename type with already taken name.')
+        return
+      }
 
       state.project.types[payload.newTypeName] = {
         ...state.project.types[payload.oldTypeName]
@@ -594,6 +598,22 @@ export default createStore({
     },
     REMOVE_TYPE(state, typeName: string) {
       registerStaticDataMutation(state)
+
+      // Also reset values for all props that were references to the removed type
+      Object.entries(state.project.types).forEach((tuple1) => { // each type
+        const tName = tuple1[0]
+        const typeDefinition = tuple1[1]
+
+        Object.entries(typeDefinition).forEach((tuple2) => { // each prop definition
+          const propName = tuple2[0]
+          const targetTypeName = tuple2[1].refTargetType
+          if (targetTypeName && targetTypeName === typeName) {
+            Object.entries(state.project.staticData[tName]).forEach((tuple3) => { // each prop instance
+              tuple3[1][propName].values = []
+            })
+          }
+        })
+      })
 
       delete state.project.types[typeName]
       delete state.project.staticData[typeName]
@@ -689,9 +709,10 @@ export default createStore({
     REMOVE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
       registerStaticDataMutation(state)
 
+      // Also remove all references to this instance from other instances
+
       delete state.project.staticData[payload.typeName][payload.instanceId]
     },
-    /* =========== PROJECT ENTITY BINDING MUTATIONS =========== */
     /* =========== APPLICATION DATA MUTATIONS =========== */
     SET_APPLICATION_DATA(state, data) {
       state.applicationData = data
