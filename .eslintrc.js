@@ -31,6 +31,7 @@ module.exports = {
     'no-underscore-dangle': 0,
     'no-nested-ternary': 0,
     'no-else-return': 0,
+    'no-plusplus': 0,
     // 'arrow-parens': 0,
     "@typescript-eslint/camelcase": 0,
     "@typescript-eslint/no-explicit-any": 0,

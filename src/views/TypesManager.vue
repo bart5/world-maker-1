@@ -71,7 +71,7 @@ export default class TypesManager extends Vue {
   }
 
   get selectedTypeInstances() {
-    return this.$store.getters.typeInstances(this.selectedTypeName)
+    return this.$store.getters.getAllTypeInstances(this.selectedTypeName)
   }
 
   createNewType() {

@@ -123,7 +123,7 @@ interface TypesDefinitions {
 
 interface TypeBasics {
   id: PropDefinition;
-  meta_typeId: PropDefinition;
+  meta_typeName: PropDefinition;
   meta_isBound: PropDefinition;
 }
 
@@ -150,7 +150,7 @@ interface InstancesList {
 
 interface InstanceBasics {
   id: InstanceProp;
-  meta_typeId: InstanceProp;
+  meta_typeName: InstanceProp;
   meta_isBound: InstanceProp;
 }
 

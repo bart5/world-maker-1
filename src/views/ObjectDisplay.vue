@@ -72,7 +72,7 @@ export default class ObjectDisplay extends Vue {
   }
 
   get typeInstnace(): TypesInstances | null {
-    return this.instanceId ? this.$store.getters.getTypeInstance(this.instanceId) : null
+    return this.instanceId ? this.$store.getters.getTypeInstance(this.typeName, this.instanceId) : null
   }
 
   get entityType() {
