@@ -41,7 +41,7 @@
               @change="maybeSubmit"
             >
               <option
-                v-for="instance in TypesInstancess"
+                v-for="instance in TypeInstances"
                 :key="instance.id"
                 :value="instance.id"
               >

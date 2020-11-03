@@ -66,11 +66,39 @@ const getUniquePropName = (state: ApplicationState, typeName: string) => {
   return getNewName()
 }
 
+const getUniqueInstanceId = (state: ApplicationState) => {
+  const getId = () => Date.now().toString().substring(3).substring(-1)
+  const isUnique = (id: string) => {
+    const types = state.project.types
+    return !Object.keys(types).some((tn) => {
+      const typeInstances = state.project.staticData[tn]
+      return Object.keys(typeInstances).some((tin) => {
+        return typeInstances[tin].id.values[0] === id
+      })
+    })
+  }
+  let uid = getId()
+  let i = 0
+  while (!isUnique(uid) && i < 1000) {
+    uid = getId()
+    i++
+  }
+  return uid
+}
+
 const getNewTypeData = (): TypeDefinition => {
   return {
     id: getTypeDefProp('int32', 'id'),
     meta_isBound: getTypeDefProp('bool', 'meta_isBound'),
     meta_typeName: getTypeDefProp('string', 'meta_typeId'),
+  }
+}
+
+const getNewInstanceData = (typeName: string, uid: string): TypeInstance => {
+  return {
+    id: getInstanceProp('int32', 'id', [uid]),
+    meta_isBound: getInstanceProp('bool', 'meta_isBound', [false]),
+    meta_typeName: getInstanceProp('string', 'meta_typeId', [typeName]),
   }
 }
 
@@ -121,8 +149,8 @@ const getMockedTypesDefinitions = (): TypesDefinitions => {
   }
 }
 
-function getMockedTypesInstances(typeName: string, typeId: number, types?: TypesDefinitions): TypesInstances {
-  const id = Date.now().toString().substring(4)
+function getMockedTypeInstance(typeName: string, typeId: number, types?: TypesDefinitions): TypeInstance {
+  const id = Date.now().toString().substring(3).substring(-1)
   const assignValues = (prop: PropDefinition): InstanceProp => {
     const getValues = (valueType: ValueType, isArray?: boolean) => {
       const getValue = (vT: ValueType) => {
@@ -172,19 +200,19 @@ function getMockedTypesInstances(typeName: string, typeId: number, types?: Types
   }
 
   const props = types ? types[typeName] : getMockedTypesDefinitions()[typeName]
-  const TypesInstances: TypesInstances = Object.keys(props).reduce((acc, k) => {
+  const TypeInstance: TypeInstance = Object.keys(props).reduce((acc, k) => {
     return {
       ...acc,
       [props[k].name]: assignValues(props[k])
     }
-  }, {} as TypesInstances)
+  }, {} as TypeInstance)
 
-  return TypesInstances
+  return TypeInstance
 }
 
 const getMockedStaticData = (): StaticData => {
   const getType = (typeName: string, typeId: number) => {
-    const instance = getMockedTypesInstances(typeName, typeId)
+    const instance = getMockedTypeInstance(typeName, typeId)
     return {
       [(instance.id as InstanceProp).values[0] as number]: {
         ...instance
@@ -519,14 +547,6 @@ export default createStore({
       activeWorkspace.configuration.lastSessionCamera = camera
     },
     /* =========== PROJECT STATIC DATA MUTATIONS =========== */
-    UPDATE_TYPE_PROPERTY(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
-      registerStaticDataMutation(state)
-      console.log('new type prop: ', payload.newProp)
-
-      state.project.types[payload.typeName][payload.oldPropName] = {
-        ...payload.newProp
-      }
-    },
     CREATE_TYPE(state) {
       registerStaticDataMutation(state)
 
@@ -546,9 +566,29 @@ export default createStore({
         [uniquePropName]: getTypeDefProp('int32', uniquePropName)
       }
     },
+    UPDATE_TYPE_PROPERTY(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+      registerStaticDataMutation(state)
+
+      state.project.types[payload.typeName][payload.oldPropName] = {
+        ...payload.newProp
+      }
+    },
+    REMOVE_TYPE_PROPERTY(state, payload: { newProp: PropDefinition, typeName: string }) {
+      registerStaticDataMutation(state)
+
+      delete state.project.staticData[payload.typeName][payload.newProp.name]
+    },
+    CREATE_TYPE_INSTANCE(state, typeName: string) {
+      registerStaticDataMutation(state)
+      const uniqueInstanceId = getUniqueInstanceId(state)
+
+      state.project.staticData[typeName] = {
+        ...state.project.staticData[typeName],
+        [uniqueInstanceId]: getNewInstanceData(typeName, uniqueInstanceId)
+      }
+    },
     UPDATE_INSTANCE_PROPERTY(state, payload: { newProp: InstanceProp, typeName: string, instanceId: string }) {
       registerStaticDataMutation(state)
-      console.log('new instance prop: ', payload.newProp)
 
       state.project.staticData[payload.typeName][payload.instanceId][payload.newProp.name] = {
         ...payload.newProp
@@ -864,7 +904,7 @@ export default createStore({
     updateTypeProperty(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
       this.commit('UPDATE_TYPE_PROPERTY', payload)
     },
-    removeTypeProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
+    removeTypeProperty(state, payload: { newProp: PropDefinition, typeName: string }) {
       this.commit('REMOVE_TYPE_PROPERTY', payload)
     },
     moveTypePropertyUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {

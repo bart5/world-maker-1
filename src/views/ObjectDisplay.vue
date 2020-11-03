@@ -54,7 +54,7 @@ export default class ObjectDisplay extends Vue {
   }
 
   get props() {
-    return this.typeDefinition || this.typeInstnace as TypeDefinition | TypesInstances
+    return this.typeDefinition || this.typeInstnace as TypeDefinition | TypeInstance
   }
 
   modifiedProps: any = {}
@@ -71,7 +71,7 @@ export default class ObjectDisplay extends Vue {
     return this.instanceId ? null : this.$store.getters.getTypeDefinition(this.typeName)
   }
 
-  get typeInstnace(): TypesInstances | null {
+  get typeInstnace(): TypeInstance | null {
     return this.instanceId ? this.$store.getters.getTypeInstance(this.typeName, this.instanceId) : null
   }
 
@@ -84,7 +84,7 @@ export default class ObjectDisplay extends Vue {
       this.$store.dispatch('updateType', this.props)
     }
     if (this.entityType === 'instance') {
-      this.$store.dispatch('updateTypesInstances', this.props)
+      this.$store.dispatch('updateTypeInstance', this.props)
     }
   }
 
