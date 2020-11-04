@@ -85,7 +85,7 @@ function saveFile(directory: string, fileName: string, data: any = {}, isBackup?
     /* Save file as .temp */
     const saveData = () => {
       if (isBackup) {
-        const backupPath = path + `-${Date.now()}`
+        const backupPath = path + `-${(new Date()).toUTCString().split(' ').join('-')}`
         fs.writeFile(backupPath, JSON.stringify(data), (err) => {
           if (err) return reject(getError(`Error saving data for file in path: ${backupPath}`, err))
           console.info(`Success saving data to file: ${backupPath}.temp`)
@@ -262,13 +262,14 @@ export default function setupCommunicaton(getWindow: () => BrowserWindow | null)
       const path = applicationData.lastProjectPath
       const fileName = getFileNameFromPath(path)
       const directory = getDirectoryFromPath(path)
+      this.backupProject({ path, data: payload })
       return saveFile(directory, fileName, payload)
     },
     backupProject(payload: { path: string, data: Project }) {
       const { path, data } = payload
       const fileName = getFileNameFromPath(path)
       const directory = getDirectoryFromPath(path)
-      return saveFile(directory, fileName, data, true)
+      return saveFile(directory + '/backups', fileName, data, true)
     },
     selectDirectoryDialog(payload: { buttonLabel: string, defaultPath: string }) {
       const win = getWindow()
