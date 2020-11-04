@@ -720,27 +720,9 @@ export default createStore({
     REMOVE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
       registerStaticDataMutation(state)
 
-      // Also remove all references to this instance from other instances
-      Object.entries(state.project.types).forEach((tuple1) => { // each type
-        const tName = tuple1[0]
-        const typeDefinition = tuple1[1]
-
-        Object.entries(typeDefinition).forEach((tuple2) => { // each prop definition
-          const propName = tuple2[0]
-          const targetTypeName = tuple2[1].refTargetType
-          if (targetTypeName && targetTypeName === payload.typeName) {
-            Object.entries(state.project.staticData[tName]).forEach((tuple3) => { // each prop instance
-              tuple3[1][propName].values = [
-                ...tuple3[1][propName].values.filter((v) => v !== payload.instanceId)
-              ]
-            })
-          }
-        })
-      })
-
       delete state.project.staticData[payload.typeName][payload.instanceId]
     },
-    ADD_INSTANCE_REFERENCE(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
+    ADD_INSTANCE_OUTBOUND_REFERENCE_META(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
       registerStaticDataMutation(state)
       const { typeName, instanceId, referencedId } = payload
 
@@ -749,13 +731,13 @@ export default createStore({
       // Now tell that instance that we reference it
       Object.entries(state.project.staticData).some((tuple1) => {
         if (referencedId in tuple1[1]) { // find that instance first
-          tuple1[1][referencedId].meta_isReferencedBy.values.push(instanceId)
+          tuple1[1][referencedId].meta_isReferencedBy.values.push(instanceId) // add meta-data about reference
           return true // stop "some" after first finding
         }
         return false // continue "some"
       })
     },
-    REMOVE_INSTANCE_REFERENCE(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
+    REMOVE_INSTANCE_OUTBOUND_REFERENCE_META(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
       registerStaticDataMutation(state)
       const { typeName, instanceId, referencedId } = payload
 
@@ -775,6 +757,51 @@ export default createStore({
         }
         return false
       })
+    },
+    REMOVE_ALL_INSTANCE_OUTBOUND_REFERENCES_META(state, payload: { typeName: string, instanceId: string }) {
+      registerStaticDataMutation(state)
+      const { typeName, instanceId } = payload
+
+      ;(state.project.staticData[typeName][instanceId].meta_isReferencing.values as string[]).forEach((irId) => {
+        Object.entries(state.project.staticData).some((tuple1) => {
+          if (irId in tuple1[1]) {
+            const isReferencedBy = tuple1[1][irId].meta_isReferencedBy
+            isReferencedBy.values = {
+              ...isReferencedBy.values.filter((irbId) => irbId !== instanceId)
+            }
+            return true
+          }
+          return false
+        })
+      })
+    },
+    // This also removes values from properties of instances that were referencing given instance
+    REMOVE_ALL_INSTANCE_INBOUND_REFERENCES(state, payload: { typeName: string, instanceId: string }) {
+      registerStaticDataMutation(state)
+      const { typeName, instanceId } = payload
+
+      ;(state.project.staticData[typeName][instanceId].meta_isReferencedBy.values as string[]).forEach((irbId) => {
+        Object.entries(state.project.staticData).some((tuple1) => {
+          if (irbId in tuple1[1]) {
+            const isReferencing = tuple1[1][irbId].meta_isReferencing
+            isReferencing.values = {
+              ...isReferencing.values.filter((irId) => irId !== instanceId)
+            }
+            const referencingProperties = Object.entries(state.project.types[tuple1[0]]).filter((tuple2) => {
+              return tuple2[1]?.refTargetType === typeName
+            })
+            referencingProperties.forEach((propNameTuple) => {
+              tuple1[1][irbId][propNameTuple[0]].values = [
+                ...tuple1[1][irbId][propNameTuple[0]].values.filter((v) => v !== instanceId)
+              ]
+            })
+            return true
+          }
+          return false
+        })
+      })
+
+      state.project.staticData[typeName][instanceId].meta_isReferencedBy.values = []
     },
     /* =========== APPLICATION DATA MUTATIONS =========== */
     SET_APPLICATION_DATA(state, data) {
@@ -1100,13 +1127,29 @@ export default createStore({
       this.commit('UPDATE_INSTANCE_PROPERTY', payload)
     },
     removeTypeInstance(state, payload: { typeName: string, instanceId: string }) {
+      const { typeName, instanceId } = payload
+
+      // Remove all references to the instance from other instance together with values
+      // from properties that were source of the reference
+      state.dispatch('removeAllInstanceInboundReferences', { typeName, instanceId })
+
+      // Here we remove references to every instance this instance was referencing and tell every
+      // referenced instance that we don't reference it any more
+      state.dispatch('removeAllInstanceReferencesMeta', { typeName, instanceId })
+
       this.commit('REMOVE_TYPE_INSTANCE', payload)
     },
-    addInstanceReference(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
-      this.commit('ADD_INSTANCE_REFERENCE', payload)
+    addInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
+      this.commit('ADD_INSTANCE_OUTBOUND_REFERENCE_META', payload)
     },
-    removeInstanceReference(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
-      this.commit('REMOVE_INSTANCE_REFERENCE', payload)
+    removeInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
+      this.commit('REMOVE_INSTANCE_OUTBOUND_REFERENCE_META', payload)
+    },
+    removeAllInstanceOutboundReferencesMeta(state, payload: { typeName: string, instanceId: string }) {
+      this.commit('REMOVE_ALL_INSTANCE_OUTBOUND_REFERENCES_META', payload)
+    },
+    removeAllInstanceInboundReferences(state, payload: { typeName: string, instanceId: string }) {
+      this.commit('REMOVE_ALL_INSTANCE_INBOUND_REFERENCES', payload)
     },
   },
   modules: {
