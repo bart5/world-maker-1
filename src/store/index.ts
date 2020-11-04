@@ -578,7 +578,9 @@ export default createStore({
       ) as Workspace
       activeWorkspace.configuration.lastSessionCamera = camera
     },
-    /* =========== PROJECT STATIC DATA MUTATIONS =========== */
+    /** =======================================================
+     *            PROJECT STATIC DATA MUTATIONS
+     *  ======================================================= */
     CREATE_TYPE(state) {
       registerStaticDataMutation(state)
       const uniqueName = getUniqueTypeName(state)
@@ -737,6 +739,42 @@ export default createStore({
       })
 
       delete state.project.staticData[payload.typeName][payload.instanceId]
+    },
+    ADD_INSTANCE_REFERENCE(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
+      registerStaticDataMutation(state)
+      const { typeName, instanceId, referencedId } = payload
+
+      // Remember what instance we are referencing
+      state.project.staticData[typeName][instanceId].meta_isReferencing.values.push(referencedId)
+      // Now tell that instance that we reference it
+      Object.entries(state.project.staticData).some((tuple1) => {
+        if (referencedId in tuple1[1]) { // find that instance first
+          tuple1[1][referencedId].meta_isReferencedBy.values.push(instanceId)
+          return true // stop "some" after first finding
+        }
+        return false // continue "some"
+      })
+    },
+    REMOVE_INSTANCE_REFERENCE(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
+      registerStaticDataMutation(state)
+      const { typeName, instanceId, referencedId } = payload
+
+      // Forget referenced instance
+      const isReferencing = state.project.staticData[typeName][instanceId].meta_isReferencing
+      isReferencing.values = [
+        ...isReferencing.values.filter((rId) => rId !== referencedId)
+      ]
+      // Now tell referenced instance that we no longer reference it
+      Object.entries(state.project.staticData).some((tuple1) => {
+        if (referencedId in tuple1[1]) {
+          const isReferencedBy = state.project.staticData[typeName][referencedId].meta_isReferencing
+          isReferencedBy.values = [
+            ...isReferencedBy.values.filter((rId) => rId !== instanceId)
+          ]
+          return true
+        }
+        return false
+      })
     },
     /* =========== APPLICATION DATA MUTATIONS =========== */
     SET_APPLICATION_DATA(state, data) {
@@ -1049,6 +1087,12 @@ export default createStore({
     removeTypeProperty(state, payload: { propName: string, typeName: string }) {
       this.commit('REMOVE_TYPE_PROPERTY', payload)
     },
+    moveTypePropertyUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
+      this.commit('MOVE_TYPE_PROPERTY_UP', payload)
+    },
+    moveTypePropertyDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
+      this.commit('MOVE_TYPE_PROPERTY_DOWN', payload)
+    },
     createTypeInstance(state, typeName: string) {
       this.commit('CREATE_TYPE_INSTANCE', typeName)
     },
@@ -1058,11 +1102,11 @@ export default createStore({
     removeTypeInstance(state, payload: { typeName: string, instanceId: string }) {
       this.commit('REMOVE_TYPE_INSTANCE', payload)
     },
-    moveTypePropertyUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-      this.commit('MOVE_TYPE_PROPERTY_UP', payload)
+    addInstanceReference(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
+      this.commit('ADD_INSTANCE_REFERENCE', payload)
     },
-    moveTypePropertyDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-      this.commit('MOVE_TYPE_PROPERTY_DOWN', payload)
+    removeInstanceReference(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
+      this.commit('REMOVE_INSTANCE_REFERENCE', payload)
     },
   },
   modules: {

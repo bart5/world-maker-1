@@ -154,7 +154,10 @@ interface InstancesList {
 interface InstanceBasics {
   id: InstanceProp;
   meta_typeName: InstanceProp;
-  meta_isBound: InstanceProp;
+  meta_isBoundTo: InstanceProp;
+  meta_isReferencing: InstanceProp;
+  meta_isReferencedBy: InstanceProp;
+  meta_isLocked: InstanceProp;
 }
 
 interface TypeInstance extends InstanceBasics {
