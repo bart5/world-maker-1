@@ -709,10 +709,30 @@ export default createStore({
       registerStaticDataMutation(state)
       const uniqueInstanceId = getUniqueInstanceId(state)
 
-      state.project.staticData[typeName] = {
-        ...state.project.staticData[typeName],
-        [uniqueInstanceId]: getNewInstanceData(state, typeName, uniqueInstanceId)
+      state.project.staticData[typeName][uniqueInstanceId] = getNewInstanceData(state, typeName, uniqueInstanceId)
+    },
+    DUPLICATE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
+      registerStaticDataMutation(state)
+      const { typeName, instanceId } = payload
+      const uniqueInstanceId = getUniqueInstanceId(state)
+
+      const source = state.project.staticData[typeName][instanceId]
+
+      let instance = Object.keys(source).reduce((acc, propName) => {
+        if (propName.includes('meta') || propName === 'id') {
+          return acc
+        }
+        const prop = source[propName]
+        acc[propName] = getInstanceProp(prop.valueType, prop.name, prop.values, prop.isArray)
+        return acc
+      }, {} as TypeInstance)
+
+      instance = {
+        ...getNewInstanceData(state, typeName, uniqueInstanceId),
+        ...instance
       }
+
+      state.project.staticData[typeName][uniqueInstanceId] = instance
     },
     UPDATE_INSTANCE_PROPERTY(state, payload: { newProp: InstanceProp, typeName: string, instanceId: string }) {
       registerStaticDataMutation(state)
@@ -1140,6 +1160,9 @@ export default createStore({
     },
     createTypeInstance(state, typeName: string) {
       this.commit('CREATE_TYPE_INSTANCE', typeName)
+    },
+    duplicateTypeInstance(state, payload: { typeName: string, instanceId: string }) {
+      this.commit('DUPLICATE_TYPE_INSTANCE', payload)
     },
     updateInstanceProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
       this.commit('UPDATE_INSTANCE_PROPERTY', payload)
