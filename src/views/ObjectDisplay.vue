@@ -57,8 +57,6 @@ export default class ObjectDisplay extends Vue {
     return this.typeDefinition || this.typeInstnace as TypeDefinition | TypeInstance
   }
 
-  modifiedProps: any = {}
-
   get isDirty() {
     return Object.keys(this.modifiedProps).length > 0
   }
@@ -125,8 +123,12 @@ export default class ObjectDisplay extends Vue {
     this.selectedName = propName
   }
 
-  createNewProperty() {
-    this.$store.dispatch('createNewProperty', { typeName: this.typeName })
+  createTypeProperty() {
+    this.$store.dispatch('createTypeProperty', this.typeName)
+  }
+
+  removeProperty(propName: string) {
+    this.$store.dispatch('removeTypeProperty', { propName, typeName: this.typeName })
   }
 }
 </script>

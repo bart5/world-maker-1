@@ -74,17 +74,20 @@ export default class TypesManager extends Vue {
     return this.$store.getters.getAllTypeInstances(this.selectedTypeName)
   }
 
-  createNewType() {
-    this.$store.dispatch('createNewType')
-  }
-
-  removeType() {
-    this.$store.dispatch('removeType')
-  }
-
   selectType(typeName: string) {
-    console.log('selecting type: ', typeName)
     this.selectedTypeName = typeName
+  }
+
+  createNewType() {
+    this.$store.dispatch('createType')
+  }
+
+  renameType(oldTypeName: string, newTypeName: string) {
+    this.$store.dispatch('renameType', { oldTypeName, newTypeName })
+  }
+
+  removeType(typeName: string) {
+    this.$store.dispatch('removeType', typeName)
   }
 }
 </script>
