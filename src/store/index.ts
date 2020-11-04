@@ -90,10 +90,10 @@ const getNewTypeData = (): TypeDefinition => {
   return {
     id: getTypeDefProp('int32', 'id'),
     meta_typeName: getTypeDefProp('string', 'meta_typeName'),
-    meta_isBoundTo: getTypeDefProp('bool', 'meta_isBoundTo', true),
-    meta_isReferencing: getTypeDefProp('string', 'meta_isReferencing', true),
-    meta_isReferencedBy: getTypeDefProp('string', 'meta_isReferencedBy', true),
-    meta_isLocked: getTypeDefProp('string', 'meta_isLocked'),
+    meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
+    meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
+    meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
+    meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
   }
 }
 
@@ -124,8 +124,11 @@ const getNewInstanceData = (state: ApplicationState, typeName: string, uid: stri
   return {
     ...instance,
     id: getInstanceProp('int32', 'id', [uid]),
-    meta_isBound: getInstanceProp('bool', 'meta_isBound', [false]),
+    meta_isBoundTo: getInstanceProp('int32', 'meta_isBound', [], true),
     meta_typeName: getInstanceProp('string', 'meta_typeName', [typeName]),
+    meta_isReferencing: getInstanceProp('int32', 'meta_isReferencing', [], true),
+    meta_isReferencedBy: getInstanceProp('int32', 'meta_isReferencedBy', [], true),
+    meta_isLocked: getInstanceProp('bool', 'meta_isLocked', [false]),
   }
 }
 
@@ -154,21 +157,21 @@ const getMockedTypesDefinitions = (): TypesDefinitions => {
   return {
     type1: {
       id: getTypeDefProp('int32', 'id'),
-      meta_isBoundTo: getTypeDefProp('bool', 'meta_isBoundTo', true),
+      meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
       meta_typeName: getTypeDefProp('string', 'meta_typeName'),
-      meta_isReferencing: getTypeDefProp('string', 'meta_isReferencing', true),
-      meta_isReferencedBy: getTypeDefProp('string', 'meta_isReferencedBy', true),
-      meta_isLocked: getTypeDefProp('string', 'meta_isLocked'),
+      meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
+      meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
+      meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
       prop1: getTypeDefProp('int32', 'prop1'),
       prop2: getTypeDefProp('int32', 'prop2')
     },
     type2: {
       id: getTypeDefProp('int32', 'id'),
-      meta_isBoundTo: getTypeDefProp('bool', 'meta_isBound', true),
+      meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
       meta_typeName: getTypeDefProp('string', 'meta_typeName'),
-      meta_isReferencing: getTypeDefProp('string', 'meta_isReferencing', true),
-      meta_isReferencedBy: getTypeDefProp('string', 'meta_isReferencedBy', true),
-      meta_isLocked: getTypeDefProp('string', 'meta_isReferencedBy'),
+      meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
+      meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
+      meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
       prop1: getTypeDefProp('int32', 'prop1'),
       prop2: getTypeDefProp('flt', 'prop2'),
       prop3: getTypeDefProp('string', 'prop3'),
@@ -856,6 +859,13 @@ export default createStore({
         state.ui.lastProjectLoadTime = String(Date.now())
       })
     },
+    LOAD_PROJECT_NON_UI_DATA(state, project: Project) {
+      state.project.types = project.types
+      state.project.staticData = project.staticData
+      window.setTimeout(() => {
+        state.ui.lastProjectLoadTime = String(Date.now())
+      })
+    },
     REFERENCE_FRAME_DATA(state, payload: { board: HTMLElement, workspace: HTMLElement }) {
       state.ui.frameData = payload
     },
@@ -1004,6 +1014,14 @@ export default createStore({
         await state.dispatch('asyncUpdateApplicationData', { lastProjectPath: path })
           .catch((e) => Error(`Failed updating application data. \n${e}`))
       }
+    },
+    async asyncRealoadTypesAndSDFromLastSave(state) {
+      const path = state.getters.applicationData.lastProjectPath
+
+      const project = await state.dispatch('asyncFetchProject', path)
+        .catch((e) => Error(`Failed fetching project. \n${e}`))
+
+      this.commit('LOAD_PROJECT_NON_UI_DATA', project)
     },
     asyncLoadApplicationData() {
       return ipc.exchange('loadApplicationData').then((data: ApplicationData) => {

@@ -174,6 +174,9 @@ export const emittersFactory = (contents: WebContents) => ({
   onShowTypesEditor() {
     contents.send('showTypesEditor')
   },
+  onRevertDataChanges() {
+    contents.send('revertDataChanges')
+  },
 })
 
 export default function setupCommunicaton(getWindow: () => BrowserWindow | null) {

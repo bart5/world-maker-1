@@ -19,6 +19,7 @@ type menuSignal =
   | 'showApplicationConfiguration'
   | 'closeApplication'
   | 'showTypesEditor'
+  | 'revertDataChanges'
 
 interface IpcReply {
   opType: opType;
