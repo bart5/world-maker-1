@@ -398,6 +398,30 @@ export default createStore({
     getAllTypeInstances: (state) => (typeName: string) => {
       return state.project.staticData[typeName]
     },
+    /** ===================================================
+     *  Static Data
+     *  ===================================================
+     */
+    getUnfinishedInstances: (state) => {
+      const notReadyInstances: { instanceId: string, type: string }[] = []
+
+      Object.entries(state.project.staticData).forEach((t) => {
+        Object.entries(t[1]).forEach((i) => {
+          Object.entries(i[1]).forEach((p) => {
+            if (!p[0].includes('meta') || p[0] !== 'id') {
+              if (!p[1].values.length) {
+                notReadyInstances.push({
+                  instanceId: i[0],
+                  type: t[0]
+                })
+              }
+            }
+          })
+        })
+      })
+
+      return notReadyInstances
+    },
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
@@ -1192,6 +1216,10 @@ export default createStore({
     removeAllInstanceInboundReferences(state, payload: { typeName: string, instanceId: string }) {
       this.commit('REMOVE_ALL_INSTANCE_INBOUND_REFERENCES', payload)
     },
+    /** ==============================================================
+     *
+     *  ==============================================================
+     */
   },
   modules: {
   },
