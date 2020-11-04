@@ -422,6 +422,58 @@ export default createStore({
 
       return notReadyInstances
     },
+    getFilteredInstances: (state, getters) => (
+      payload: {
+        instanceId: string,
+        typeName: string,
+        prop: { name: string, value: string | number | boolean },
+        isReferencedById: string,
+        isReferencingId: string,
+        instances: TypeInstance[]
+      }
+    ) => {
+      const { instanceId, typeName, prop, isReferencedById, isReferencingId } = payload
+      let { instances } = payload
+      if (!instances) {
+        instances = []
+        Object.entries(state.project.staticData).forEach((tuple) => {
+          instances.push(
+            ...Object.entries(state.project.staticData[tuple[0]]).map((tuple2) => tuple2[1])
+          )
+        })
+      }
+      if (instanceId) {
+        let match: any = null
+        instances.some((i) => {
+          if (i.id.values[0] === instanceId) {
+            match = i
+          }
+          return true
+        })
+        instances = [match] || []
+        return getters.getters.getFilteredInstances({ typeName, prop, isReferencedById, isReferencingId, instances })
+      }
+      if (typeName) {
+        instances.filter((i) => i.meta_typeName.values[0] === typeName)
+        return getters.getters.getFilteredInstances({ prop, isReferencedById, isReferencingId, instances })
+      }
+      if (prop) {
+        const matchByPropValue = (i: TypeInstance) => {
+          return Object.entries(i).some((p) => p[0] === prop.name && p[1].values.some((v) => v === prop.value))
+        }
+        instances.filter(matchByPropValue)
+        return getters.getters.getFilteredInstances({ isReferencedById, isReferencingId, instances })
+      }
+      if (isReferencedById) {
+        instances.filter((i) => i.meta_isReferencedBy.values.some((v) => v === isReferencedById))
+        return getters.getters.getFilteredInstances({ isReferencingId, instances })
+      }
+      if (isReferencingId) {
+        instances.filter((i) => i.meta_isReferencing.values.some((v) => v === isReferencingId))
+        return getters.getters.getFilteredInstances({ instances })
+      }
+      return instances
+    }
   },
   mutations: {
     // setSelectedTask(state, { questId, taskId }) {
