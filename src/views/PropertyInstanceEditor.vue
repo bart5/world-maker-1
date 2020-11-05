@@ -15,14 +15,14 @@
               :disabled="!editable"
               v-bind="valueInputAttributes"
               v-model="localProperty.value"
-              @change="maybeSubmit"
+              @change="maybeUpdate"
             >
             <!-- Boolean -->
             <select
               v-else
               :disabled="!editable"
               v-model="localProperty.value"
-              @change="maybeSubmit"
+              @change="maybeUpdate"
             >
               <option value="true" ><option/>
               <option value="false" ><option/>
@@ -38,7 +38,7 @@
               :disabled="!editable"
               class="selector type-instance"
               v-model="localProperty.value"
-              @change="maybeSubmit"
+              @change="maybeUpdate"
             >
               <option
                 v-for="instance in TypeInstances"
@@ -134,12 +134,16 @@ export default class TypePropertyEditor extends Vue {
     }
   }
 
-  maybeSubmit() {
-    if (this.isDirty) this.sendToParent()
+  maybeUpdate() {
+    if (this.isDirty) this.updateProperty()
   }
 
-  sendToParent() {
-    this.$emit('update-property', { entity: this.localProperty })
+  updateProperty() {
+    this.$store.dispatch('updateTypeProperty', { oldPropName: this.prop.name, typeName: this.typeName, newProp: this.localProperty })
+  }
+
+  revertProp() {
+    /*  */
   }
 }
 </script>
