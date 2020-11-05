@@ -281,12 +281,73 @@ const getNewProjectTemplate = () => {
   return project
 }
 
+function copyType(source: TypeDefinition) {
+  return Object.entries(source).reduce((acc, tuple1) => {
+    acc[tuple1[0]] = {
+      ...tuple1[1]
+    }
+    return acc
+  }, {} as TypeDefinition)
+}
+
+function copyInstance(source: TypeInstance) {
+  return Object.entries(source).reduce((acc, tuple1) => {
+    acc[tuple1[0]] = {
+      ...tuple1[1],
+      values: [
+        ...tuple1[1].values
+      ]
+    }
+    return acc
+  }, {} as TypeInstance)
+}
+
+function registerTypeChange(
+  state: ApplicationState, payload: { changeType: 'created' | 'edited' | 'removed', typeName: string, newTypeName: string }
+) {
+  const { changeType, typeName, newTypeName } = payload
+  if (changeType === 'created') {
+    state.changedTypes.created.push(typeName)
+  } else if (changeType === 'edited') {
+    if (state.changedTypes.created.some((tn) => tn === typeName)) {
+      if (newTypeName) {
+        state.changedTypes.created = [
+          ...state.changedTypes.created.filter((tn) => tn === typeName),
+          newTypeName
+        ]
+      }
+    } else {
+      const typeCopy = copyType(state.project.types[typeName])
+      state.changedTypes.edited.push(typeCopy)
+    }
+  } else if (changeType === 'removed') {
+    if (state.changedTypes.created.some((tn) => tn === typeName)) {
+      state.changedTypes.created = [
+        ...state.changedTypes.created.filter((tn) => tn === typeName)
+      ]
+    } else if (Object.entries(state.changedTypes.edited).some((tuple) => tuple[0] === typeName)) {
+      const typeCopy = copyType(state.project.types[typeName])
+      state.changedTypes.removed.push(typeCopy)
+    }
+  }
+}
+
 const initialState: ApplicationState = {
   applicationData: null,
   project: {} as Project,
   projectUiDataMutated: false,
   projectStaticDataMutated: false,
   projectEntityBindingsMutated: false,
+  changedTypes: {
+    created: [],
+    edited: [],
+    removed: [],
+  },
+  changedInstances: {
+    created: [],
+    edited: [],
+    removed: [],
+  },
   ui: {
     connectingInProgress: false,
     tileDeletionInProgress: false,
@@ -1267,6 +1328,18 @@ export default createStore({
     },
     removeAllInstanceInboundReferences(state, payload: { typeName: string, instanceId: string }) {
       this.commit('REMOVE_ALL_INSTANCE_INBOUND_REFERENCES', payload)
+    },
+    registerTypeChange(state, payload: { changeType: 'create' | 'edit' | 'remove', typeName: string }) {
+      const { changeType, typeName } = payload
+      // First we mark as edited so we can indicate in UI
+      if (changeType === 'create') {
+        state.state.changedTypes.create.push(typeName)
+      } else if (changeType === 'edit') {
+        const typeCopy = copyType
+        state.state.changedTypes.edit.push(typeName)
+      }
+      this.commit('REMOVE_ALL_INSTANCE_INBOUND_REFERENCES', payload)
+      // Then we create a backup unless the entity is completely new
     },
     /** ==============================================================
      *

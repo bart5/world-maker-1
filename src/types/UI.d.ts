@@ -32,6 +32,16 @@ interface ApplicationState {
   projectUiDataMutated: boolean;
   projectStaticDataMutated: boolean;
   projectEntityBindingsMutated: boolean;
+  changedTypes: {
+    created: string[], // type names
+    edited: TypeDefinition[],
+    removed: TypeDefinition[],
+  },
+  changedInstances: {
+    created: string[], // instanceIds
+    edited: TypeInstance[],
+    removed: TypeInstance[],
+  },
   ui: UIState;
 }
 
@@ -114,11 +124,11 @@ type ValueType = 'int32' | 'flt' | 'string' | 'bool'
 
 // It is suppsed to resemble enum with list of Types
 interface Types {
-  [typeName: string]: number;
+  [typeId: string]: number;
 }
 
 interface TypesDefinitions {
-  [typeName: string]: TypeDefinition;
+  [typeId: string]: TypeDefinition;
 }
 
 interface TypeBasics {
