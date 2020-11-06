@@ -22,7 +22,7 @@
     <h3>Type instances</h3>
     <button
       class="type"
-      v-for="instanceId in selectedTypeInstances"
+      v-for="instanceId in selectedInstances"
       :key="instanceId"
       @click="selectInstance(instanceId)"
     >
@@ -70,8 +70,8 @@ export default class TypesManager extends Vue {
     return this.projectTypes[this.selectedTypeName] || null
   }
 
-  get selectedTypeInstances() {
-    return this.$store.getters.getAllTypeInstances(this.selectedTypeName)
+  get selectedInstances() {
+    return this.$store.getters.getAllInstances(this.selectedTypeName)
   }
 
   selectType(typeName: string) {

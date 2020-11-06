@@ -12,15 +12,9 @@ export default createStore({
   mutations: {
     ...(UI as any).mutations,
     ...(typesAndInstances as any).mutations,
-    /* =========== APPLICATION DATA MUTATIONS =========== */
-    SET_APPLICATION_DATA(state, data) {
-      state.applicationData = data
-    },
   },
   actions: {
     ...(UI as any).actions,
     ...(typesAndInstances as any).actions,
-  },
-  modules: {
   },
 });

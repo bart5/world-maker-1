@@ -17,6 +17,8 @@ export function getWorkspaceConfigurationDefaults() {
   return workspaceConfiguration
 }
 
+export function forEveryTypeDo(state, do)
+
 export function getWorkspaceDefaults() {
   const workspace: Workspace = {
     id: `workspace_${Date.now()}${Math.random()}`,
@@ -66,9 +68,9 @@ export function getUniqueInstanceId(state: ApplicationState) {
   const isUnique = (id: string) => {
     const types = state.project.types
     return !Object.keys(types).some((tn) => {
-      const typeInstances = state.project.instances[tn]
-      return Object.keys(typeInstances).some((tin) => {
-        return typeInstances[tin].id.values[0] === id
+      const instances = state.project.instances[tn]
+      return Object.keys(instances).some((tin) => {
+        return instances[tin].id.values[0] === id
       })
     })
   }
@@ -104,7 +106,7 @@ export function getInitialPropValues(propDef: PropDefinition) {
   return [false]
 }
 
-export function getNewInstanceData(state: ApplicationState, typeName: string, uid: string): TypeInstance {
+export function getNewInstanceData(state: ApplicationState, typeName: string, uid: string): Instance {
   const instance = Object.entries(state.project.types[typeName]).reduce((acc, tuple) => {
     if (tuple[0] === 'id' || tuple[0] === 'meta_isBound' || tuple[0] === 'meta_typeName') {
       return acc
@@ -179,7 +181,7 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
   }
 }
 
-export function getMockedTypeInstance(typeName: string, typeId: number, types?: TypesDefinitions): TypeInstance {
+export function getMockedInstance(typeName: string, typeId: number, types?: TypesDefinitions): Instance {
   const id = Date.now().toString().substring(3).substring(-1)
   const assignValues = (prop: PropDefinition): InstanceProp => {
     const getValues = (valueType: ValueType, isArray?: boolean) => {
@@ -230,19 +232,19 @@ export function getMockedTypeInstance(typeName: string, typeId: number, types?: 
   }
 
   const props = types ? types[typeName] : getMockedTypesDefinitions()[typeName]
-  const TypeInstance: TypeInstance = Object.keys(props).reduce((acc, k) => {
+  const Instance: Instance = Object.keys(props).reduce((acc, k) => {
     return {
       ...acc,
       [props[k].name]: assignValues(props[k])
     }
-  }, {} as TypeInstance)
+  }, {} as Instance)
 
-  return TypeInstance
+  return Instance
 }
 
 export function getMockedInstances(): Instances {
   const getType = (typeName: string, typeId: number) => {
-    const instance = getMockedTypeInstance(typeName, typeId)
+    const instance = getMockedInstance(typeName, typeId)
     return {
       [(instance.id as InstanceProp).values[0] as number]: {
         ...instance
@@ -285,7 +287,7 @@ export function copyType(source: TypeDefinition) {
   }, {} as TypeDefinition)
 }
 
-export function copyInstance(source: TypeInstance) {
+export function copyInstance(source: Instance) {
   return Object.entries(source).reduce((acc, tuple1) => {
     acc[tuple1[0]] = {
       ...tuple1[1],
@@ -294,5 +296,5 @@ export function copyInstance(source: TypeInstance) {
       ]
     }
     return acc
-  }, {} as TypeInstance)
+  }, {} as Instance)
 }

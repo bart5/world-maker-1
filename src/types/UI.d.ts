@@ -37,8 +37,8 @@ interface ApplicationState {
   },
   changedInstances: {
     created: string[], // instanceIds
-    edited: TypeInstance[],
-    removed: TypeInstance[],
+    edited: Instance[],
+    removed: Instance[],
   },
   ui: UIState;
 }
@@ -128,11 +128,12 @@ interface Types {
 
 interface TypeWrapper {
   name: string,
+  id: string,
   definition: TypeDefinition
 }
 
 interface TypesDefinitions {
-  [typeId: string]: TypeDefinition;
+  [typeId: string]: TypeWrapper;
 }
 
 interface TypeBasics {
@@ -157,11 +158,11 @@ interface PropDefinition {
 }
 
 interface Instances {
-  [typeName: string]: InstancesList;
+  [typeId: string]: InstanceList;
 }
 
-interface InstancesList {
-  [instanceId: string]: TypeInstance;
+interface InstanceList {
+  [instanceId: string]: Instance;
 }
 
 interface InstanceBasics {
@@ -172,7 +173,7 @@ interface InstanceBasics {
   meta_isReferencedBy: InstanceProp;
 }
 
-interface TypeInstance extends InstanceBasics {
+interface Instance extends InstanceBasics {
   [propName: string]: InstanceProp;
 }
 

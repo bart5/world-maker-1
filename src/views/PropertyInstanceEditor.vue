@@ -41,7 +41,7 @@
               @change="maybeUpdate"
             >
               <option
-                v-for="instance in TypeInstances"
+                v-for="instance in Instances"
                 :key="instance.id"
                 :value="instance.id"
               >
@@ -106,8 +106,8 @@ export default class TypePropertyEditor extends Vue {
     }
   }
 
-  get TypeInstances() {
-    return this.$store.getters.TypeInstances({ type: this.propDef.refTargetType })
+  get Instances() {
+    return this.$store.getters.Instances({ type: this.propDef.refTargetType })
   }
 
   get isDirty() {

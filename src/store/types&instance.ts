@@ -15,25 +15,38 @@ const registerInstancesMutation = (state: ApplicationState) => {
 // }
 
 const identity = (payload: any) => payload
-const UI = identity as unknown as typeof createStore
+const typesAndInstances = identity as unknown as typeof createStore
 
-export default UI({
+export default typesAndInstances({
   state: initialState,
   getters: {
     projectTypes: (state) => {
       return state.project.types
     },
-    getTypeDefinition: (state) => (typeName: string) => {
-      return state.project.types[typeName]
+    getTypeByName: (state) => (typeName: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      return (Object.entries(state.project.types).find(([id, wrapper]) => wrapper.name === typeName) || [null])[0]
     },
-    getPropDefinition: (state) => (typeName: string, propName: string) => {
-      return state.project.types[typeName][propName]
+    getTypeById: (state) => (typeId: string) => {
+      return (Object.entries(state.project.types).find(([id]) => id === typeId) || [null])[0]
     },
-    getTypeInstance: (state) => (typeName: string, instanceId: string) => {
-      return state.project.instances[typeName][instanceId]
+    getTypeDefinition: (state, getters) => (typeName: string) => {
+      return getters.getTypeByName(typeName)?.definition
     },
-    getAllTypeInstances: (state) => (typeName: string) => {
-      return state.project.instances[typeName]
+    getPropDefinition: (state, getters) => (typeName: string, propName: string) => {
+      return getters.getTypeByName(typeName)?.definition[propName]
+    },
+    getInstanceByTypeId: (state) => (typeId: string, instanceId: string) => {
+      return state.project.instances[typeId].definition[instanceId]
+    },
+    getInstanceByTypeName: (state, getters) => (typeName: string, instanceId: string) => {
+      return getters.getInstanceByTypeId(getters.getTypeByName(typeName).id, instanceId)
+    },
+    getAllInstancesByTypeId: (state) => (typeId: string) => {
+      return state.project.instances[typeId]
+    },
+    getAllInstancesByTypeName: (state, getters) => (typeName: string) => {
+      return state.project.instances[getters.getTypeByName(typeName).id]
     },
     // Instances
     getUnfinishedInstances: (state) => {
@@ -63,7 +76,7 @@ export default UI({
         prop: { name: string, value: string | number | boolean },
         isReferencedById: string,
         isReferencingId: string,
-        instances: TypeInstance[]
+        instances: Instance[]
       }
     ) => {
       const { instanceId, typeName, prop, isReferencedById, isReferencingId } = payload
@@ -92,7 +105,7 @@ export default UI({
         return getters.getters.getFilteredInstances({ prop, isReferencedById, isReferencingId, instances })
       }
       if (prop) {
-        const matchByPropValue = (i: TypeInstance) => {
+        const matchByPropValue = (i: Instance) => {
           return Object.entries(i).some((p) => p[0] === prop.name && p[1].values.some((v) => v === prop.value))
         }
         instances.filter(matchByPropValue)
@@ -235,14 +248,14 @@ export default UI({
       registerInstancesMutation(state)
       const uniqueInstanceId = utils.getUniqueInstanceId(state)
 
-      state.project.instances[typeName][uniqueInstanceId] = utils.getNewInstanceData(state, typeName, uniqueInstanceId)
+      state.project.instances[typeId].definition[uniqueInstanceId] = utils.getNewInstanceData(state, typeName, uniqueInstanceId)
     },
     DUPLICATE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
       registerInstancesMutation(state)
       const { typeName, instanceId } = payload
       const uniqueInstanceId = utils.getUniqueInstanceId(state)
 
-      const source = state.project.instances[typeName][instanceId]
+      const source = state.project.instances[typeId].definition[instanceId]
 
       let instance = Object.keys(source).reduce((acc, propName) => {
         if (propName.includes('meta') || propName === 'id') {
@@ -251,14 +264,14 @@ export default UI({
         const prop = source[propName]
         acc[propName] = utils.getInstanceProp(prop.valueType, prop.name, prop.values, prop.isArray)
         return acc
-      }, {} as TypeInstance)
+      }, {} as Instance)
 
       instance = {
         ...utils.getNewInstanceData(state, typeName, uniqueInstanceId),
         ...instance
       }
 
-      state.project.instances[typeName][uniqueInstanceId] = instance
+      state.project.instances[typeId].definition[uniqueInstanceId] = instance
     },
     UPDATE_INSTANCE_PROPERTY(state, payload: { newProp: InstanceProp, typeName: string, instanceId: string }) {
       registerInstancesMutation(state)
@@ -276,7 +289,7 @@ export default UI({
       const { typeName, instanceId, referencedId } = payload
 
       // Remember what instance we are referencing
-      state.project.instances[typeName][instanceId].meta_isReferencing.values.push(referencedId)
+      state.project.instances[typeId].definition[instanceId].meta_isReferencing.values.push(referencedId)
       // Now tell that instance that we reference it
       Object.entries(state.project.instances).some((tuple1) => {
         if (referencedId in tuple1[1]) { // find that instance first
@@ -291,14 +304,14 @@ export default UI({
       const { typeName, instanceId, referencedId } = payload
 
       // Forget referenced instance
-      const isReferencing = state.project.instances[typeName][instanceId].meta_isReferencing
+      const isReferencing = state.project.instances[typeId].definition[instanceId].meta_isReferencing
       isReferencing.values = [
         ...isReferencing.values.filter((rId) => rId !== referencedId)
       ]
       // Now tell referenced instance that we no longer reference it
       Object.entries(state.project.instances).some((tuple1) => {
         if (referencedId in tuple1[1]) {
-          const isReferencedBy = state.project.instances[typeName][referencedId].meta_isReferencing
+          const isReferencedBy = state.project.instances[typeId].definition[referencedId].meta_isReferencing
           isReferencedBy.values = [
             ...isReferencedBy.values.filter((rId) => rId !== instanceId)
           ]
@@ -311,7 +324,7 @@ export default UI({
       registerInstancesMutation(state)
       const { typeName, instanceId } = payload
 
-      ;(state.project.instances[typeName][instanceId].meta_isReferencing.values as string[]).forEach((irId) => {
+      ;(state.project.instances[typeId].definition[instanceId].meta_isReferencing.values as string[]).forEach((irId) => {
         Object.entries(state.project.instances).some((tuple1) => {
           if (irId in tuple1[1]) {
             const isReferencedBy = tuple1[1][irId].meta_isReferencedBy
@@ -329,7 +342,7 @@ export default UI({
       registerInstancesMutation(state)
       const { typeName, instanceId } = payload
 
-      ;(state.project.instances[typeName][instanceId].meta_isReferencedBy.values as string[]).forEach((irbId) => {
+      ;(state.project.instances[typeId].definition[instanceId].meta_isReferencedBy.values as string[]).forEach((irbId) => {
         Object.entries(state.project.instances).some((tuple1) => {
           if (irbId in tuple1[1]) {
             const isReferencing = tuple1[1][irbId].meta_isReferencing
@@ -350,7 +363,7 @@ export default UI({
         })
       })
 
-      state.project.instances[typeName][instanceId].meta_isReferencedBy.values = []
+      state.project.instances[typeId].definition[instanceId].meta_isReferencedBy.values = []
     },
   },
   actions: {
@@ -378,16 +391,16 @@ export default UI({
     moveTypePropertyDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
       this.commit('MOVE_TYPE_PROPERTY_DOWN', payload)
     },
-    createTypeInstance(state, typeName: string) {
+    createInstance(state, typeName: string) {
       this.commit('CREATE_TYPE_INSTANCE', typeName)
     },
-    duplicateTypeInstance(state, payload: { typeName: string, instanceId: string }) {
+    duplicateInstance(state, payload: { typeName: string, instanceId: string }) {
       this.commit('DUPLICATE_TYPE_INSTANCE', payload)
     },
     updateInstanceProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
       this.commit('UPDATE_INSTANCE_PROPERTY', payload)
     },
-    removeTypeInstance(state, payload: { typeName: string, instanceId: string }) {
+    removeInstance(state, payload: { typeName: string, instanceId: string }) {
       const { typeName, instanceId } = payload
 
       // Remove all references to the instance from other instance together with values

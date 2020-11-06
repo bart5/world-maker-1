@@ -49,7 +49,7 @@ export default class ObjectDisplay extends Vue {
   showMeta = false
 
   get props() {
-    return this.typeDefinition || this.typeInstnace as TypeDefinition | TypeInstance
+    return this.typeDefinition || this.typeInstnace as TypeDefinition | Instance
   }
 
   get selectedProp(): PropDefinition | InstanceProp {
@@ -60,8 +60,8 @@ export default class ObjectDisplay extends Vue {
     return this.instanceId ? null : this.$store.getters.getTypeDefinition(this.typeName)
   }
 
-  get typeInstnace(): TypeInstance | null {
-    return this.instanceId ? this.$store.getters.getTypeInstance(this.typeName, this.instanceId) : null
+  get typeInstnace(): Instance | null {
+    return this.instanceId ? this.$store.getters.getInstance(this.typeName, this.instanceId) : null
   }
 
   get entityType() {

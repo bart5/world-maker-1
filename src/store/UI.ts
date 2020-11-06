@@ -296,6 +296,10 @@ export default UI({
     REFERENCE_FRAME_DATA(state, payload: { board: HTMLElement, workspace: HTMLElement }) {
       state.ui.frameData = payload
     },
+    /* =========== APPLICATION DATA MUTATIONS =========== */
+    SET_APPLICATION_DATA(state, data) {
+      state.applicationData = data
+    },
   },
   actions: {
     loadInstances(state) {
