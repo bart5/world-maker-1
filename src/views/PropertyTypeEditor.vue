@@ -7,7 +7,7 @@
           type="checkbox"
           :checked="isRef"
           @click="toggleRef"
-          @change="maybeSubmit"
+          @change="maybeUpdate"
         >
       </div>
       <div class="name-field">
@@ -15,7 +15,7 @@
           :disabled="!editable"
           type="text"
           v-model="localProp.name"
-          @change="maybeSubmit"
+          @change="maybeUpdate"
         >
       </div>
       <div class="type-field">
@@ -23,7 +23,7 @@
           :disabled="!editable"
           class="selector type-selector"
           v-model="selectedType"
-          @change="updatelocalProp(); maybeSubmit()"
+          @change="updatelocalProp(); maybeUpdate()"
         >
           <option v-for="type in basicTypes" :key="type">
             {{ type }}
@@ -34,7 +34,7 @@
           :disabled="!editable"
           class="selector type-reference"
           v-model="localProp.refTargetType"
-          @change="maybeSubmit"
+          @change="maybeUpdate"
         >
           <option v-for="type in projectTypes" :key="type">
             {{ type }}
@@ -46,7 +46,7 @@
           :disabled="!editable"
           type="checkbox"
           v-model="localProp.isArray"
-          @change="maybeSubmit"
+          @change="maybeUpdate"
         >
       </div>
       <div v-if="isRef" class="show-ref-target button">
@@ -73,6 +73,10 @@ export default class PropertyTypeEditor extends Vue {
   @Prop() prop!: PropDefinition
 
   @Prop() editable!: boolean
+
+  @Prop() typeName!: string
+
+  @Prop() isLocked!: boolean
 
   localProp: PropDefinition = { ...this.prop }
 
@@ -117,6 +121,10 @@ export default class PropertyTypeEditor extends Vue {
     this.localProp.valueType = this.selectedType
   }
 
+  get isDisabled() {
+    return this.prop.name.includes('meta_')
+  }
+
   get basicTypes() {
     return [
       'int32', 'flt', 'string', 'bool'
@@ -141,14 +149,12 @@ export default class PropertyTypeEditor extends Vue {
       || this.prop.isArray !== this.localProp.isArray
   }
 
-  maybeSubmit() {
-    if (this.isDirty) {
-      this.sendToParent()
-    }
+  maybeUpdate() {
+    if (this.isDirty) this.updateProperty()
   }
 
-  sendToParent() {
-    this.$emit('update-property', { oldPropName: this.prop.name, newProp: { ...this.localProp } })
+  updateProperty() {
+    this.$store.dispatch('updateTypeProperty', { oldPropName: this.prop.name, typeName: this.typeName, newProp: this.localProp })
   }
 
   selectProperty() {

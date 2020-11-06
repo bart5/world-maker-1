@@ -5,6 +5,7 @@
         <PropertyTypeEditor
           v-for="prop in props"
           :prop="prop"
+          :typeName="typeName"
           :key="typeName + prop.name"
           :editable="editable"
           @select-property="selectProp"
@@ -45,6 +46,8 @@ export default class ObjectDisplay extends Vue {
 
   selectedName = ''
 
+  showMeta = false
+
   get props() {
     return this.typeDefinition || this.typeInstnace as TypeDefinition | TypeInstance
   }
@@ -79,6 +82,10 @@ export default class ObjectDisplay extends Vue {
 
   selectProp(propName: string) {
     this.selectedName = propName
+  }
+
+  toggleMeta() {
+    this.showMeta = !this.showMeta
   }
 }
 </script>

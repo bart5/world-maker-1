@@ -121,10 +121,16 @@ type modalTypes =
 // ===================
 
 type ValueType = 'int32' | 'flt' | 'string' | 'bool'
+type Values = Array<number | string | boolean>
 
 // It is suppsed to resemble enum with list of Types
 interface Types {
   [typeId: string]: number;
+}
+
+interface TypeWrapper {
+  name: string,
+  definition: TypeDefinition
 }
 
 interface TypesDefinitions {
@@ -137,7 +143,6 @@ interface TypeBasics {
   meta_isBoundTo: PropDefinition;
   meta_isReferencing: PropDefinition;
   meta_isReferencedBy: PropDefinition;
-  meta_isLocked: PropDefinition;
 }
 
 interface TypeDefinition extends TypeBasics {
@@ -167,7 +172,6 @@ interface InstanceBasics {
   meta_isBoundTo: InstanceProp;
   meta_isReferencing: InstanceProp;
   meta_isReferencedBy: InstanceProp;
-  meta_isLocked: InstanceProp;
 }
 
 interface TypeInstance extends InstanceBasics {
@@ -178,5 +182,5 @@ interface InstanceProp {
   valueType: ValueType;
   name: string;
   isArray?: bool;
-  values: Array<string | number | boolean>;
+  values: Values;
 }

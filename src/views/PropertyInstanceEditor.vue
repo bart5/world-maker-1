@@ -52,11 +52,6 @@
         </template>
       </div>
     </div>
-    <component
-      v-if="isRef && showRefTarget"
-      v-bind:is="objectDisplay"
-      v-bind="displayProps"
-    />
   </div>
 </template>
 
@@ -83,15 +78,6 @@ export default class TypePropertyEditor extends Vue {
 
   get propDef(): PropDefinition {
     return this.$store.getters.getTypeDefinition(this.typeName, this.prop.name)
-  }
-
-  get displayProps() {
-    return {
-      typeName: this.propDef.refTargetType,
-      instanceId: this.selectedRef,
-      entityType: 'instance',
-      editable: this.editable,
-    }
   }
 
   get isRef() {
