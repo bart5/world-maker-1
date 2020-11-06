@@ -4,16 +4,6 @@ const initialState: ApplicationState = {
   projectUiDataMutated: false,
   projectInstancesMutated: false,
   projectEntityBindingsMutated: false,
-  changedTypes: {
-    created: [],
-    edited: [],
-    removed: [],
-  },
-  changedInstances: {
-    created: [],
-    edited: [],
-    removed: [],
-  },
   ui: {
     connectingInProgress: false,
     tileDeletionInProgress: false,

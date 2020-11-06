@@ -1,3 +1,5 @@
+import { ActionContext } from 'vuex'
+
 /* Shallow */
 export function validateProjectDataKeys(data: any) {
   return Object.keys(data).every((k) => Object.keys(getNewProjectTemplate()).some((dk) => dk === k))
@@ -85,6 +87,54 @@ export function getUniqueId(state: ApplicationState) {
     i++
   }
   return uid
+}
+
+export function getChangeId() {
+  return Date.now().toString();
+}
+
+/**
+ * Always register before any changes!
+ */
+export function registerChange(
+  state: ActionContext<ApplicationState, ApplicationState>,
+  entityId: TypeWrapper | Instance | null,
+  actionType: ChangeActionType,
+  subjectType: ChangeSubjectType,
+  sideEffects: Array<ChangeBase> = []
+) {
+  const changeId = getChangeId();
+  let entityCopy = null
+  if (subjectType === 'instance' || subjectType === 'instanceProp') {
+    const entity = state.getters.getInstance(entityId)
+    entityCopy = copyInstance(entity as Instance)
+  } else if (subjectType === 'type' || subjectType === 'propDef') {
+    const entity = state.getters.getType(entityId)
+    entityCopy = copyTypeWrapper(entity as TypeWrapper)
+  }
+  const change: Change = {
+    id: changeId,
+    entityBefore: entityCopy,
+    actionType,
+    subjectType,
+    sideEffects
+  }
+  state.state.changeLog.push(change)
+}
+
+export function revertChange(
+  state: ActionContext<ApplicationState, ApplicationState>,
+  change: Change,
+) {
+  if (change.subjectType === 'instanceProp') {
+
+  } else if (change.subjectType === 'instance') {
+
+  } else if (change.subjectType === 'propDef') {
+
+  } else if (change.subjectType === 'type') {
+
+  }
 }
 
 export function getNewTypeData(): TypeDefinition {
@@ -289,6 +339,14 @@ export function copyType(source: TypeDefinition) {
     }
     return acc
   }, {} as TypeDefinition)
+}
+
+export function copyTypeWrapper(source: TypeWrapper): TypeWrapper {
+  return {
+    id: source.id,
+    name: source.name,
+    definition: copyType(source.definition)
+  }
 }
 
 export function copyInstance(source: Instance) {

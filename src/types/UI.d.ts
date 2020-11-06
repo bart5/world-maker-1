@@ -10,12 +10,27 @@ interface ApplicationData {
   lastProjectPath: string;
   /* Path to projects directory under appData */
   defaultLocalPath: string;
+  /* Path to log of changes */
 }
 
 interface UiData {
   workspaces: Array<Workspace>;
   tiles: Array<Tile>;
   activeWorkspaceId: workspaceId;
+}
+
+type ChangeActionType = 'create' | 'remove' | 'rename' | 'update'
+type ChangeSubjectType = 'type' | 'instance' | 'propDef' | 'instanceProp'
+
+interface ChangeBase {
+  entityBefore: TypeWrapper | Instance | null
+  actionType: ChangeActionType;
+  subjectType: ChangeSubjectType;
+}
+
+interface Change extends ChangeBase {
+  id: string;
+  sideEffects: Array<ChangeBase>;
 }
 
 interface Project {
@@ -27,19 +42,10 @@ interface Project {
 interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
+  changeLog: Array<Change>;
   projectUiDataMutated: boolean;
   projectInstancesMutated: boolean;
   projectEntityBindingsMutated: boolean;
-  changedTypes: {
-    created: string[], // type names
-    edited: TypeDefinition[],
-    removed: TypeDefinition[],
-  },
-  changedInstances: {
-    created: string[], // instanceIds
-    edited: Instance[],
-    removed: Instance[],
-  },
   ui: UIState;
 }
 

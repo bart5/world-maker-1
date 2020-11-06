@@ -47,11 +47,17 @@ export default typesAndInstances({
     getInstanceByTypeName: (state, getters) => (typeName: string, instanceId: string) => {
       return getters.getInstanceByTypeId(getters.getType({ typeName }).id, instanceId)
     },
-    getInstance: (state, getters) => (instanceId: string, type: { typeId: string, typeName: string }) => {
-      if (type.typeId) {
+    getInstance: (state, getters) => (instanceId: string, type?: { typeId: string, typeName: string }) => {
+      if (type && type.typeId) {
         return getters.getInstanceByTypeId(type.typeId, instanceId)
+      } else if (type && type.typeName) {
+        return getters.getInstanceByTypeName(type.typeName, instanceId)
       }
-      return getters.getInstanceByTypeName(type.typeName, instanceId)
+      const instance: Instance[] = []
+      utils.oToA(state.project.instances).some((instanceList) => {
+        return instanceId in instanceList && instance.push(instanceList[instanceId])
+      })
+      return instance[0]
     },
     getAllInstancesByTypeId: (state) => (typeId: string) => {
       return utils.oToA<Instance>(state.project.instances[typeId])
@@ -85,7 +91,7 @@ export default typesAndInstances({
 
       return instances
     },
-    getAllTypesReferencingType: (state) => (typeId: string) => {
+    getAllTypeIdsReferencingType: (state) => (typeId: string) => {
       const types = state.project.types
       return Object.entries(types).reduce((acc, [tId]) => {
         return Object.entries(types[tId].definition).some(([, prop]) => {
@@ -93,7 +99,7 @@ export default typesAndInstances({
         }) ? [...acc, tId] : acc
       }, [] as string[])
     },
-    getInstancesFromTypeIds: (state, getters) => (typeIds: string[]) => {
+    getAllInstancesFromTypeIds: (state, getters) => (typeIds: string[]) => {
       return typeIds.reduce((acc, tId) => {
         return [...acc, getters.getAllInstancesOfType({ typeId: tId })]
       }, [] as Instance[])
@@ -397,23 +403,50 @@ export default typesAndInstances({
     },
   },
   actions: {
-    createType() {
+    registerChange(state, change: Change) {
+
+    },
+    revertChange(state, p: { change: Change }) {
+
+    },
+    createType(state, p: { revert: boolean }) {
       this.commit('CREATE_TYPE')
     },
-    renameType(state, payload: { typeId: string, newName: string }) {
+    renameType(state, payload: { typeId: string, newName: string, changeId: string }) {
       if (state.getters.getTypeByName(payload.newName)) {
         console.error('Type nam is already in use.')
         return
       }
       this.commit('RENAME_TYPE', payload)
     },
-    removeType(state, typeName: string) {
-      // before removing type need to:
-      // remove references to all instanes of this from instances of other types
-      //  by removing props that were source of the references
-      // update meta of those types about not referencing any more
-      // get every instance of every type referencing any instance of type in removal
-      // show this list
+    removeType(state, typeId: string) {
+      // Instances of other types that rely on removed type
+
+      const affectedTypesIds: string[] = state.getters.getAllTypeIdsReferencingType(typeId)
+      const affectedTypes: TypeWrapper[] = affectedTypesIds.map((tId) => state.getters.getTypeById(tId))
+
+      const affectedInstances = state.getters.getAllInstancesFromTypeIds(
+        state.getters.getAllTypeIdsReferencingType(typeId)
+      )
+
+      if (affectedTypesIds.length > 0) {
+        console.log('affected types: ', affectedTypes)
+        console.log('affected instances: ', affectedInstances)
+        /* As for confirmation about removal */
+        const confirm = true
+        if (!confirm) return
+      }
+
+      // Removing affected properties from affected types
+      affectedTypes.forEach((typeWrapper) => {
+        utils.oToA(typeWrapper.definition).find((p) => {
+          if (p.refTargetTypeId === typeId) {
+            this.dispatch('removeTypeProperty', { propName: p.name, typeId: typeWrapper.id, changeId: string })
+            return true
+          }
+          return false
+        })
+      })
 
       this.commit('REMOVE_TYPE', typeName)
     },
@@ -423,7 +456,7 @@ export default typesAndInstances({
     updateTypeProperty(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
       this.commit('UPDATE_TYPE_PROPERTY', payload)
     },
-    removeTypeProperty(state, payload: { propName: string, typeName: string }) {
+    removeTypeProperty(state, payload: { propName: string, typeId: string, sidefect: boolean }) {
       this.commit('REMOVE_TYPE_PROPERTY', payload)
     },
     moveTypePropertyUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
