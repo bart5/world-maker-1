@@ -122,12 +122,25 @@ export function registerChange(
   state.state.changeLog.push(change)
 }
 
+/**
+ * We assume that changes can only be reverted
+ * one by one. You cannot jump to arbitrary point
+ * in the past.
+ */
 export function revertChange(
   state: ActionContext<ApplicationState, ApplicationState>,
   change: Change,
 ) {
   if (change.subjectType === 'instanceProp') {
+    if (change.actionType === 'create') {
+      state.dispatch('')
+    } else if (change.actionType === 'remove') {
 
+    } else if (change.actionType === 'remove') {
+
+    } else if (change.actionType === 'update') {
+
+    }
   } else if (change.subjectType === 'instance') {
 
   } else if (change.subjectType === 'propDef') {

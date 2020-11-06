@@ -1,4 +1,4 @@
-import { createStore } from 'vuex';
+import { ActionContext, createStore } from 'vuex';
 import * as utils from './utils';
 import initialState from './state';
 
@@ -58,6 +58,26 @@ export default typesAndInstances({
         return instanceId in instanceList && instance.push(instanceList[instanceId])
       })
       return instance[0]
+    },
+    getInstanceType: (state, getters) => (instanceId: string) => {
+      let type: TypeWrapper[] = []
+      Object.entries(state.project.instances).some(([typeId, instanceList]) => {
+        return instanceId in instanceList && type.push(getters.getType({ typeId }))
+      })
+      return type[0]
+    },
+    getPropRefTarget: (state) => (
+      p: { propName: string, typeId: string, instanceId: string },
+      st: ActionContext<ApplicationState, ApplicationState>
+    ) => {
+      const { propName, typeId, instanceId } = p
+      let type: TypeWrapper
+      if (typeId) {
+        type = st.getters.getTypeById(typeId)
+      } else {
+        type = st.getters.getInstanceType(instanceId)
+      }
+      return type.definition[propName].refTargetTypeId
     },
     getAllInstancesByTypeId: (state) => (typeId: string) => {
       return utils.oToA<Instance>(state.project.instances[typeId])
@@ -315,6 +335,10 @@ export default typesAndInstances({
       const prop = state.project.instances[payload.typeName][payload.instanceId][payload.newProp.name]
       prop.values = payload.newProp.values
     },
+    REMOVE_INSTANCE_PROPERTY(state, payload: { propName: string, instance: Instance }) {
+      registerInstancesMutation(state)
+      delete payload.instance[payload.propName]
+    },
     REMOVE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
       registerInstancesMutation(state)
 
@@ -474,6 +498,14 @@ export default typesAndInstances({
     updateInstanceProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
       this.commit('UPDATE_INSTANCE_PROPERTY', payload)
     },
+    removeInstanceProperty(state, payload: { propName: string, instanceId: string, revert: boolean }) {
+      const { propName, instanceId, revert } = payload
+      if (!revert) {
+        /*  */
+      }
+      const instance = state.getters.getInstance(instanceId)
+      this.commit('REMOVE_INSTANCE_PROPERTY', { propName, instance })
+    },
     removeInstance(state, payload: { typeName: string, instanceId: string }) {
       const { typeName, instanceId } = payload
 
@@ -486,6 +518,18 @@ export default typesAndInstances({
       state.dispatch('removeAllInstanceReferencesMeta', { typeName, instanceId })
 
       this.commit('REMOVE_TYPE_INSTANCE', payload)
+    },
+    updateReferenceMetaConcerningInstance(state, payload: {instanceId: string, typeId: string }) {
+      const { instanceId, typeId } = payload
+      const instanceTypeId = typeId || state.getters.getInstanceType(instanceId).id
+      // Gather new list of all who reference me
+      // Gather new list of all who I reference
+      const referenceMe = Object.entries(state.state.project.instances).reduce((acc, [tId, instanceList]) => {
+        if (tId === instanceTypeId) return acc
+        utils.oToA(instanceList).reduce((acc, instance) => {
+          utils.oToA(instance).map((p) => p.)
+        }, [] as string[])
+      }, [] as string[])
     },
     addInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
       this.commit('ADD_INSTANCE_OUTBOUND_REFERENCE_META', payload)

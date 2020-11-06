@@ -144,10 +144,10 @@ interface TypesDefinitions {
 
 interface TypeBasics {
   id: PropDefinition;
-  meta_typeName: PropDefinition;
-  meta_isBoundTo: PropDefinition;
-  meta_isReferencing: PropDefinition;
-  meta_isReferencedBy: PropDefinition;
+  // meta_typeName: PropDefinition;
+  // meta_isBoundTo: PropDefinition;
+  // meta_isReferencing: PropDefinition;
+  // meta_isReferencedBy: PropDefinition;
 }
 
 interface TypeDefinition extends TypeBasics {
