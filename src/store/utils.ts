@@ -61,6 +61,10 @@ export function getUniquePropName(state: ApplicationState, typeName: string) {
   return getNewName()
 }
 
+export function oToA<T>(o: {[k: string]: T}): Array<T> {
+  return Object.entries(o).map(([, v]) => v)
+}
+
 export function getUniqueId(state: ApplicationState) {
   const getId = () => Date.now().toString().substring(3).substring(-1)
   const isUnique = (id: string) => {

@@ -35,17 +35,17 @@ export default typesAndInstances({
       }
       return getters.getTypeByName(type.typeName)
     },
-    getTypeDefinition: (state, getters) => (typeName: string) => {
-      return getters.getTypeByName(typeName)?.definition
+    getTypeDefinition: (state, getters) => (type: { typeId: string, typeName: string }) => {
+      return getters.getType(type)?.definition
     },
-    getPropDefinition: (state, getters) => (typeName: string, propName: string) => {
-      return getters.getTypeByName(typeName)?.definition[propName]
+    getPropDefinition: (state, getters) => (type: { typeId: string, typeName: string }, propName: string) => {
+      return getters.getType(type)?.definition[propName]
     },
     getInstanceByTypeId: (state) => (typeId: string, instanceId: string) => {
-      return state.project.instances[typeId].definition[instanceId]
+      return state.project.instances[typeId][instanceId]
     },
     getInstanceByTypeName: (state, getters) => (typeName: string, instanceId: string) => {
-      return getters.getInstanceByTypeId(getters.getTypeByName(typeName).id, instanceId)
+      return getters.getInstanceByTypeId(getters.getType({ typeName }).id, instanceId)
     },
     getInstance: (state, getters) => (instanceId: string, type: { typeId: string, typeName: string }) => {
       if (type.typeId) {
@@ -54,12 +54,12 @@ export default typesAndInstances({
       return getters.getInstanceByTypeName(type.typeName, instanceId)
     },
     getAllInstancesByTypeId: (state) => (typeId: string) => {
-      return state.project.instances[typeId]
+      return utils.oToA<Instance>(state.project.instances[typeId])
     },
     getAllInstancesByTypeName: (state, getters) => (typeName: string) => {
-      return state.project.instances[getters.getTypeByName(typeName).id]
+      return utils.oToA<Instance>(state.project.instances[getters.getTypeByName(typeName).id])
     },
-    getAllInstancesByType: (state, getters) => (type: { typeId: string, typeName: string }) => {
+    getAllInstancesOfType: (state, getters) => (type: { typeId: string, typeName: string }) => {
       if (type.typeId) {
         return getters.getAllInstancesByTypeId(type.typeId)
       }
@@ -93,8 +93,10 @@ export default typesAndInstances({
         }) ? [...acc, tId] : acc
       }, [] as string[])
     },
-    getInstancesFromTypeIds: (state) => (typeIds: string[]) => {
-      return typeIds.
+    getInstancesFromTypeIds: (state, getters) => (typeIds: string[]) => {
+      return typeIds.reduce((acc, tId) => {
+        return [...acc, getters.getAllInstancesOfType({ typeId: tId })]
+      }, [] as Instance[])
     },
     getFilteredInstances: (state, getters) => (
       payload: {
