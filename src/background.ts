@@ -82,7 +82,7 @@ function createWindow() {
           click() { emitters.onShowTypesEditor() }
         },
         {
-          label: 'Revert Types and StaticData',
+          label: 'Revert Types and Instances',
           click() { emitters.onRevertDataChanges() }
         },
       ]

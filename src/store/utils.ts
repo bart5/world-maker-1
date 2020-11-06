@@ -36,8 +36,6 @@ export function getNewProjectUiData() {
       ...workspaceDefaults
     }],
     tiles: [],
-    staticDataPath: '',
-    assetsPath: '',
     activeWorkspaceId: workspaceDefaults.id,
   }
   return uiData
@@ -68,7 +66,7 @@ export function getUniqueInstanceId(state: ApplicationState) {
   const isUnique = (id: string) => {
     const types = state.project.types
     return !Object.keys(types).some((tn) => {
-      const typeInstances = state.project.staticData[tn]
+      const typeInstances = state.project.instances[tn]
       return Object.keys(typeInstances).some((tin) => {
         return typeInstances[tin].id.values[0] === id
       })
@@ -242,7 +240,7 @@ export function getMockedTypeInstance(typeName: string, typeId: number, types?: 
   return TypeInstance
 }
 
-export function getMockedStaticData(): StaticData {
+export function getMockedInstances(): Instances {
   const getType = (typeName: string, typeId: number) => {
     const instance = getMockedTypeInstance(typeName, typeId)
     return {
@@ -269,7 +267,7 @@ export function getMockedStaticData(): StaticData {
 
 export function getNewProjectTemplate() {
   const project: Project = {
-    staticData: getMockedStaticData(),
+    instances: getMockedInstances(),
     types: getMockedTypesDefinitions(),
     uiData: {
       ...getNewProjectUiData()

@@ -15,13 +15,11 @@ interface ApplicationData {
 interface UiData {
   workspaces: Array<Workspace>;
   tiles: Array<Tile>;
-  staticDataPath: string;
-  assetsPath: string;
   activeWorkspaceId: workspaceId;
 }
 
 interface Project {
-  staticData: StaticData;
+  instances: Instances;
   types: TypesDefinitions;
   uiData: UiData;
 }
@@ -30,7 +28,7 @@ interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
   projectUiDataMutated: boolean;
-  projectStaticDataMutated: boolean;
+  projectInstancesMutated: boolean;
   projectEntityBindingsMutated: boolean;
   changedTypes: {
     created: string[], // type names
@@ -158,7 +156,7 @@ interface PropDefinition {
   order?: number;
 }
 
-interface StaticData {
+interface Instances {
   [typeName: string]: InstancesList;
 }
 

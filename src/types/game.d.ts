@@ -22,7 +22,7 @@ type spawnId = string
 type npcPartyId = string
 type landResourceId = string
 
-// interface StaticData {
+// interface Instances {
 //   quests: QuestStore,
 //   tasks: TaskStore,
 // }

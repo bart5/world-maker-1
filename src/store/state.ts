@@ -2,7 +2,7 @@ const initialState: ApplicationState = {
   applicationData: null,
   project: {} as Project,
   projectUiDataMutated: false,
-  projectStaticDataMutated: false,
+  projectInstancesMutated: false,
   projectEntityBindingsMutated: false,
   changedTypes: {
     created: [],

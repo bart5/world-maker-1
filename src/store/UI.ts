@@ -13,7 +13,7 @@ const registerUiDataMutation = (state: ApplicationState) => {
 }
 const resetMutations = (state: ApplicationState) => {
   state.projectUiDataMutated = false
-  state.projectStaticDataMutated = false
+  state.projectInstancesMutated = false
   state.projectEntityBindingsMutated = false
 }
 
@@ -54,7 +54,7 @@ export default UI({
     projectDataIsLoaded: (state) => state.ui.projectDataIsLoaded,
     isUnsavedData: (state) => {
       return state.projectEntityBindingsMutated
-        || state.projectStaticDataMutated
+        || state.projectInstancesMutated
         || state.projectUiDataMutated
     },
     lastProjectSaveTime: (state) => {
@@ -288,7 +288,7 @@ export default UI({
     },
     LOAD_PROJECT_NON_UI_DATA(state, project: Project) {
       state.project.types = project.types
-      state.project.staticData = project.staticData
+      state.project.instances = project.instances
       window.setTimeout(() => {
         state.ui.lastProjectLoadTime = String(Date.now())
       })
@@ -298,20 +298,20 @@ export default UI({
     },
   },
   actions: {
-    loadStaticData(state) {
-      if (state.getters.loadingStaticData) {
+    loadInstances(state) {
+      if (state.getters.loadingInstances) {
         console.warn('Already loading static data')
         return
       }
-      window.ipcRenderer.send('loadStaticData')
-      this.commit('setLoadingStaticData', true)
+      window.ipcRenderer.send('loadInstances')
+      this.commit('setLoadingInstances', true)
     },
-    setStaticData(state, data: StaticData) {
-      this.commit('setStaticData', data)
-      this.commit('setLoadingStaticData', false)
+    setInstances(state, data: Instances) {
+      this.commit('setInstances', data)
+      this.commit('setLoadingInstances', false)
     },
-    saveStaticData(state, data: StaticData) {
-      window.ipcRenderer.send('saveStaticData', data)
+    saveInstances(state, data: Instances) {
+      window.ipcRenderer.send('saveInstances', data)
     },
     createNewTile(state, positionShift?: { x: number, y: number }) {
       const tileId = `tile_${Date.now()}${Math.random()}`
