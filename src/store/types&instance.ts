@@ -49,17 +49,17 @@ export default typesAndInstances({
       return state.project.instances[getters.getTypeByName(typeName).id]
     },
     // Instances
-    getUnfinishedInstances: (state) => {
-      const notReadyInstances: { instanceId: string, type: string }[] = []
+    getInstancesWithEmptyValues: (state) => {
+      const instances: { instanceId: string, typeId: string }[] = []
 
-      Object.entries(state.project.instances).forEach((t) => {
-        Object.entries(t[1]).forEach((i) => {
-          Object.entries(i[1]).forEach((p) => {
-            if (!p[0].includes('meta') || p[0] !== 'id') {
-              if (!p[1].values.length) {
-                notReadyInstances.push({
-                  instanceId: i[0],
-                  type: t[0]
+      Object.entries(state.project.instances).forEach(([typeId, instanceList]) => { // for each type instance
+        Object.entries(instanceList).forEach(([instanceId, instance]) => {
+          Object.entries(instance).forEach(([propName, prop]) => {
+            if (!propName.includes('meta') || propName !== 'id') {
+              if (!prop.values.length) {
+                instances.push({
+                  instanceId,
+                  typeId
                 })
               }
             }
@@ -67,7 +67,7 @@ export default typesAndInstances({
         })
       })
 
-      return notReadyInstances
+      return instances
     },
     getFilteredInstances: (state, getters) => (
       payload: {
