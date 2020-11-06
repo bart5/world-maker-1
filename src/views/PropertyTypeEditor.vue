@@ -33,7 +33,7 @@
           v-if="isRef"
           :disabled="!editable"
           class="selector type-reference"
-          v-model="localProp.refTargetType"
+          v-model="localProp.refTargetTypeId"
           @change="maybeUpdate"
         >
           <option v-for="type in projectTypes" :key="type">
@@ -88,7 +88,7 @@ export default class PropertyTypeEditor extends Vue {
 
   get displayProps() {
     return {
-      typeName: this.localProp.refTargetType,
+      typeName: this.localProp.refTargetTypeId,
       entityType: 'type',
       editable: this.editable,
     }
@@ -100,12 +100,12 @@ export default class PropertyTypeEditor extends Vue {
     if (this.localProp.name.startsWith('ref_')) {
       this.localProp.name = this.localProp.name.replace('ref_', '')
       this.localProp.isRef = false
-      delete this.localProp.refTargetType
+      delete this.localProp.refTargetTypeId
     } else {
       this.localProp.name = 'ref_' + this.localProp.name
       this.localProp.isRef = true
       this.localProp.valueType = 'int32'
-      this.localProp.refTargetType = this.projectTypes[0]
+      this.localProp.refTargetTypeId = this.projectTypes[0]
     }
   }
 

@@ -107,7 +107,7 @@ export default class TypePropertyEditor extends Vue {
   }
 
   get Instances() {
-    return this.$store.getters.Instances({ type: this.propDef.refTargetType })
+    return this.$store.getters.Instances({ type: this.propDef.refTargetTypeId })
   }
 
   get isDirty() {

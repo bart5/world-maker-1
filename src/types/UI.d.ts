@@ -153,7 +153,7 @@ interface PropDefinition {
   name: string;
   isArray?: bool;
   isRef?: boolean;
-  refTargetType?: string,
+  refTargetTypeId?: string,
   order?: number;
 }
 

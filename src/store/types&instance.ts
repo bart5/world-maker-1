@@ -23,11 +23,17 @@ export default typesAndInstances({
     projectTypes: (state) => {
       return state.project.types
     },
+    getTypeById: (state) => (typeId: string) => {
+      return (Object.entries(state.project.types).find(([id]) => id === typeId) || [null])[0]
+    },
     getTypeByName: (state) => (typeName: string) => {
       return (Object.entries(state.project.types).find(([, wrapper]) => wrapper.name === typeName) || [null])[0]
     },
-    getTypeById: (state) => (typeId: string) => {
-      return (Object.entries(state.project.types).find(([id]) => id === typeId) || [null])[0]
+    getType: (state, getters) => (type: { typeId: string, typeName: string }) => {
+      if (type.typeId) {
+        return getters.getTypeById(type.typeId)
+      }
+      return getters.getTypeByName(type.typeName)
     },
     getTypeDefinition: (state, getters) => (typeName: string) => {
       return getters.getTypeByName(typeName)?.definition
@@ -41,13 +47,24 @@ export default typesAndInstances({
     getInstanceByTypeName: (state, getters) => (typeName: string, instanceId: string) => {
       return getters.getInstanceByTypeId(getters.getTypeByName(typeName).id, instanceId)
     },
+    getInstance: (state, getters) => (instanceId: string, type: { typeId: string, typeName: string }) => {
+      if (type.typeId) {
+        return getters.getInstanceByTypeId(type.typeId, instanceId)
+      }
+      return getters.getInstanceByTypeName(type.typeName, instanceId)
+    },
     getAllInstancesByTypeId: (state) => (typeId: string) => {
       return state.project.instances[typeId]
     },
     getAllInstancesByTypeName: (state, getters) => (typeName: string) => {
       return state.project.instances[getters.getTypeByName(typeName).id]
     },
-    // Instances
+    getAllInstancesByType: (state, getters) => (type: { typeId: string, typeName: string }) => {
+      if (type.typeId) {
+        return getters.getAllInstancesByTypeId(type.typeId)
+      }
+      return getters.getAllInstancesByTypeName(type.typeName)
+    },
     getInstancesWithEmptyValues: (state) => {
       const instances: { instanceId: string, typeId: string }[] = []
 
@@ -67,6 +84,17 @@ export default typesAndInstances({
       })
 
       return instances
+    },
+    getAllTypesReferencingType: (state) => (typeId: string) => {
+      const types = state.project.types
+      return Object.entries(types).reduce((acc, [tId]) => {
+        return Object.entries(types[tId].definition).some(([, prop]) => {
+          return prop.refTargetTypeId === typeId
+        }) ? [...acc, tId] : acc
+      }, [] as string[])
+    },
+    getInstancesFromTypeIds: (state) => (typeIds: string[]) => {
+      return typeIds.
     },
     getFilteredInstances: (state, getters) => (
       payload: {
@@ -146,17 +174,17 @@ export default typesAndInstances({
         instance.meta_typeName.values = [newName]
       })
     },
-    REMOVE_TYPE(state, typeName: string) {
+    REMOVE_TYPE(state, typeId: string) {
       registerInstancesMutation(state)
 
       // Also reset values for all props that were references to the removed type
-      Object.entries(state.project.types).forEach((tuple1) => { // each type
+      Object.entries(state.project.types).forEach(([typeId, wrapper]) => { // each type
         const tName = tuple1[0]
-        const typeDefinition = tuple1[1]
+        const typeDefinition = wrapper.definition
 
         Object.entries(typeDefinition).forEach((tuple2) => { // each prop definition
           const propName = tuple2[0]
-          const targetTypeName = tuple2[1].refTargetType
+          const targetTypeName = tuple2[1].refTargetTypeId
           if (targetTypeName && targetTypeName === typeName) {
             Object.entries(state.project.instances[tName]).forEach((tuple3) => { // each prop instance
               tuple3[1][propName].values = []
@@ -165,8 +193,11 @@ export default typesAndInstances({
         })
       })
 
-      delete state.project.types[typeName]
-      delete state.project.instances[typeName]
+      delete state.project.types[typeId]
+      delete state.project.instances[typeId]
+    },
+    REMOVE_ALL_REFERENCES_TO_TYPE_FROM_INSTANCES(state, typeId: string) {
+
     },
     CREATE_TYPE_PROPERTY(state, typeName: string) {
       registerInstancesMutation(state)
@@ -195,7 +226,7 @@ export default typesAndInstances({
       const isValueTypeChange = oldProp.valueType !== payload.newProp.valueType
       const isArrayChange = oldProp.isArray !== payload.newProp.isArray
       const isRefChange = oldProp.isRef !== payload.newProp.isRef
-      const isRefTargetChange = oldProp.refTargetType !== payload.newProp.refTargetType
+      const isRefTargetChange = oldProp.refTargetTypeId !== payload.newProp.refTargetTypeId
 
       // Updating prop in type definition
       state.project.types[payload.typeName][payload.newProp.name] = {
@@ -347,7 +378,7 @@ export default typesAndInstances({
               ...isReferencing.values.filter((irId) => irId !== instanceId)
             }
             const referencingProperties = Object.entries(state.project.types[tuple1[0]]).filter((tuple2) => {
-              return tuple2[1]?.refTargetType === typeName
+              return tuple2[1]?.refTargetTypeId === typeName
             })
             referencingProperties.forEach((propNameTuple) => {
               tuple1[1][irbId][propNameTuple[0]].values = [
@@ -375,6 +406,13 @@ export default typesAndInstances({
       this.commit('RENAME_TYPE', payload)
     },
     removeType(state, typeName: string) {
+      // before removing type need to:
+      // remove references to all instanes of this from instances of other types
+      //  by removing props that were source of the references
+      // update meta of those types about not referencing any more
+      // get every instance of every type referencing any instance of type in removal
+      // show this list
+
       this.commit('REMOVE_TYPE', typeName)
     },
     createTypeProperty(state, typeName: string) {
