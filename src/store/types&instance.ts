@@ -346,6 +346,20 @@ export default typesAndInstances({
 
       delete state.project.instances[payload.typeName][payload.instanceId]
     },
+    ADD_REF_META_FROM_A_TO_B(state, p: { instA: Instance, instB: Instance }) {
+      const { instA, instB } = p
+      instA.meta_isReferencing.values.push(instB.id.values[0])
+      instB.meta_isReferencedBy.values.push(instA.id.values[0])
+    },
+    REMOVE_REF_META_FROM_A_TO_B(state, p: { instA: Instance, instB: Instance }) {
+      const { instA, instB } = p
+      instA.meta_isReferencing.values = [
+        ...instA.meta_isReferencing.values.filter((iId) => iId !== instB.id.values[0])
+      ]
+      instB.meta_isReferencedBy.values = [
+        ...instB.meta_isReferencedBy.values.filter((iId) => iId !== instA.id.values[0])
+      ]
+    },
     ADD_INSTANCE_OUTBOUND_REFERENCE_META(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
       registerInstancesMutation(state)
       const { typeName, instanceId, referencedId } = payload
@@ -526,7 +540,17 @@ export default typesAndInstances({
       // Gather new list of all who reference me
       // Gather new list of all who I reference
 
-      const referenceMe = utils.getInstancesReferencingInstance(instanceId, state)
+      const theyReferenceMe = utils.getInstancesReferencingInstance(instanceId, state)
+    },
+    addRefMetaFromAToB(state, p: { aId: string, bId: string }) {
+      const instA = state.getters.getInstance(p.aId)
+      const instB = state.getters.getInstance(p.bId)
+      this.commit('ADD_REF_META_FROM_A_TO_B', { instA, instB })
+    },
+    removeRefMetaFromAToB(state, p: { aId: string, bId: string }) {
+      const instA = state.getters.getInstance(p.aId)
+      const instB = state.getters.getInstance(p.bId)
+      this.commit('REMOVE_REF_META_FROM_A_TO_B', { instA, instB })
     },
     addInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
       this.commit('ADD_INSTANCE_OUTBOUND_REFERENCE_META', payload)
