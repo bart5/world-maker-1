@@ -24,8 +24,7 @@ export default typesAndInstances({
       return state.project.types
     },
     getTypeByName: (state) => (typeName: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      return (Object.entries(state.project.types).find(([id, wrapper]) => wrapper.name === typeName) || [null])[0]
+      return (Object.entries(state.project.types).find(([, wrapper]) => wrapper.name === typeName) || [null])[0]
     },
     getTypeById: (state) => (typeId: string) => {
       return (Object.entries(state.project.types).find(([id]) => id === typeId) || [null])[0]
@@ -83,9 +82,9 @@ export default typesAndInstances({
       let { instances } = payload
       if (!instances) {
         instances = []
-        Object.entries(state.project.instances).forEach((tuple) => {
+        Object.entries(state.project.instances).forEach(([, instanceList]) => {
           instances.push(
-            ...Object.entries(state.project.instances[tuple[0]]).map((tuple2) => tuple2[1])
+            ...Object.entries(instanceList).map(([, instance]) => instance)
           )
         })
       }
@@ -94,10 +93,11 @@ export default typesAndInstances({
         instances.some((i) => {
           if (i.id.values[0] === instanceId) {
             match = i
+            return true
           }
-          return true
+          return false
         })
-        instances = [match] || []
+        instances = match ? [match] : []
         return getters.getters.getFilteredInstances({ typeName, prop, isReferencedById, isReferencingId, instances })
       }
       if (typeName) {
@@ -126,28 +126,25 @@ export default typesAndInstances({
     CREATE_TYPE(state) {
       registerInstancesMutation(state)
       const uniqueName = utils.getUniqueTypeName(state)
+      const uniqueId = utils.getUniqueId(state)
 
-      state.project.types[uniqueName] = utils.getNewTypeData()
-      state.project.instances[uniqueName] = {}
+      state.project.types[uniqueId] = {
+        name: uniqueName,
+        id: uniqueId,
+        definition: utils.getNewTypeData()
+      }
+      state.project.instances[uniqueId] = {}
     },
-    RENAME_TYPE(state, payload: { oldTypeName: string, newTypeName: string }) {
+    RENAME_TYPE(state, payload: { typeId: string, newName: string }) {
       registerInstancesMutation(state)
+      const { typeId, newName } = payload
 
-      if (payload.newTypeName in state.project.types) {
-        console.error('Tried to rename type with already taken name.')
-        return
-      }
+      const type = state.project.types[typeId]
+      type.name = newName
 
-      state.project.types[payload.newTypeName] = {
-        ...state.project.types[payload.oldTypeName]
-      }
-
-      Object.entries(state.project.instances[payload.newTypeName]).forEach((tuple) => {
-        const instance = tuple[1]
-        instance.meta_typeName.values = [payload.newTypeName]
+      Object.entries(state.project.instances[typeId]).forEach(([, instance]) => {
+        instance.meta_typeName.values = [newName]
       })
-
-      delete state.project.types[payload.oldTypeName]
     },
     REMOVE_TYPE(state, typeName: string) {
       registerInstancesMutation(state)
@@ -370,7 +367,11 @@ export default typesAndInstances({
     createType() {
       this.commit('CREATE_TYPE')
     },
-    renameType(state, payload: { oldTypeName: string, newTypeName: string }) {
+    renameType(state, payload: { typeId: string, newName: string }) {
+      if (state.getters.getTypeByName(payload.newName)) {
+        console.error('Type nam is already in use.')
+        return
+      }
       this.commit('RENAME_TYPE', payload)
     },
     removeType(state, typeName: string) {

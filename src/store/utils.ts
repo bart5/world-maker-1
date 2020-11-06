@@ -17,8 +17,6 @@ export function getWorkspaceConfigurationDefaults() {
   return workspaceConfiguration
 }
 
-export function forEveryTypeDo(state, do)
-
 export function getWorkspaceDefaults() {
   const workspace: Workspace = {
     id: `workspace_${Date.now()}${Math.random()}`,
@@ -63,14 +61,16 @@ export function getUniquePropName(state: ApplicationState, typeName: string) {
   return getNewName()
 }
 
-export function getUniqueInstanceId(state: ApplicationState) {
+export function getUniqueId(state: ApplicationState) {
   const getId = () => Date.now().toString().substring(3).substring(-1)
   const isUnique = (id: string) => {
     const types = state.project.types
-    return !Object.keys(types).some((tn) => {
-      const instances = state.project.instances[tn]
-      return Object.keys(instances).some((tin) => {
-        return instances[tin].id.values[0] === id
+    return !Object.keys(types).some(([typeId]) => {
+      if (typeId === id) return true
+
+      const instances = state.project.instances[typeId]
+      return Object.keys(instances).some(([instanceId]) => {
+        return instanceId === id
       })
     })
   }
