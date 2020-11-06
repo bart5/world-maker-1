@@ -29,11 +29,13 @@ export default typesAndInstances({
     getTypeByName: (state) => (typeName: string) => {
       return (Object.entries(state.project.types).find(([, wrapper]) => wrapper.name === typeName) || [null])[0]
     },
-    getType: (state, getters) => (type: { typeId: string, typeName: string }) => {
+    getType: (state, getters) => (type: { typeId: string, typeName: string }, instanceId?: string) => {
       if (type.typeId) {
         return getters.getTypeById(type.typeId)
+      } else if (type.typeName) {
+        return getters.getTypeByName(type.typeName)
       }
-      return getters.getTypeByName(type.typeName)
+      return getters.getInstanceType(instanceId)
     },
     getTypeDefinition: (state, getters) => (type: { typeId: string, typeName: string }) => {
       return getters.getType(type)?.definition
@@ -60,13 +62,13 @@ export default typesAndInstances({
       return instance[0]
     },
     getInstanceType: (state, getters) => (instanceId: string) => {
-      let type: TypeWrapper[] = []
+      const type: TypeWrapper[] = []
       Object.entries(state.project.instances).some(([typeId, instanceList]) => {
         return instanceId in instanceList && type.push(getters.getType({ typeId }))
       })
       return type[0]
     },
-    getPropRefTarget: (state) => (
+    getPropRefTarget: () => (
       p: { propName: string, typeId: string, instanceId: string },
       st: ActionContext<ApplicationState, ApplicationState>
     ) => {
@@ -521,15 +523,10 @@ export default typesAndInstances({
     },
     updateReferenceMetaConcerningInstance(state, payload: {instanceId: string, typeId: string }) {
       const { instanceId, typeId } = payload
-      const instanceTypeId = typeId || state.getters.getInstanceType(instanceId).id
       // Gather new list of all who reference me
       // Gather new list of all who I reference
-      const referenceMe = Object.entries(state.state.project.instances).reduce((acc, [tId, instanceList]) => {
-        if (tId === instanceTypeId) return acc
-        utils.oToA(instanceList).reduce((acc, instance) => {
-          utils.oToA(instance).map((p) => p.)
-        }, [] as string[])
-      }, [] as string[])
+
+      const referenceMe = utils.getInstancesReferencingInstance(instanceId, state)
     },
     addInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
       this.commit('ADD_INSTANCE_OUTBOUND_REFERENCE_META', payload)

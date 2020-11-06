@@ -150,6 +150,51 @@ export function revertChange(
   }
 }
 
+export function getPropsOfAWithRefToB(
+  p: {
+    typeAId?: string, typeBId?: string, instAId?: string, instBId?: string,
+  },
+  st: ActionContext<ApplicationState, ApplicationState>
+) {
+  const { instAId, instBId, typeAId } = p
+  let { typeBId } = p
+  const typeA: TypeWrapper = st.getters.getType({ typeId: typeAId }, instAId)
+  const typeB: TypeWrapper = st.getters.getType({ typeId: typeBId }, instBId)
+  typeBId = typeBId || typeB.id
+  const propNames: string[] = []
+  Object.entries(typeA.definition).forEach(([, prop]) => {
+    if (prop.refTargetTypeId === typeBId) {
+      propNames.push(prop.name)
+    }
+  })
+  return propNames
+}
+
+export function getInstancesReferencingInstance(
+  targetInstId: string,
+  st: ActionContext<ApplicationState, ApplicationState>
+) {
+  const referencingIds: string[] = []
+  const instanceType: TypeWrapper = st.getters.getType({ instanceId: targetInstId })
+  Object.entries(st.state.project.instances).forEach(([typeId, instancesList]) => {
+    if (targetInstId in instancesList) return
+
+    const propNames = getPropsOfAWithRefToB({ typeAId: typeId, typeBId: instanceType.id }, st)
+
+    oToA(instancesList).forEach((inst) => {
+      propNames.some((propName) => {
+        if (inst[propName].values.includes(targetInstId)) {
+          referencingIds.push(inst.id.values[0])
+          return true
+        }
+        return false
+      })
+    })
+  })
+
+  return referencingIds
+}
+
 export function getNewTypeData(): TypeDefinition {
   return {
     id: getTypeDefProp('int32', 'id'),

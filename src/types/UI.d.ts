@@ -172,20 +172,20 @@ interface InstanceList {
 }
 
 interface InstanceBasics {
-  id: InstanceProp;
-  meta_typeName: InstanceProp;
-  meta_isBoundTo: InstanceProp;
-  meta_isReferencing: InstanceProp;
-  meta_isReferencedBy: InstanceProp;
+  id: InstanceProp<[string]>;
+  meta_typeName: InstanceProp<[string]>;
+  meta_isBoundTo: InstanceProp<string[]>;
+  meta_isReferencing: InstanceProp<string[]>;
+  meta_isReferencedBy: InstanceProp<string[]>;
 }
 
 interface Instance extends InstanceBasics {
   [propName: string]: InstanceProp;
 }
 
-interface InstanceProp {
+interface InstanceProp<T = Values> {
   valueType: ValueType;
   name: string;
   isArray?: bool;
-  values: Values;
+  values: T;
 }
