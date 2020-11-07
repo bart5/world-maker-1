@@ -19,18 +19,47 @@ interface UiData {
   activeWorkspaceId: workspaceId;
 }
 
+type ChangeType =
+  | 'createType'
+  // 1 step:
+  //  1) creates type. (subjects = null)
+  | 'removeType'
+  // 3 steps:
+  //  1) removes references FROM all instances of type. (subjects = [all instances of type])
+  //  2) removes references TO all instances. (subjects = [all instances of type])
+  //  3) removes all instances. (subjects = [all instances of type])
+  | 'renameType'
+  // 1 step:
+  //  1) changes name in typeWrapper and meta_typeName in all instances. (subjects = typeWrapper + [all instances of type])
+  | 'createProp'
+  // 1 step:
+  //  1) create prop for type and create props for all instances. (subjects = typeWrapper + [all instances of type])
+  | 'renameProp'
+  // 1 step:
+  //  1) rename prop in type, rename prop in all instances. (subjects = typeWrapper + [all instances of type])
+  | 'changePropValue_int32<->flt' // cast with trimmed precision
+  | 'changePropValue_int32<->string' // literal cast
+  | 'changePropValue_int32<->bool' // cast to 1 or 0 and true or false
+  | 'changePropValue_flt<->string' // literal cast
+  | 'changePropValue_flt<->bool' // cast to 1 or 0 and true or false
+  | 'changePropValue_string<->bool' // cast to 'true' or 'false' and (from string) true or false
+  // 1 step:
+  //  1) change valueType in typeWrappe and instances and instances props values. (subjects = typeWrapper + [all instances of type])
+  // occurs in type, instant effect on type and all instances (cast to other type (if possible))
+                          // If prop was a reference it first acts as changePropRefValues as if removing all values
+  | 'changePropRefTarget' // it first removes all ref values from instances with this prop
+  | 'changePropRefValues' // instance and meta of other instances
+  | 'changePropValues' // only instance (non ref change)
+  | ''
+
 type ChangeActionType = 'create' | 'remove' | 'rename' | 'update'
 type ChangeSubjectType = 'type' | 'instance' | 'propDef' | 'instanceProp'
 
-interface ChangeBase {
+interface Change {
+  id: string;
   entityBefore: TypeWrapper | Instance | null
   actionType: ChangeActionType;
   subjectType: ChangeSubjectType;
-}
-
-interface Change extends ChangeBase {
-  id: string;
-  sideEffects: Array<ChangeBase>;
 }
 
 interface Project {
@@ -124,7 +153,7 @@ type modalTypes =
 
 // ===================
 
-type ValueType = 'int32' | 'flt' | 'string' | 'bool'
+type ValueType = 'int32' | 'flt' | 'string' | 'bool' | 'ref'
 type Values = Array<number | string | boolean>
 
 // It is suppsed to resemble enum with list of Types
@@ -158,7 +187,7 @@ interface PropDefinition {
   valueType: ValueType;
   name: string;
   isArray?: bool;
-  isRef?: boolean;
+  // isRef?: boolean;
   refTargetTypeId?: string,
   order?: number;
 }

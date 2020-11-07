@@ -101,7 +101,6 @@ export function registerChange(
   entityId: TypeWrapper | Instance | null,
   actionType: ChangeActionType,
   subjectType: ChangeSubjectType,
-  sideEffects: Array<ChangeBase> = []
 ) {
   const changeId = getChangeId();
   let entityCopy = null
@@ -117,7 +116,6 @@ export function registerChange(
     entityBefore: entityCopy,
     actionType,
     subjectType,
-    sideEffects
   }
   state.state.changeLog.push(change)
 }
@@ -151,10 +149,10 @@ export function revertChange(
 }
 
 export function getPropsOfAWithRefToB(
+  st: ActionContext<ApplicationState, ApplicationState>,
   p: {
     typeAId?: string, typeBId?: string, instAId?: string, instBId?: string,
   },
-  st: ActionContext<ApplicationState, ApplicationState>
 ) {
   const { instAId, instBId, typeAId } = p
   let { typeBId } = p

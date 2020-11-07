@@ -560,7 +560,7 @@ export default typesAndInstances({
     },
     removeAllRefsFromAtoB(state, p: { aId: string, bId: string }) {
       const { aId, bId } = p
-      const refingProps = utils.getPropsOfAWithRefToB({ instAId: aId, instBId: bId }, state)
+      const refingProps = utils.getPropsOfAWithRefToB(state, { instAId: aId, instBId: bId })
       refingProps.forEach((propName) => {
         this.dispatch('removeRefFromAToB', { aId, aPropName: propName, bId })
       })
