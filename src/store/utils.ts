@@ -97,26 +97,26 @@ export function getChangeId() {
  * Always register before StaticData (types or instances) MUTATION!
  */
 export function registerChange(
-  state: ActionContext<ApplicationState, ApplicationState>,
-  entity: TypeWrapper | PropDefinition | Instance | InstanceProp,
+  state: ApplicationState,
+  entityBeforeChange: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
   entityType: EntityTypes,
   // for TypeWrapper and PropDefinition it's type id
   // for Instance and InstanceProp it's instance id
   typeId: string,
   instanceId: string
 ) {
-  if (!state.state.currentTransaction) return
+  if (!state.currentTransaction) return
 
-  let entityBefore: typeof entity
+  let entityBefore: typeof entityBeforeChange
 
   if (entityType === 'TypeWrapper') {
-    entityBefore = copyTypeWrapper(entity as TypeWrapper)
+    entityBefore = copyTypeWrapper(entityBeforeChange as TypeWrapper)
   } else if (entityType === 'PropDefinition') {
-    entityBefore = copyPropDef(entity as PropDefinition)
+    entityBefore = copyPropDef(entityBeforeChange as PropDefinition)
   } else if (entityType === 'Instance') {
-    entityBefore = copyInstance(entity as Instance)
+    entityBefore = copyInstance(entityBeforeChange as Instance)
   } else /* (entityType === 'InstanceProp') */ {
-    entityBefore = copyInstanceProp(entity as InstanceProp)
+    entityBefore = copyInstanceProp(entityBeforeChange as InstanceProp)
   }
 
   const change: Change = {
@@ -126,7 +126,7 @@ export function registerChange(
     instanceId,
   }
 
-  state.state.currentTransaction.changes.push(change)
+  state.currentTransaction.changes.push(change)
 }
 
 /**
@@ -135,26 +135,26 @@ export function registerChange(
  * in the past.
  */
 export function revertChange(
-  state: ActionContext<ApplicationState, ApplicationState>,
+  state: ApplicationState,
   change: Change,
 ) {
   let entity
   switch (change.entityType) {
     case 'TypeWrapper':
       entity = change.entityBefore as TypeWrapper
-      state.state.project.types[change.typeId] = entity
+      state.project.types[entity.id] = entity
       break;
     case 'PropDefinition':
       entity = change.entityBefore as PropDefinition
-      state.state.project.types[change.typeId].definition[entity.name] = entity
+      state.project.types[change.typeId].definition[entity.name] = entity
       break;
     case 'Instance':
       entity = change.entityBefore as Instance
-      state.state.project.instances[change.typeId][change.instanceId] = entity
+      state.project.instances[change.typeId][change.instanceId] = entity
       break;
     case 'InstanceProp':
       entity = change.entityBefore as InstanceProp
-      state.state.project.instances[change.typeId][change.instanceId][entity.name] = entity
+      state.project.instances[change.typeId][change.instanceId][entity.name] = entity
       break;
     default:
       Error(`Unknown entity type of the change: ${change.entityType}.`)

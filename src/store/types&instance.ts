@@ -1,28 +1,20 @@
 import { ActionContext, createStore } from 'vuex';
 import * as utils from './utils';
-import registerChange from './utils'
-import revertChange from './utils'
+import { registerChange } from './utils'
+import { revertChange } from './utils'
 import initialState from './state';
 
 const registerInstancesMutation = (state: ApplicationState) => {
   state.projectInstancesMutated = true
 }
 
-function openTransaction(state: ActionContext<ApplicationState, ApplicationState>, changeType: ChangeType) {
-  state.commit('OPEN_TRANSACTION', changeType)
-}
-
-function closeTransaction(state: ActionContext<ApplicationState, ApplicationState>) {
-  state.commit('CLOSE_TRANSACTION')
-}
-
-const identity = (payload: any) => payload
+const identity = <T>(payload: T) => payload
 const typesAndInstances = identity as unknown as typeof createStore
 
 export default typesAndInstances({
   state: initialState,
   getters: {
-    projectTypes: (state) => {
+    projectTypes(state) {
       return state.project.types
     },
     getTypeById: (state) => (typeId: string) => {
@@ -202,6 +194,8 @@ export default typesAndInstances({
       const uniqueName = utils.getUniqueTypeName(state)
       const uniqueId = utils.getUniqueId(state)
 
+      registerChange(state, null, 'TypeWrapper', uniqueId, '')
+
       state.project.types[uniqueId] = {
         name: uniqueName,
         id: uniqueId,
@@ -212,6 +206,8 @@ export default typesAndInstances({
     RENAME_TYPE(state, payload: { typeId: string, newName: string }) {
       registerInstancesMutation(state)
       const { typeId, newName } = payload
+
+      registerChange(state, state.project.types[typeId], 'TypeWrapper', '', '')
 
       const type = state.project.types[typeId]
       type.name = newName
@@ -224,20 +220,24 @@ export default typesAndInstances({
       registerInstancesMutation(state)
 
       // Also reset values for all props that were references to the removed type
-      Object.entries(state.project.types).forEach(([typeId, wrapper]) => { // each type
-        const tName = tuple1[0]
-        const typeDefinition = wrapper.definition
 
-        Object.entries(typeDefinition).forEach((tuple2) => { // each prop definition
-          const propName = tuple2[0]
-          const targetTypeName = tuple2[1].refTargetTypeId
-          if (targetTypeName && targetTypeName === typeName) {
-            Object.entries(state.project.instances[tName]).forEach((tuple3) => { // each prop instance
-              tuple3[1][propName].values = []
-            })
-          }
-        })
-      })
+      // This should be initiated in action
+      // Object.entries(state.project.types).forEach(([typeId, wrapper]) => { // each type
+      //   const tName = tuple1[0]
+      //   const typeDefinition = wrapper.definition
+
+      //   Object.entries(typeDefinition).forEach((tuple2) => { // each prop definition
+      //     const propName = tuple2[0]
+      //     const targetTypeName = tuple2[1].refTargetTypeId
+      //     if (targetTypeName && targetTypeName === typeName) {
+      //       Object.entries(state.project.instances[tName]).forEach((tuple3) => { // each prop instance
+      //         tuple3[1][propName].values = []
+      //       })
+      //     }
+      //   })
+      // })
+
+      registerChange(state, state.project.types[typeId], 'TypeWrapper', '', '')
 
       delete state.project.types[typeId]
       delete state.project.instances[typeId]
@@ -462,54 +462,28 @@ export default typesAndInstances({
   actions: {
     change(state, p: { changeType: ChangeType, context: any }) {
       const { changeType, context } = p
-      const dispatch = () => this.dispatch(changeType, context)
-      switch (changeType) {
-        case 'createType':
-          dispatch(); break;
-        case 'removeType':
-          dispatch(); break;
-        case 'renameType':
-          dispatch(); break;
-        case 'createProp':
-          dispatch(); break;
-        case 'removeProp':
-          dispatch(); break;
-        case 'renameProp':
-          dispatch(); break;
-        case 'changePropValueType':
-          dispatch(); break;
-        case 'changePropToArray':
-          dispatch(); break;
-        case 'changePropToSingle':
-          dispatch(); break;
-        case 'changePropValueTypeToRef':
-          dispatch(); break;
-        case 'changePropValueTypeFromRef':
-          dispatch(); break;
-        case 'changePropRefTargetType':
-          dispatch(); break;
-        case 'addPropRefValue':
-          dispatch(); break;
-        case 'removePropRefValue':
-          dispatch(); break;
-        case 'changePropValues':
-          dispatch(); break;
-        case 'changePropOrder':
-          dispatch(); break;
-        case 'createInstance':
-          dispatch(); break;
-        case 'removeInstance':
-          dispatch(); break;
-        default:
-          return utils.assertNever(changeType)
-      }
-      return true
+      this.dispatch('openTransaction', changeType)
+      this.dispatch(changeType, context)
+      this.dispatch('closeTransaction', changeType)
     },
+    openTransaction(state, changeType: ChangeType) {
+      state.commit('OPEN_TRANSACTION', changeType)
+    },
+    closeTransaction(state) {
+      state.commit('CLOSE_TRANSACTION')
+    },
+    /* === CHANGES START HERE === */
     createType(state) {
       this.commit('CREATE_TYPE')
     },
     removeType(state, typeId: string) {
       // Instances of other types that rely on removed type
+
+      utils.oToA(state.state.project.instances[typeid]).forEach((instance) => {
+        this.dispatch('removeInstance') // args
+      })
+
+
 
       const affectedTypesIds: string[] = state.getters.getAllTypeIdsReferencingType(typeId)
       const affectedTypes: TypeWrapper[] = affectedTypesIds.map((tId) => state.getters.getTypeById(tId))
@@ -590,7 +564,18 @@ export default typesAndInstances({
       this.commit('REMOVE_REF_FROM_A_TO_B', { instA, aPropName: p.aPropName, instBId: p.bId })
       this.dispatch('removeRefMetaFromAToB', { instA, instB })
     },
-    /* ----- Changes end here ------- */
+    createInstance(state, typeName: string) {
+      this.commit('CREATE_TYPE_INSTANCE', typeName)
+    },
+    removeInstance(state, payload: { typeName: string, instanceId: string }) {
+      const { typeName, instanceId } = payload
+
+      this.dispatch('removeAllRefsFromA') // args
+      this.dispatch('removeAllRefsToA') // args
+
+      this.commit('REMOVE_TYPE_INSTANCE', payload)
+    },
+    /* === CHANGES END HERE === */
 
     addRefMetaFromAToB(state, p: { aId: string, bId: string, instA?: Instance, instB?: Instance }) {
       const instA = p.instA || state.getters.getInstance(p.aId)
@@ -606,7 +591,21 @@ export default typesAndInstances({
       const { aId, bId } = p
       const refingProps = utils.getPropsOfAWithRefToB(state, { instAId: aId, instBId: bId })
       refingProps.forEach((propName) => {
-        this.dispatch('removeRefFromAToB', { aId, aPropName: propName, bId })
+        this.dispatch('removePropRefValue', { aId, aPropName: propName, bId })
+      })
+    },
+    removeAllRefsFromA(state, p: { aId: string }) {
+      const type: TypeWrapper = state.getters.getType({ instanceId: p.aId })
+      const references = state.state.project.instances[type.id][p.aId].meta_isReferencing.values
+      references.forEach((bId) => {
+        this.dispatch('removeAllRefsFromAtoB', { aId: p.aId, bId })
+      })
+    },
+    removeAllRefsToA(state, p: { aId: string }) {
+      const type: TypeWrapper = state.getters.getType({ instanceId: p.aId })
+      const references = state.state.project.instances[type.id][p.aId].meta_isReferencedBy.values
+      references.forEach((bId) => {
+        this.dispatch('removeAllRefsFromAtoB', { aId: bId, bId: p.aId })
       })
     },
 
@@ -622,27 +621,11 @@ export default typesAndInstances({
     moveTypePropertyDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
       this.commit('MOVE_TYPE_PROPERTY_DOWN', payload)
     },
-    createInstance(state, typeName: string) {
-      this.commit('CREATE_TYPE_INSTANCE', typeName)
-    },
     duplicateInstance(state, payload: { typeName: string, instanceId: string }) {
       this.commit('DUPLICATE_TYPE_INSTANCE', payload)
     },
     updateInstanceProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
       this.commit('UPDATE_INSTANCE_PROPERTY', payload)
-    },
-    removeInstance(state, payload: { typeName: string, instanceId: string }) {
-      const { typeName, instanceId } = payload
-
-      // Remove all references to the instance from other instance together with values
-      // from properties that were source of the reference
-      state.dispatch('removeAllInstanceInboundReferences', { typeName, instanceId })
-
-      // Here we remove references to every instance this instance was referencing and tell every
-      // referenced instance that we don't reference it any more
-      state.dispatch('removeAllInstanceReferencesMeta', { typeName, instanceId })
-
-      this.commit('REMOVE_TYPE_INSTANCE', payload)
     },
 
     addInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {

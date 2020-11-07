@@ -37,10 +37,12 @@ type ChangeType =
   // 1 step:
   //  1) creates type. (subjects = typeWrapper to remove)
   | 'removeType'
-  // 3 steps:
+  // 5 steps:
   //  1) removes references FROM all instances of type. (subjects = [all instances of type])
   //  2) removes references TO all instances of type. (subjects = [some instances of some types])
   //  3) removes all instances. (subjects = [all instances of type])
+  //  4) remove all references in types propDefs
+  //  5) remove the type itself
   | 'renameType'
   // 1 step:
   //  1) changes name in typeWrapper and meta_typeName in all instances. (subjects = typeWrapper + [all instances of type])
@@ -109,7 +111,7 @@ type ChangeType =
 type EntityTypes = 'TypeWrapper' | 'PropDefinition' | 'Instance' | 'InstanceProp'
 
 interface Change {
-  entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp;
+  entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null;
   entityType: EntityTypes
   typeId: string;
   instanceId: string;
