@@ -105,6 +105,8 @@ export function registerChange(
   typeId: string,
   instanceId: string
 ) {
+  if (!state.state.currentTransaction) return
+
   let entityBefore: typeof entity
 
   if (entityType === 'TypeWrapper') {
@@ -124,7 +126,7 @@ export function registerChange(
     instanceId,
   }
 
-  state.state.currentTransation.changes.push(change)
+  state.state.currentTransaction.changes.push(change)
 }
 
 /**
@@ -432,4 +434,8 @@ export function copyInstanceProp(source: InstanceProp) {
     ...source,
     values: [...source.values]
   }
+}
+
+export function assertNever(x: never): never {
+  throw new Error('Unexpected object: ' + x);
 }

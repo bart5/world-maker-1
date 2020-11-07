@@ -50,12 +50,13 @@ type ChangeType =
   | 'renameProp'
   // 1 step:
   //  1) rename prop in type, rename prop in all instances. (subjects = typeWrapper + [all instances of type])
-  | 'changePropValueType_int32<->flt' // cast with trimmed precision
-  | 'changePropValueType_int32<->string' // literal cast
-  | 'changePropValueType_int32<->bool' // cast to 1 or 0 and true or false
-  | 'changePropValueType_flt<->string' // literal cast
-  | 'changePropValueType_flt<->bool' // cast to 1 or 0 and true or false
-  | 'changePropValueType_string<->bool' // cast to 'true' or 'false' and (from string) true or false
+  | 'changePropValueType' // cast with trimmed precision
+  // | 'changePropValueType_int32<->flt' // cast with trimmed precision
+  // | 'changePropValueType_int32<->string' // literal cast
+  // | 'changePropValueType_int32<->bool' // cast to 1 or 0 and true or false
+  // | 'changePropValueType_flt<->string' // literal cast
+  // | 'changePropValueType_flt<->bool' // cast to 1 or 0 and true or false
+  // | 'changePropValueType_string<->bool' // cast to 'true' or 'false' and (from string) true or false
   // 1 step:
   //  1) change valueType in typeWrapper and props of instances. cast props values.
   //    (subjects = typeWrapper + [all instances of type])
@@ -67,13 +68,13 @@ type ChangeType =
   // 1 step:
   //  1) change arity in prop definition, change arity in props of all instances. Trim values.
   //    (subjects = typeWrapper + [all instances of type])
-  | 'changePropValueType_any->ref'
+  | 'changePropValueTypeToRef'
   // 2 steps:
   //  1) Remove *values* from props all instances.
   //    (subjects = [all instances of type])
   //  2) Change ValueType in prop of type and props of all instances.
   //    (subjects = typeWrapper + [all instances of type])
-  | 'changePropValueType_ref->any'
+  | 'changePropValueTypeFromRef'
   // 2 steps:
   //  1) Remove *ref values* from prop in all instances of type.
   //    (subjects = [all instances of type] + [other through meta])
@@ -101,6 +102,7 @@ type ChangeType =
   // 1 step:
   //  1) Change prop definition order and re-shuffle other
   //    (subjects = type)
+  | 'removeProp'
   | 'createInstance'
   | 'removeInstance'
 
@@ -123,7 +125,7 @@ interface Project {
 interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
-  currentTransation: Transaction;
+  currentTransaction: Transaction | null;
   projectUiDataMutated: boolean;
   projectInstancesMutated: boolean;
   projectEntityBindingsMutated: boolean;

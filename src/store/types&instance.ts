@@ -1,18 +1,20 @@
 import { ActionContext, createStore } from 'vuex';
 import * as utils from './utils';
+import registerChange from './utils'
+import revertChange from './utils'
 import initialState from './state';
 
 const registerInstancesMutation = (state: ApplicationState) => {
   state.projectInstancesMutated = true
 }
-// const registerUiDataMutation = (state: ApplicationState) => {
-//   state.projectUiDataMutated = true
-// }
-// const resetMutations = (state: ApplicationState) => {
-//   state.projectUiDataMutated = false
-//   state.projectInstancesMutated = false
-//   state.projectEntityBindingsMutated = false
-// }
+
+function openTransaction(state: ActionContext<ApplicationState, ApplicationState>, changeType: ChangeType) {
+  state.commit('OPEN_TRANSACTION', changeType)
+}
+
+function closeTransaction(state: ActionContext<ApplicationState, ApplicationState>) {
+  state.commit('CLOSE_TRANSACTION')
+}
 
 const identity = (payload: any) => payload
 const typesAndInstances = identity as unknown as typeof createStore
@@ -181,6 +183,20 @@ export default typesAndInstances({
     }
   },
   mutations: {
+    OPEN_TRANSACTION(state, changeType: ChangeType) {
+      if (state.currentTransaction) return
+      state.currentTransaction = {
+        changeType,
+        changes: []
+      }
+    },
+    CLOSE_TRANSACTION(state) {
+      if (!state.currentTransaction) return
+      state.project.recentChanges.push({
+        ...state.currentTransaction
+      })
+      state.currentTransaction = null
+    },
     CREATE_TYPE(state) {
       registerInstancesMutation(state)
       const uniqueName = utils.getUniqueTypeName(state)
@@ -444,21 +460,53 @@ export default typesAndInstances({
     },
   },
   actions: {
-    beginTransaction(state, change: Change) {
-
-    },
-    revertChange(state, p: { change: Change }) {
-
-    },
-    createType(state, p: { revert: boolean }) {
-      this.commit('CREATE_TYPE')
-    },
-    renameType(state, payload: { typeId: string, newName: string, changeId: string }) {
-      if (state.getters.getTypeByName(payload.newName)) {
-        console.error('Type nam is already in use.')
-        return
+    change(state, p: { changeType: ChangeType, context: any }) {
+      const { changeType, context } = p
+      const dispatch = () => this.dispatch(changeType, context)
+      switch (changeType) {
+        case 'createType':
+          dispatch(); break;
+        case 'removeType':
+          dispatch(); break;
+        case 'renameType':
+          dispatch(); break;
+        case 'createProp':
+          dispatch(); break;
+        case 'removeProp':
+          dispatch(); break;
+        case 'renameProp':
+          dispatch(); break;
+        case 'changePropValueType':
+          dispatch(); break;
+        case 'changePropToArray':
+          dispatch(); break;
+        case 'changePropToSingle':
+          dispatch(); break;
+        case 'changePropValueTypeToRef':
+          dispatch(); break;
+        case 'changePropValueTypeFromRef':
+          dispatch(); break;
+        case 'changePropRefTargetType':
+          dispatch(); break;
+        case 'addPropRefValue':
+          dispatch(); break;
+        case 'removePropRefValue':
+          dispatch(); break;
+        case 'changePropValues':
+          dispatch(); break;
+        case 'changePropOrder':
+          dispatch(); break;
+        case 'createInstance':
+          dispatch(); break;
+        case 'removeInstance':
+          dispatch(); break;
+        default:
+          return utils.assertNever(changeType)
       }
-      this.commit('RENAME_TYPE', payload)
+      return true
+    },
+    createType(state) {
+      this.commit('CREATE_TYPE')
     },
     removeType(state, typeId: string) {
       // Instances of other types that rely on removed type
@@ -491,9 +539,77 @@ export default typesAndInstances({
 
       this.commit('REMOVE_TYPE', typeName)
     },
-    createTypeProperty(state, typeName: string) {
+    renameType(state, payload: { typeId: string, newName: string, changeId: string }) {
+      if (state.getters.getTypeByName(payload.newName)) {
+        console.error('Type nam is already in use.')
+        return
+      }
+      this.commit('RENAME_TYPE', payload)
+    },
+    createProp(state, typeName: string) {
       this.commit('CREATE_TYPE_PROPERTY', typeName)
     },
+    removeProp(state, payload: { propName: string, instanceId: string, revert: boolean }) {
+      const { propName, instanceId, revert } = payload
+      if (!revert) {
+        /*  */
+      }
+      const instance = state.getters.getInstance(instanceId)
+      this.commit('REMOVE_INSTANCE_PROPERTY', { propName, instance })
+    },
+    renameProp(state, payload: { propName: string, instanceId: string, revert: boolean }) {
+      /*  */
+    },
+    changePropValueType(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+      /*  */
+    },
+    changePropToArray(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+      /*  */
+    },
+    changePropToSingle(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+      /*  */
+    },
+    changePropValueTypeToRef(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+      /*  */
+    },
+    changePropValueTypeFromRef(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+      /*  */
+    },
+    changePropRefTargetType(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+      /*  */
+    },
+    addPropRefValue(state, p: { aId: string, aPropName: string, bId: string }) {
+      const instA = state.getters.getInstance(p.aId)
+      const instB = state.getters.getInstance(p.bId)
+      this.commit('ADD_REF_FROM_A_TO_B', { instA, aPropName: p.aPropName, instBId: p.bId })
+      this.dispatch('addRefMetaFromAtoB', { instA, instB })
+    },
+    removePropRefValue(state, p: { aId: string, aPropName: string, bId: string }) {
+      const instA = state.getters.getInstance(p.aId)
+      const instB = state.getters.getInstance(p.bId)
+      this.commit('REMOVE_REF_FROM_A_TO_B', { instA, aPropName: p.aPropName, instBId: p.bId })
+      this.dispatch('removeRefMetaFromAToB', { instA, instB })
+    },
+    /* ----- Changes end here ------- */
+
+    addRefMetaFromAToB(state, p: { aId: string, bId: string, instA?: Instance, instB?: Instance }) {
+      const instA = p.instA || state.getters.getInstance(p.aId)
+      const instB = p.instB || state.getters.getInstance(p.bId)
+      this.commit('ADD_REF_META_FROM_A_TO_B', { instA, instB })
+    },
+    removeRefMetaFromAToB(state, p: { aId: string, bId: string, instA?: Instance, instB?: Instance }) {
+      const instA = p.instA || state.getters.getInstance(p.aId)
+      const instB = p.instB || state.getters.getInstance(p.bId)
+      this.commit('REMOVE_REF_META_FROM_A_TO_B', { instA, instB })
+    },
+    removeAllRefsFromAtoB(state, p: { aId: string, bId: string }) {
+      const { aId, bId } = p
+      const refingProps = utils.getPropsOfAWithRefToB(state, { instAId: aId, instBId: bId })
+      refingProps.forEach((propName) => {
+        this.dispatch('removeRefFromAToB', { aId, aPropName: propName, bId })
+      })
+    },
+
     updateTypeProperty(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
       this.commit('UPDATE_TYPE_PROPERTY', payload)
     },
@@ -515,14 +631,6 @@ export default typesAndInstances({
     updateInstanceProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
       this.commit('UPDATE_INSTANCE_PROPERTY', payload)
     },
-    removeInstanceProperty(state, payload: { propName: string, instanceId: string, revert: boolean }) {
-      const { propName, instanceId, revert } = payload
-      if (!revert) {
-        /*  */
-      }
-      const instance = state.getters.getInstance(instanceId)
-      this.commit('REMOVE_INSTANCE_PROPERTY', { propName, instance })
-    },
     removeInstance(state, payload: { typeName: string, instanceId: string }) {
       const { typeName, instanceId } = payload
 
@@ -536,35 +644,7 @@ export default typesAndInstances({
 
       this.commit('REMOVE_TYPE_INSTANCE', payload)
     },
-    addRefFromAToB(state, p: { aId: string, aPropName: string, bId: string }) {
-      const instA = state.getters.getInstance(p.aId)
-      const instB = state.getters.getInstance(p.bId)
-      this.commit('ADD_REF_FROM_A_TO_B', { instA, aPropName: p.aPropName, instBId: p.bId })
-      this.dispatch('addRefMetaFromAtoB', { instA, instB })
-    },
-    addRefMetaFromAToB(state, p: { aId: string, bId: string, instA?: Instance, instB?: Instance }) {
-      const instA = p.instA || state.getters.getInstance(p.aId)
-      const instB = p.instB || state.getters.getInstance(p.bId)
-      this.commit('ADD_REF_META_FROM_A_TO_B', { instA, instB })
-    },
-    removeRefFromAToB(state, p: { aId: string, aPropName: string, bId: string }) {
-      const instA = state.getters.getInstance(p.aId)
-      const instB = state.getters.getInstance(p.bId)
-      this.commit('REMOVE_REF_FROM_A_TO_B', { instA, aPropName: p.aPropName, instBId: p.bId })
-      this.dispatch('removeRefMetaFromAToB', { instA, instB })
-    },
-    removeRefMetaFromAToB(state, p: { aId: string, bId: string, instA?: Instance, instB?: Instance }) {
-      const instA = p.instA || state.getters.getInstance(p.aId)
-      const instB = p.instB || state.getters.getInstance(p.bId)
-      this.commit('REMOVE_REF_META_FROM_A_TO_B', { instA, instB })
-    },
-    removeAllRefsFromAtoB(state, p: { aId: string, bId: string }) {
-      const { aId, bId } = p
-      const refingProps = utils.getPropsOfAWithRefToB(state, { instAId: aId, instBId: bId })
-      refingProps.forEach((propName) => {
-        this.dispatch('removeRefFromAToB', { aId, aPropName: propName, bId })
-      })
-    },
+
     addInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
       this.commit('ADD_INSTANCE_OUTBOUND_REFERENCE_META', payload)
     },
