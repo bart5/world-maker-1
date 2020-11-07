@@ -46,11 +46,13 @@ type ChangeType =
   | 'renameType'
   // 1 step:
   //  1) changes name in typeWrapper and meta_typeName in all instances. (subjects = typeWrapper + [all instances of type])
-  | 'removeProp'
-
   | 'createProp'
   // 1 step:
   //  1) create prop for type and create props for all instances. (subjects = typeWrapper + [all instances of type])
+  | 'removeProp'
+  //
+  //  1) remove all references from property to other instances
+  //  2) Remove property from type and instances
   | 'renameProp'
   // 1 step:
   //  1) rename prop in type, rename prop in all instances. (subjects = typeWrapper + [all instances of type])

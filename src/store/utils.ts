@@ -161,6 +161,9 @@ export function revertChange(
   }
 }
 
+/**
+ * Get all props of type A that reference type B
+ */
 export function getPropsOfAWithRefToB(
   st: ActionContext<ApplicationState, ApplicationState>,
   p: {
