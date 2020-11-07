@@ -477,51 +477,33 @@ export default typesAndInstances({
       this.commit('CREATE_TYPE')
     },
     removeType(state, typeId: string) {
-      // Instances of other types that rely on removed type
-
       utils.oToA(state.state.project.instances[typeid]).forEach((instance) => {
-        this.dispatch('removeInstance') // args
+        this.dispatch('removeInstance') // ARGS
       })
 
+      utils.oToA(state.state.project.types).forEach((typeWrapper) => {
+        if (typeWrapper.id === typeId) return
 
-
-      const affectedTypesIds: string[] = state.getters.getAllTypeIdsReferencingType(typeId)
-      const affectedTypes: TypeWrapper[] = affectedTypesIds.map((tId) => state.getters.getTypeById(tId))
-
-      const affectedInstances = state.getters.getAllInstancesFromTypeIds(
-        state.getters.getAllTypeIdsReferencingType(typeId)
-      )
-
-      if (affectedTypesIds.length > 0) {
-        console.log('affected types: ', affectedTypes)
-        console.log('affected instances: ', affectedInstances)
-        /* As for confirmation about removal */
-        const confirm = true
-        if (!confirm) return
-      }
-
-      // Removing affected properties from affected types
-      affectedTypes.forEach((typeWrapper) => {
-        utils.oToA(typeWrapper.definition).find((p) => {
-          if (p.refTargetTypeId === typeId) {
-            this.dispatch('removeTypeProperty', { propName: p.name, typeId: typeWrapper.id, changeId: string })
-            return true
-          }
-          return false
-        })
+        utils.getPropsOfAWithRefToB(state, { typeAId: typeWrapper.id, typeBId: typeId })
+          .forEach((propName) => {
+            this.dispatch('changePropRefTargetType') // ARGS
+          })
       })
 
       this.commit('REMOVE_TYPE', typeName)
     },
     renameType(state, payload: { typeId: string, newName: string, changeId: string }) {
-      if (state.getters.getTypeByName(payload.newName)) {
-        console.error('Type nam is already in use.')
-        return
-      }
+      utils.oToA(state.state.project.instances[typeId]).forEach((instance) => {
+        this.dispatch('changePropValues') // ARGS
+      })
+
       this.commit('RENAME_TYPE', payload)
     },
     createProp(state, typeName: string) {
       this.commit('CREATE_TYPE_PROPERTY', typeName)
+      utils.oToA(state.state.project.instances[typeId]).forEach((instance) => {
+        this.dispatch('addPropToInstance') // ARGS
+      })
     },
     removeProp(state, payload: { propName: string, instanceId: string, revert: boolean }) {
       const { propName, instanceId, revert } = payload
@@ -563,6 +545,9 @@ export default typesAndInstances({
       const instB = state.getters.getInstance(p.bId)
       this.commit('REMOVE_REF_FROM_A_TO_B', { instA, aPropName: p.aPropName, instBId: p.bId })
       this.dispatch('removeRefMetaFromAToB', { instA, instB })
+    },
+    changePropValues(state, typeName: string) {
+      this.commit('CHANGE_PROP_VALUES', typeName)
     },
     createInstance(state, typeName: string) {
       this.commit('CREATE_TYPE_INSTANCE', typeName)
@@ -607,6 +592,10 @@ export default typesAndInstances({
       references.forEach((bId) => {
         this.dispatch('removeAllRefsFromAtoB', { aId: bId, bId: p.aId })
       })
+    },
+
+    addPropToInstance(state, payload) {
+      this.commit('ADD_PROP_TO_INSTANCE', payload)
     },
 
     updateTypeProperty(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
