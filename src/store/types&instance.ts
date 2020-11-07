@@ -262,93 +262,11 @@ export default typesAndInstances({
         }
       })
     },
-    UPDATE_TYPE_PROPERTY(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
-      registerInstancesMutation(state)
-      const oldProp = state.project.types[payload.typeName][payload.oldPropName]
-      const isRename = payload.oldPropName !== payload.newProp.name
-      const isValueTypeChange = oldProp.valueType !== payload.newProp.valueType
-      const isArrayChange = oldProp.isArray !== payload.newProp.isArray
-      const isRefChange = oldProp.isRef !== payload.newProp.isRef
-      const isRefTargetChange = oldProp.refTargetTypeId !== payload.newProp.refTargetTypeId
-
-      // Updating prop in type definition
-      state.project.types[payload.typeName][payload.newProp.name] = {
-        ...payload.newProp
-      }
-      if (isRename) {
-        delete state.project.types[payload.typeName][payload.oldPropName]
-      }
-
-      // Updating prop in all instances
-      const getNewValues = (oldValues: Array<string | number | boolean>) => {
-        if (isValueTypeChange || isRefChange || isRefTargetChange) {
-          return utils.getInitialPropValues(payload.newProp)
-        }
-        if (isArrayChange) {
-          return [oldValues[0]]
-        }
-        return oldValues
-      }
-      Object.entries(state.project.instances[payload.typeName]).forEach((tuple) => {
-        const instance = tuple[1]
-        const oldPropInst = instance[payload.oldPropName]
-
-        instance[payload.newProp.name] = {
-          ...payload.newProp,
-          values: getNewValues(oldPropInst.values)
-        }
-
-        if (isRename) {
-          delete instance[payload.oldPropName]
-        }
-      })
-    },
-    REMOVE_TYPE_PROPERTY(state, payload: { propName: string, typeName: string }) {
-      registerInstancesMutation(state)
-
-      // Remove prop from type definition
-      delete state.project.types[payload.typeName][payload.propName]
-
-      // Remove prop from all instances
-      Object.entries(state.project.instances[payload.typeName]).forEach((tuple) => {
-        const instance = tuple[1]
-        delete instance[payload.propName]
-      })
-    },
     CREATE_TYPE_INSTANCE(state, typeName: string) {
       registerInstancesMutation(state)
       const uniqueInstanceId = utils.getUniqueInstanceId(state)
 
       state.project.instances[typeId].definition[uniqueInstanceId] = utils.getNewInstanceData(state, typeName, uniqueInstanceId)
-    },
-    DUPLICATE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
-      registerInstancesMutation(state)
-      const { typeName, instanceId } = payload
-      const uniqueInstanceId = utils.getUniqueInstanceId(state)
-
-      const source = state.project.instances[typeId].definition[instanceId]
-
-      let instance = Object.keys(source).reduce((acc, propName) => {
-        if (propName.includes('meta') || propName === 'id') {
-          return acc
-        }
-        const prop = source[propName]
-        acc[propName] = utils.getInstanceProp(prop.valueType, prop.name, prop.values, prop.isArray)
-        return acc
-      }, {} as Instance)
-
-      instance = {
-        ...utils.getNewInstanceData(state, typeName, uniqueInstanceId),
-        ...instance
-      }
-
-      state.project.instances[typeId].definition[uniqueInstanceId] = instance
-    },
-    UPDATE_INSTANCE_PROPERTY(state, payload: { newProp: InstanceProp, typeName: string, instanceId: string }) {
-      registerInstancesMutation(state)
-
-      const prop = state.project.instances[payload.typeName][payload.instanceId][payload.newProp.name]
-      prop.values = payload.newProp.values
     },
     REMOVE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
       registerInstancesMutation(state)
@@ -373,88 +291,8 @@ export default typesAndInstances({
       instA.meta_isReferencing.values.remove(instB.id.values[0])
       instB.meta_isReferencedBy.values.remove(instA.id.values[0])
     },
-    ADD_INSTANCE_OUTBOUND_REFERENCE_META(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
-      registerInstancesMutation(state)
-      const { typeName, instanceId, referencedId } = payload
-
-      // Remember what instance we are referencing
-      state.project.instances[typeId].definition[instanceId].meta_isReferencing.values.push(referencedId)
-      // Now tell that instance that we reference it
-      Object.entries(state.project.instances).some((tuple1) => {
-        if (referencedId in tuple1[1]) { // find that instance first
-          tuple1[1][referencedId].meta_isReferencedBy.values.push(instanceId) // add meta-data about reference
-          return true // stop "some" after first finding
-        }
-        return false // continue "some"
-      })
-    },
-    REMOVE_INSTANCE_OUTBOUND_REFERENCE_META(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
-      registerInstancesMutation(state)
-      const { typeName, instanceId, referencedId } = payload
-
-      // Forget referenced instance
-      const isReferencing = state.project.instances[typeId].definition[instanceId].meta_isReferencing
-      isReferencing.values = [
-        ...isReferencing.values.filter((rId) => rId !== referencedId)
-      ]
-      // Now tell referenced instance that we no longer reference it
-      Object.entries(state.project.instances).some((tuple1) => {
-        if (referencedId in tuple1[1]) {
-          const isReferencedBy = state.project.instances[typeId].definition[referencedId].meta_isReferencing
-          isReferencedBy.values = [
-            ...isReferencedBy.values.filter((rId) => rId !== instanceId)
-          ]
-          return true
-        }
-        return false
-      })
-    },
-    REMOVE_ALL_INSTANCE_OUTBOUND_REFERENCES_META(state, payload: { typeName: string, instanceId: string }) {
-      registerInstancesMutation(state)
-      const { typeName, instanceId } = payload
-
-      ;(state.project.instances[typeId].definition[instanceId].meta_isReferencing.values as string[]).forEach((irId) => {
-        Object.entries(state.project.instances).some((tuple1) => {
-          if (irId in tuple1[1]) {
-            const isReferencedBy = tuple1[1][irId].meta_isReferencedBy
-            isReferencedBy.values = {
-              ...isReferencedBy.values.filter((irbId) => irbId !== instanceId)
-            }
-            return true
-          }
-          return false
-        })
-      })
-    },
-    // This also removes values from properties of instances that were referencing given instance
-    REMOVE_ALL_INSTANCE_INBOUND_REFERENCES(state, payload: { typeName: string, instanceId: string }) {
-      registerInstancesMutation(state)
-      const { typeName, instanceId } = payload
-
-      ;(state.project.instances[typeId].definition[instanceId].meta_isReferencedBy.values as string[]).forEach((irbId) => {
-        Object.entries(state.project.instances).some((tuple1) => {
-          if (irbId in tuple1[1]) {
-            const isReferencing = tuple1[1][irbId].meta_isReferencing
-            isReferencing.values = {
-              ...isReferencing.values.filter((irId) => irId !== instanceId)
-            }
-            const referencingProperties = Object.entries(state.project.types[tuple1[0]]).filter((tuple2) => {
-              return tuple2[1]?.refTargetTypeId === typeName
-            })
-            referencingProperties.forEach((propNameTuple) => {
-              tuple1[1][irbId][propNameTuple[0]].values = [
-                ...tuple1[1][irbId][propNameTuple[0]].values.filter((v) => v !== instanceId)
-              ]
-            })
-            return true
-          }
-          return false
-        })
-      })
-
-      state.project.instances[typeId].definition[instanceId].meta_isReferencedBy.values = []
-    },
     REMOVE_PROP_VALUE(state) {
+      /*  */
     }
   },
   actions: {
@@ -510,7 +348,7 @@ export default typesAndInstances({
       this.dispatch('removeAllRefsFromPropA') // ARGS
 
       const instance = state.getters.getInstance(instanceId)
-      this.commit('REMOVE_TYPE_PROPERTY', { propName, instance })
+      this.commit('REMOVE_PROP', { propName, instance })
     },
     renameProp(state, payload: { propName: string, instanceId: string, revert: boolean }) {
       // rename prop in type and instances
@@ -644,36 +482,18 @@ export default typesAndInstances({
       this.commit('ADD_PROP_TO_INSTANCE', payload)
     },
 
-    updateTypeProperty(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
-      this.commit('UPDATE_TYPE_PROPERTY', payload)
-    },
-    removeTypeProperty(state, payload: { propName: string, typeId: string, sidefect: boolean }) {
-      this.commit('REMOVE_TYPE_PROPERTY', payload)
-    },
-    moveTypePropertyUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-      this.commit('MOVE_TYPE_PROPERTY_UP', payload)
-    },
-    moveTypePropertyDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-      this.commit('MOVE_TYPE_PROPERTY_DOWN', payload)
-    },
-    duplicateInstance(state, payload: { typeName: string, instanceId: string }) {
-      this.commit('DUPLICATE_TYPE_INSTANCE', payload)
-    },
-    updateInstanceProperty(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-      this.commit('UPDATE_INSTANCE_PROPERTY', payload)
-    },
+    // duplicateType(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+    //   /*  */
+    // },
+    // duplicateInstance(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+    //   /*  */
+    // },
 
-    addInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
-      this.commit('ADD_INSTANCE_OUTBOUND_REFERENCE_META', payload)
+    moveTypePropUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
+      this.commit('MOVE_TYPE_PROP_UP', payload)
     },
-    removeInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
-      this.commit('REMOVE_INSTANCE_OUTBOUND_REFERENCE_META', payload)
-    },
-    removeAllInstanceOutboundReferencesMeta(state, payload: { typeName: string, instanceId: string }) {
-      this.commit('REMOVE_ALL_INSTANCE_OUTBOUND_REFERENCES_META', payload)
-    },
-    removeAllInstanceInboundReferences(state, payload: { typeName: string, instanceId: string }) {
-      this.commit('REMOVE_ALL_INSTANCE_INBOUND_REFERENCES', payload)
+    moveTypePropDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
+      this.commit('MOVE_TYPE_PROP_DOWN', payload)
     },
   },
 });
