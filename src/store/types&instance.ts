@@ -226,9 +226,6 @@ export default typesAndInstances({
       delete state.project.types[typeId]
       delete state.project.instances[typeId]
     },
-    REMOVE_ALL_REFERENCES_TO_TYPE_FROM_INSTANCES(state, typeId: string) {
-
-    },
     CREATE_TYPE_PROPERTY(state, typeName: string) {
       registerInstancesMutation(state)
       const uniquePropName = utils.getUniquePropName(state, typeName)
@@ -345,6 +342,12 @@ export default typesAndInstances({
       registerInstancesMutation(state)
 
       delete state.project.instances[payload.typeName][payload.instanceId]
+    },
+    ADD_REF_FROM_A_TO_B(state, p: { instA: Instance, aPropName: string, instB: Instance }) {
+      const { instA, instB, aPropName } = p
+      instA[aPropName].values
+      instA.meta_isReferencing.values.push(instB.id.values[0])
+      instB.meta_isReferencedBy.values.push(instA.id.values[0])
     },
     ADD_REF_META_FROM_A_TO_B(state, p: { instA: Instance, instB: Instance }) {
       const { instA, instB } = p
@@ -542,14 +545,19 @@ export default typesAndInstances({
 
       const theyReferenceMe = utils.getInstancesReferencingInstance(instanceId, state)
     },
+    addRefFromAToB(state, p: { aId: string, aPropName: string, bId: string }) {
+      const instA = state.getters.getInstance(p.aId)
+      const instB = state.getters.getInstance(p.bId)
+      this.commit('ADD_REF_FROM_A_TO_B', { instA, aPropName: p.aPropName, instB })
+    },
     addRefMetaFromAToB(state, p: { aId: string, bId: string }) {
       const instA = state.getters.getInstance(p.aId)
       const instB = state.getters.getInstance(p.bId)
       this.commit('ADD_REF_META_FROM_A_TO_B', { instA, instB })
     },
-    removeRefMetaFromAToB(state, p: { aId: string, bId: string }) {
-      const instA = state.getters.getInstance(p.aId)
-      const instB = state.getters.getInstance(p.bId)
+    removeRefMetaFromAToB(state, p: { aId: string, bId: string, instA?: Instance, instB?: Instance }) {
+      const instA = p.instA || state.getters.getInstance(p.aId)
+      const instB = p.instB || state.getters.getInstance(p.bId)
       this.commit('REMOVE_REF_META_FROM_A_TO_B', { instA, instB })
     },
     addInstanceOutboundReferenceMeta(state, payload: { typeName: string, instanceId: string, referencedId: string }) {
