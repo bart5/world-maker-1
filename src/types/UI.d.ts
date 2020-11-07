@@ -19,14 +19,27 @@ interface UiData {
   activeWorkspaceId: workspaceId;
 }
 
+interface SDOpContext {
+
+}
+
+interface Packet {
+
+}
+
+interface Transaction {
+  changeType: ChangeType;
+  changes: Array<Change>;
+}
+
 type ChangeType =
   | 'createType'
   // 1 step:
-  //  1) creates type. (subjects = null)
+  //  1) creates type. (subjects = typeWrapper to remove)
   | 'removeType'
   // 3 steps:
   //  1) removes references FROM all instances of type. (subjects = [all instances of type])
-  //  2) removes references TO all instances. (subjects = [all instances of type])
+  //  2) removes references TO all instances of type. (subjects = [some instances of some types])
   //  3) removes all instances. (subjects = [all instances of type])
   | 'renameType'
   // 1 step:
@@ -37,29 +50,71 @@ type ChangeType =
   | 'renameProp'
   // 1 step:
   //  1) rename prop in type, rename prop in all instances. (subjects = typeWrapper + [all instances of type])
-  | 'changePropValue_int32<->flt' // cast with trimmed precision
-  | 'changePropValue_int32<->string' // literal cast
-  | 'changePropValue_int32<->bool' // cast to 1 or 0 and true or false
-  | 'changePropValue_flt<->string' // literal cast
-  | 'changePropValue_flt<->bool' // cast to 1 or 0 and true or false
-  | 'changePropValue_string<->bool' // cast to 'true' or 'false' and (from string) true or false
+  | 'changePropValueType_int32<->flt' // cast with trimmed precision
+  | 'changePropValueType_int32<->string' // literal cast
+  | 'changePropValueType_int32<->bool' // cast to 1 or 0 and true or false
+  | 'changePropValueType_flt<->string' // literal cast
+  | 'changePropValueType_flt<->bool' // cast to 1 or 0 and true or false
+  | 'changePropValueType_string<->bool' // cast to 'true' or 'false' and (from string) true or false
   // 1 step:
-  //  1) change valueType in typeWrappe and instances and instances props values. (subjects = typeWrapper + [all instances of type])
-  // occurs in type, instant effect on type and all instances (cast to other type (if possible))
-                          // If prop was a reference it first acts as changePropRefValues as if removing all values
-  | 'changePropRefTarget' // it first removes all ref values from instances with this prop
-  | 'changePropRefValues' // instance and meta of other instances
-  | 'changePropValues' // only instance (non ref change)
-  | ''
+  //  1) change valueType in typeWrapper and props of instances. cast props values.
+  //    (subjects = typeWrapper + [all instances of type])
+  | 'changePropToArray' // lossless
+  // 1 step:
+  //  1) change arity in prop definition, change arity in props of all instances.
+  //    (subjects = typeWrapper + [all instances of type])
+  | 'changePropToSingle' // lose all values but first
+  // 1 step:
+  //  1) change arity in prop definition, change arity in props of all instances. Trim values.
+  //    (subjects = typeWrapper + [all instances of type])
+  | 'changePropValueType_any->ref'
+  // 2 steps:
+  //  1) Remove *values* from props all instances.
+  //    (subjects = [all instances of type])
+  //  2) Change ValueType in prop of type and props of all instances.
+  //    (subjects = typeWrapper + [all instances of type])
+  | 'changePropValueType_ref->any'
+  // 2 steps:
+  //  1) Remove *ref values* from prop in all instances of type.
+  //    (subjects = [all instances of type] + [other through meta])
+  //  2) Change ValueType in prop of type and props of all instances.
+  //    (subjects = typeWrapper + [all instances of type])
+  | 'changePropRefTargetType'
+  // 2 steps:
+  //  1) Remove *ref values* from prop in all instances of type.
+  //    (subjects = [all instances of type] + [other through meta])
+  //  2) Change refTargetType in prop of type and props of all instances.
+  //    (subjects = typeWrapper + [all instances of type])
+  | 'addPropRefValue'
+  // 1 step:
+  //  1) Add prop ref value
+  //    (subjects = instance + referenced instance through meta)
+  | 'removePropRefValue'
+  // 1 step:
+  //  1) Remove prop ref value
+  //    (subjects = instance + referenced instance through meta)
+  | 'changePropValues'
+  // 1 step:
+  //  1) Change prop values
+  //    (subjects = instance)
+  | 'changePropOrder'
+  // 1 step:
+  //  1) Change prop definition order and re-shuffle other
+  //    (subjects = type)
+  | 'createInstance'
+  | 'removeInstance'
 
-type ChangeActionType = 'create' | 'remove' | 'rename' | 'update'
-type ChangeSubjectType = 'type' | 'instance' | 'propDef' | 'instanceProp'
+// How to organize those changes to allow easy reversability?
+
+type SDChange
+type SDGet
+
+type EntityTypes = 'TypeWrapper' | 'TypeDefinition' | 'PropDefinition' | 'Instance' | 'InstanceProp'
 
 interface Change {
-  id: string;
-  entityBefore: TypeWrapper | Instance | null
-  actionType: ChangeActionType;
-  subjectType: ChangeSubjectType;
+  entityBefore: TypeWrapper | TypeDefinition | PropDefinition | Instance | InstanceProp;
+  entityType: EntityTypes
+  parentId: string;
 }
 
 interface Project {

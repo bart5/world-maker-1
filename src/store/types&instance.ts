@@ -444,7 +444,7 @@ export default typesAndInstances({
     },
   },
   actions: {
-    registerChange(state, change: Change) {
+    beginTransaction(state, change: Change) {
 
     },
     revertChange(state, p: { change: Change }) {
