@@ -94,30 +94,37 @@ export function getChangeId() {
 }
 
 /**
- * Always register before any changes!
+ * Always register before StaticData (types or instances) MUTATION!
  */
 export function registerChange(
   state: ActionContext<ApplicationState, ApplicationState>,
-  entityId: TypeWrapper | Instance | null,
-  actionType: ChangeActionType,
-  subjectType: ChangeSubjectType,
+  entity: TypeWrapper | PropDefinition | Instance | InstanceProp,
+  entityType: EntityTypes,
+  // for TypeWrapper and PropDefinition it's type id
+  // for Instance and InstanceProp it's instance id
+  typeId: string,
+  instanceId: string
 ) {
-  const changeId = getChangeId();
-  let entityCopy = null
-  if (subjectType === 'instance' || subjectType === 'instanceProp') {
-    const entity = state.getters.getInstance(entityId)
-    entityCopy = copyInstance(entity as Instance)
-  } else if (subjectType === 'type' || subjectType === 'propDef') {
-    const entity = state.getters.getType(entityId)
-    entityCopy = copyTypeWrapper(entity as TypeWrapper)
+  let entityBefore: typeof entity
+
+  if (entityType === 'TypeWrapper') {
+    entityBefore = copyTypeWrapper(entity as TypeWrapper)
+  } else if (entityType === 'PropDefinition') {
+    entityBefore = copyPropDef(entity as PropDefinition)
+  } else if (entityType === 'Instance') {
+    entityBefore = copyInstance(entity as Instance)
+  } else /* (entityType === 'InstanceProp') */ {
+    entityBefore = copyInstanceProp(entity as InstanceProp)
   }
+
   const change: Change = {
-    id: changeId,
-    entityBefore: entityCopy,
-    actionType,
-    subjectType,
+    entityBefore,
+    entityType,
+    typeId,
+    instanceId,
   }
-  state.state.changeLog.push(change)
+
+  state.state.currentTransation.changes.push(change)
 }
 
 /**
@@ -129,22 +136,26 @@ export function revertChange(
   state: ActionContext<ApplicationState, ApplicationState>,
   change: Change,
 ) {
-  if (change.subjectType === 'instanceProp') {
-    if (change.actionType === 'create') {
-      state.dispatch('')
-    } else if (change.actionType === 'remove') {
-
-    } else if (change.actionType === 'remove') {
-
-    } else if (change.actionType === 'update') {
-
-    }
-  } else if (change.subjectType === 'instance') {
-
-  } else if (change.subjectType === 'propDef') {
-
-  } else if (change.subjectType === 'type') {
-
+  let entity
+  switch (change.entityType) {
+    case 'TypeWrapper':
+      entity = change.entityBefore as TypeWrapper
+      state.state.project.types[change.typeId] = entity
+      break;
+    case 'PropDefinition':
+      entity = change.entityBefore as PropDefinition
+      state.state.project.types[change.typeId].definition[entity.name] = entity
+      break;
+    case 'Instance':
+      entity = change.entityBefore as Instance
+      state.state.project.instances[change.typeId][change.instanceId] = entity
+      break;
+    case 'InstanceProp':
+      entity = change.entityBefore as InstanceProp
+      state.state.project.instances[change.typeId][change.instanceId][entity.name] = entity
+      break;
+    default:
+      Error(`Unknown entity type of the change: ${change.entityType}.`)
   }
 }
 
@@ -388,31 +399,37 @@ export function getNewProjectTemplate() {
   return project
 }
 
-export function copyType(source: TypeDefinition) {
-  return Object.entries(source).reduce((acc, tuple1) => {
-    acc[tuple1[0]] = {
-      ...tuple1[1]
-    }
-    return acc
-  }, {} as TypeDefinition)
-}
-
 export function copyTypeWrapper(source: TypeWrapper): TypeWrapper {
   return {
     id: source.id,
     name: source.name,
-    definition: copyType(source.definition)
+    definition: copyTypeDef(source.definition)
+  }
+}
+
+export function copyTypeDef(source: TypeDefinition) {
+  return Object.entries(source).reduce((acc, [propName, propDef]) => {
+    acc[propName] = copyPropDef(propDef)
+    return acc
+  }, {} as TypeDefinition)
+}
+
+export function copyPropDef(source: PropDefinition) {
+  return {
+    ...source,
   }
 }
 
 export function copyInstance(source: Instance) {
-  return Object.entries(source).reduce((acc, tuple1) => {
-    acc[tuple1[0]] = {
-      ...tuple1[1],
-      values: [
-        ...tuple1[1].values
-      ]
-    }
+  return Object.entries(source).reduce((acc, [propName, prop]) => {
+    acc[propName] = copyInstanceProp(prop)
     return acc
   }, {} as Instance)
+}
+
+export function copyInstanceProp(source: InstanceProp) {
+  return {
+    ...source,
+    values: [...source.values]
+  }
 }

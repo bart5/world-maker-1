@@ -104,29 +104,26 @@ type ChangeType =
   | 'createInstance'
   | 'removeInstance'
 
-// How to organize those changes to allow easy reversability?
-
-type SDChange
-type SDGet
-
-type EntityTypes = 'TypeWrapper' | 'TypeDefinition' | 'PropDefinition' | 'Instance' | 'InstanceProp'
+type EntityTypes = 'TypeWrapper' | 'PropDefinition' | 'Instance' | 'InstanceProp'
 
 interface Change {
-  entityBefore: TypeWrapper | TypeDefinition | PropDefinition | Instance | InstanceProp;
+  entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp;
   entityType: EntityTypes
-  parentId: string;
+  typeId: string;
+  instanceId: string;
 }
 
 interface Project {
   instances: Instances;
   types: TypesDefinitions;
+  recentChanges: Array<Transaction>;
   uiData: UiData;
 }
 
 interface ApplicationState {
   applicationData: ApplicationData | null;
   project: Project;
-  changeLog: Array<Change>;
+  currentTransation: Transaction;
   projectUiDataMutated: boolean;
   projectInstancesMutated: boolean;
   projectEntityBindingsMutated: boolean;
