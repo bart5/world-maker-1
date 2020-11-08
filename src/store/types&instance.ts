@@ -189,6 +189,7 @@ export default typesAndInstances({
       })
       state.currentTransaction = null
     },
+    // CREATE_TYPE(state, p: { sbj: TypeWrapper, tId: string, eT: EntityTypes, iId: string, pN: string }) {
     CREATE_TYPE(state, p: { sbj: TypeWrapper, tId: string, eT: EntityTypes, iId: string, pN: string }) {
       registerInstancesMutation(state)
       const { sbj, tId, eT, iId, pN } = p
@@ -318,6 +319,14 @@ export default typesAndInstances({
      *====================================================================== */
     createType(state) {
       const tId = utils.getUniqueId(state.state)
+      function mutate(
+        eT: EntityTypes,
+        tId: string,
+        iId = '',
+        pN = '',
+      ) {
+
+      }
       this.commit('CREATE_TYPE', { sbj: null, tId, eT: 'TypeWrapper', iId: '', pN: '' })
     },
     removeType(state, p: { tId: string }) {
@@ -348,7 +357,8 @@ export default typesAndInstances({
       const sbj = state.getters.getType({ tId })
       this.commit('RENAME_TYPE', { sbj, tId, eT: 'TypeWrapper', iId: '', pN: '', newName })
     },
-    createProp(state, typeName: string) {
+    createProp(state, p: { tId }) {
+      this.commit('CREATE_TYPE_PROPERTY', { sbj: null, tId, eT: 'TypeWrapper', iId: '', pN: '' })
       this.commit('CREATE_TYPE_PROPERTY', typeName)
       utils.oToA(state.state.project.instances[typeId]).forEach((instance) => {
         this.dispatch('addPropToInstance') // ARGS

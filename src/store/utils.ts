@@ -98,28 +98,29 @@ export function getChangeId() {
  */
 export function registerChange(
   state: ApplicationState,
-  entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
+  // entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
+  entityCopy: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
   entityType: EntityTypes,
   typeId: string,
-  instanceId: string,
-  propName: string
+  instanceId = '',
+  propName = ''
 ) {
   if (!state.currentTransaction) return
 
-  let entityBeforeCopy
+  // let entityBeforeCopy
 
-  if (entityType === 'TypeWrapper') {
-    entityBeforeCopy = copyTypeWrapper(entityBefore as TypeWrapper)
-  } else if (entityType === 'PropDefinition') {
-    entityBeforeCopy = copyPropDef(entityBefore as PropDefinition)
-  } else if (entityType === 'Instance') {
-    entityBeforeCopy = copyInstance(entityBefore as Instance)
-  } else /* (entityType === 'InstanceProp') */ {
-    entityBeforeCopy = copyInstanceProp(entityBefore as InstanceProp)
-  }
+  // if (entityType === 'TypeWrapper') {
+  //   entityBeforeCopy = copyTypeWrapper(entityBefore as TypeWrapper)
+  // } else if (entityType === 'PropDefinition') {
+  //   entityBeforeCopy = copyPropDef(entityBefore as PropDefinition)
+  // } else if (entityType === 'Instance') {
+  //   entityBeforeCopy = copyInstance(entityBefore as Instance)
+  // } else /* (entityType === 'InstanceProp') */ {
+  //   entityBeforeCopy = copyInstanceProp(entityBefore as InstanceProp)
+  // }
 
   const change: Change = {
-    entityBefore: entityBeforeCopy,
+    entityBefore: entityCopy,
     entityType,
     typeId,
     instanceId,
@@ -127,6 +128,18 @@ export function registerChange(
   }
 
   state.currentTransaction.changes.push(change)
+}
+
+export function getContext(
+  entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
+  entityType: EntityTypes,
+  typeId: string,
+  instanceId = '',
+  propName = ''
+) {
+  return {
+
+  }
 }
 
 /**
