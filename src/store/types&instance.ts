@@ -189,35 +189,38 @@ export default typesAndInstances({
       })
       state.currentTransaction = null
     },
-    CREATE_TYPE(state) {
+    CREATE_TYPE(state, p: { sbj: TypeWrapper, tId: string, eT: EntityTypes, iId: string, pN: string }) {
       registerInstancesMutation(state)
+      const { sbj, tId, eT, iId, pN } = p
+      registerChange(state, sbj, eT, tId, iId, pN)
+
       const uniqueName = utils.getUniqueTypeName(state)
-      const uniqueId = utils.getUniqueId(state)
 
-      registerChange(state, null, 'TypeWrapper', uniqueId, '')
-
-      state.project.types[uniqueId] = {
+      state.project.types[tId] = {
         name: uniqueName,
-        id: uniqueId,
+        id: tId,
         definition: utils.getNewTypeData()
       }
-      state.project.instances[uniqueId] = {}
+      state.project.instances[tId] = {}
     },
-    RENAME_TYPE(state, payload: { typeId: string, newName: string }) {
+    RENAME_TYPE(state, p: { sbj: TypeWrapper, tId: string, eT: EntityTypes, iId: string, pN: string, newName: string }) {
       registerInstancesMutation(state)
-      const { typeId, newName } = payload
+      const { sbj, tId, eT, iId, pN } = p
+      registerChange(state, sbj, eT, tId, iId, pN)
 
-      registerChange(state, state.project.types[typeId], 'TypeWrapper', '', '')
+      const { newName } = p
 
-      const type = state.project.types[typeId]
+      const type = state.project.types[tId]
       type.name = newName
 
-      Object.entries(state.project.instances[typeId]).forEach(([, instance]) => {
+      Object.entries(state.project.instances[tId]).forEach(([, instance]) => {
         instance.meta_typeName.values = [newName]
       })
     },
-    REMOVE_TYPE(state, typeId: string) {
+    REMOVE_TYPE(state, p: { sbj: TypeWrapper, tId: string, cT: ChangeType }) {
+      const { sbj, tId } = p
       registerInstancesMutation(state)
+      registerChange(state, sbj, eT, tId, '', '')
 
       // Also reset values for all props that were references to the removed type
 
@@ -314,31 +317,36 @@ export default typesAndInstances({
      *
      *====================================================================== */
     createType(state) {
-      this.commit('CREATE_TYPE')
+      const tId = utils.getUniqueId(state.state)
+      this.commit('CREATE_TYPE', { sbj: null, tId, eT: 'TypeWrapper', iId: '', pN: '' })
     },
-    removeType(state, typeId: string) {
-      utils.oToA(state.state.project.instances[typeid]).forEach((instance) => {
+    removeType(state, p: { tId: string }) {
+      const { tId } = p
+      utils.oToA(state.state.project.instances[tId]).forEach((instance) => {
         this.dispatch('removeInstance') // ARGS
       })
 
       // tell propDefs of other types that this type is no longer available
       utils.oToA(state.state.project.types).forEach((typeWrapper) => {
-        if (typeWrapper.id === typeId) return
+        if (typeWrapper.id === tId) return
 
-        utils.getPropsOfAWithRefToB(state, { typeAId: typeWrapper.id, typeBId: typeId })
+        utils.getPropsOfAWithRefToB(state, { typeAId: typeWrapper.id, typeBId: tId })
           .forEach((propName) => {
             this.dispatch('changePropRefTargetType') // ARGS
           })
       })
 
-      this.commit('REMOVE_TYPE', typeName)
+      const sbj = state.getters.getType({ tId })
+      this.commit('CREATE_TYPE', { sbj, tId, eT: 'TypeWrapper', iId: '', pN: '' })
     },
-    renameType(state, payload: { typeId: string, newName: string, changeId: string }) {
+    renameType(state, p: { tId: string, newName: string }) {
+      const { tId, newName } = p
       utils.oToA(state.state.project.instances[typeId]).forEach((instance) => {
         this.dispatch('changePropValues') // ARGS
       })
 
-      this.commit('RENAME_TYPE', payload)
+      const sbj = state.getters.getType({ tId })
+      this.commit('RENAME_TYPE', { sbj, tId, eT: 'TypeWrapper', iId: '', pN: '', newName })
     },
     createProp(state, typeName: string) {
       this.commit('CREATE_TYPE_PROPERTY', typeName)

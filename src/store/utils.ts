@@ -98,18 +98,32 @@ export function getChangeId() {
  */
 export function registerChange(
   state: ApplicationState,
-  change: Change,
+  entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
+  entityType: EntityTypes,
+  typeId: string,
+  instanceId: string,
+  propName: string
 ) {
   if (!state.currentTransaction) return
 
-  if (change.entityType === 'TypeWrapper') {
-    change.entityBefore = copyTypeWrapper(change.entityBefore as TypeWrapper)
-  } else if (change.entityType === 'PropDefinition') {
-    change.entityBefore = copyPropDef(change.entityBefore as PropDefinition)
-  } else if (change.entityType === 'Instance') {
-    change.entityBefore = copyInstance(change.entityBefore as Instance)
+  let entityBeforeCopy
+
+  if (entityType === 'TypeWrapper') {
+    entityBeforeCopy = copyTypeWrapper(entityBefore as TypeWrapper)
+  } else if (entityType === 'PropDefinition') {
+    entityBeforeCopy = copyPropDef(entityBefore as PropDefinition)
+  } else if (entityType === 'Instance') {
+    entityBeforeCopy = copyInstance(entityBefore as Instance)
   } else /* (entityType === 'InstanceProp') */ {
-    change.entityBefore = copyInstanceProp(change.entityBefore as InstanceProp)
+    entityBeforeCopy = copyInstanceProp(entityBefore as InstanceProp)
+  }
+
+  const change: Change = {
+    entityBefore: entityBeforeCopy,
+    entityType,
+    typeId,
+    instanceId,
+    propName
   }
 
   state.currentTransaction.changes.push(change)
