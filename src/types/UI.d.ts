@@ -118,6 +118,7 @@ interface Change {
   entityType: EntityTypes
   typeId: string;
   instanceId: string;
+  propName: string;
 }
 
 interface Project {

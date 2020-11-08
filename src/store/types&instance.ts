@@ -308,7 +308,11 @@ export default typesAndInstances({
     closeTransaction(state) {
       state.commit('CLOSE_TRANSACTION')
     },
-    /* === CHANGES START HERE === */
+    /* =====================================================================
+     *
+     *                    PUBLIC CHANGES API START
+     *
+     *====================================================================== */
     createType(state) {
       this.commit('CREATE_TYPE')
     },
@@ -438,7 +442,11 @@ export default typesAndInstances({
 
       this.commit('REMOVE_TYPE_INSTANCE', payload)
     },
-    /* === CHANGES END HERE === */
+    /* =====================================================================
+     *
+     *                    PUBLIC CHANGES API END
+     *
+     *====================================================================== */
 
     addRefMetaFromAToB(state, p: { aId: string, bId: string, instA?: Instance, instB?: Instance }) {
       const instA = p.instA || state.getters.getInstance(p.aId)

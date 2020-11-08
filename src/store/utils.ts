@@ -98,32 +98,18 @@ export function getChangeId() {
  */
 export function registerChange(
   state: ApplicationState,
-  entityBeforeChange: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
-  entityType: EntityTypes,
-  // for TypeWrapper and PropDefinition it's type id
-  // for Instance and InstanceProp it's instance id
-  typeId: string,
-  instanceId: string
+  change: Change,
 ) {
   if (!state.currentTransaction) return
 
-  let entityBefore: typeof entityBeforeChange
-
-  if (entityType === 'TypeWrapper') {
-    entityBefore = copyTypeWrapper(entityBeforeChange as TypeWrapper)
-  } else if (entityType === 'PropDefinition') {
-    entityBefore = copyPropDef(entityBeforeChange as PropDefinition)
-  } else if (entityType === 'Instance') {
-    entityBefore = copyInstance(entityBeforeChange as Instance)
+  if (change.entityType === 'TypeWrapper') {
+    change.entityBefore = copyTypeWrapper(change.entityBefore as TypeWrapper)
+  } else if (change.entityType === 'PropDefinition') {
+    change.entityBefore = copyPropDef(change.entityBefore as PropDefinition)
+  } else if (change.entityType === 'Instance') {
+    change.entityBefore = copyInstance(change.entityBefore as Instance)
   } else /* (entityType === 'InstanceProp') */ {
-    entityBefore = copyInstanceProp(entityBeforeChange as InstanceProp)
-  }
-
-  const change: Change = {
-    entityBefore,
-    entityType,
-    typeId,
-    instanceId,
+    change.entityBefore = copyInstanceProp(change.entityBefore as InstanceProp)
   }
 
   state.currentTransaction.changes.push(change)
@@ -140,21 +126,37 @@ export function revertChange(
 ) {
   let entity
   switch (change.entityType) {
-    case 'TypeWrapper':
+    case 'TypeWrapper': // typeId
       entity = change.entityBefore as TypeWrapper
-      state.project.types[entity.id] = entity
+      if (entity === null) {
+        delete state.project.types[change.typeId]
+      } else {
+        state.project.types[change.typeId] = entity
+      }
       break;
-    case 'PropDefinition':
+    case 'PropDefinition': // typeId, propName
       entity = change.entityBefore as PropDefinition
-      state.project.types[change.typeId].definition[entity.name] = entity
+      if (entity === null) {
+        delete state.project.types[change.typeId].definition[change.propName]
+      } else {
+        state.project.types[change.typeId].definition[change.propName] = entity
+      }
       break;
-    case 'Instance':
+    case 'Instance': // typeId, instanceId
       entity = change.entityBefore as Instance
-      state.project.instances[change.typeId][change.instanceId] = entity
+      if (entity === null) {
+        delete state.project.instances[change.typeId][change.instanceId]
+      } else {
+        state.project.instances[change.typeId][change.instanceId] = entity
+      }
       break;
-    case 'InstanceProp':
+    case 'InstanceProp': // typeId, instanceId, propName
       entity = change.entityBefore as InstanceProp
-      state.project.instances[change.typeId][change.instanceId][entity.name] = entity
+      if (entity === null) {
+        delete state.project.instances[change.typeId][change.instanceId][change.propName]
+      } else {
+        state.project.instances[change.typeId][change.instanceId][entity.name] = entity
+      }
       break;
     default:
       Error(`Unknown entity type of the change: ${change.entityType}.`)
