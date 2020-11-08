@@ -363,12 +363,20 @@ export default typesAndInstances({
     },
     changePropValueType(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
       const { tId, pN, newType } = p
+      const isRef = state.getters.isPropARef(tId, pN)
 
-      // Need to change prop valueType in every single existing instance
-      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changeInstancePropData', { tId, iId, pN, newType })
-      })
+      if (isRef) {
+        this.dispatch('changePropValueTypeFromRef', p)
+      } else if (newType === 'ref') {
+        this.dispatch('changePropValueTypeToRef', p)
+      } else {
+        // Need to change prop valueType in every single existing instance
+        Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+          this.dispatch('changeInstancePropData', { tId, iId, pN, newType })
+        })
+      }
 
+      // REMEMBER TO ADD/REMOVE refTargetTypeId
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
     },
     changePropToArray(state, p: { tId: string, pN: string }) { // OK
@@ -403,30 +411,6 @@ export default typesAndInstances({
 
       mutate('CHANGE_PROP_TO_SINGLE', {}, 'PropDefinition', tId, '', pN)
     },
-    changePropValueTypeToRef(state, p: { tId: string, pN: string }) {
-      const { tId, pN } = p
-
-      // IMPLEMENT
-      const values: string[]
-      values.forEach((v) => {
-        this.dispatch('removePropRefValue')
-      })
-
-      // REMEMBER TO ADD refTargetTypeId
-      mutate('CHANGE_PROP_VALUE_TYPE_TO_REF', {}, 'PropDefinition', tId, '', pN)
-    },
-    changePropValueTypeFromRef(state, p: { tId: string, pN: string, newType: ValueType }) {
-      const { tId, pN, newType } = p
-
-      // IMPLEMENT
-      const values: string[]
-      values.forEach((v) => {
-        this.dispatch('removePropValue')
-      })
-
-      // REMEMBER TO REMOVE refTargetTypeId
-      mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
-    },
     changePropRefTargetType(state, p: { tId: string, pN: string, newTargetId: string }) { // OK
       const { tId, pN, newTargetId } = p
       // Removing values from all instances with this prop.
@@ -445,6 +429,7 @@ export default typesAndInstances({
 
       mutate('CHANGE_PROP_VALUE', { value }, 'InstanceProp', tId, iId, pN)
     },
+
     addPropValue(state, p: { tId: string, pN: string, value: Values }) {
       const { tId, pN, value } = p
       const isRef = state.getters.isPropARef(tId, pN)
@@ -573,6 +558,33 @@ export default typesAndInstances({
     removeInstanceProp(state, p: { tId: string, iId: string, pN: string }) { // OK
       const { tId, iId, pN } = p
       mutate('REMOVE_INSTANCE_PROP', {}, 'InstanceProp', tId, iId, pN)
+    },
+
+    changePropValueTypeToRef(state, p: { tId: string, pN: string }) { // OK
+      const { tId, pN } = p
+
+      // For this prop in all instance
+      Object.entries(state.state.project.instances[tId]).forEach(([iId, instance]) => {
+        // Remove all values
+        const valuesToRemove = instance[pN].values
+        valuesToRemove.forEach((v) => this.dispatch('removePropValue', { tId, pN, value: v }))
+
+        // And then change value type of prop to ref
+        this.dispatch('changeInstancePropData', { tId, iId, pN, newType: 'ref' })
+      })
+    },
+    changePropValueTypeFromRef(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
+      const { tId, pN, newType } = p
+
+      // For this prop in all instance
+      Object.entries(state.state.project.instances[tId]).forEach(([iId, instance]) => {
+        // Remove all values
+        const valuesToRemove = instance[pN].values
+        valuesToRemove.forEach((v) => this.dispatch('removePropRefValue', { tId, pN, value: v }))
+
+        // And then change value type of prop to ref
+        this.dispatch('changeInstancePropData', { tId, iId, pN, newType })
+      })
     },
 
     // moveTypePropUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
