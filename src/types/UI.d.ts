@@ -111,11 +111,11 @@ type ChangeType =
   | 'createInstance'
   | 'removeInstance'
 
-type EntityTypes = 'TypeWrapper' | 'PropDefinition' | 'Instance' | 'InstanceProp'
+type EntityType = 'TypeWrapper' | 'PropDefinition' | 'Instance' | 'InstanceProp'
 
 interface Change {
   entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null;
-  entityType: EntityTypes
+  entityType: EntityType
   typeId: string;
   instanceId: string;
   propName: string;
@@ -258,6 +258,16 @@ interface Instances {
 
 interface InstanceList {
   [instanceId: string]: Instance;
+}
+
+interface MutCtx extends MutArgs {
+  tId: string;
+  iId: string;
+  pN: string;
+}
+
+interface MutArgs {
+  newName?: string;
 }
 
 interface InstanceBasics {

@@ -3,6 +3,7 @@ import * as utils from './utils';
 import { registerChange } from './utils'
 import { revertChange } from './utils'
 import initialState from './state';
+import { mutate } from './transactions';
 
 const registerInstancesMutation = (state: ApplicationState) => {
   state.projectInstancesMutated = true
@@ -189,11 +190,10 @@ export default typesAndInstances({
       })
       state.currentTransaction = null
     },
-    // CREATE_TYPE(state, p: { sbj: TypeWrapper, tId: string, eT: EntityTypes, iId: string, pN: string }) {
-    CREATE_TYPE(state, p: { sbj: TypeWrapper, tId: string, eT: EntityTypes, iId: string, pN: string }) {
+    // CREATE_TYPE(state, p: { sbj: TypeWrapper, tId: string, eT: EntityType, iId: string, pN: string }) {
+    CREATE_TYPE(state, p: MutCtx) {
       registerInstancesMutation(state)
-      const { sbj, tId, eT, iId, pN } = p
-      registerChange(state, sbj, eT, tId, iId, pN)
+      const { tId } = p
 
       const uniqueName = utils.getUniqueTypeName(state)
 
@@ -204,12 +204,9 @@ export default typesAndInstances({
       }
       state.project.instances[tId] = {}
     },
-    RENAME_TYPE(state, p: { sbj: TypeWrapper, tId: string, eT: EntityTypes, iId: string, pN: string, newName: string }) {
+    RENAME_TYPE(state, p: MutCtx) {
       registerInstancesMutation(state)
-      const { sbj, tId, eT, iId, pN } = p
-      registerChange(state, sbj, eT, tId, iId, pN)
-
-      const { newName } = p
+      const { tId, newName } = p
 
       const type = state.project.types[tId]
       type.name = newName
@@ -218,33 +215,12 @@ export default typesAndInstances({
         instance.meta_typeName.values = [newName]
       })
     },
-    REMOVE_TYPE(state, p: { sbj: TypeWrapper, tId: string, cT: ChangeType }) {
-      const { sbj, tId } = p
+    REMOVE_TYPE(state, p: MutCtx) {
+      const { tId } = p
       registerInstancesMutation(state)
-      registerChange(state, sbj, eT, tId, '', '')
 
-      // Also reset values for all props that were references to the removed type
-
-      // This should be initiated in action
-      // Object.entries(state.project.types).forEach(([typeId, wrapper]) => { // each type
-      //   const tName = tuple1[0]
-      //   const typeDefinition = wrapper.definition
-
-      //   Object.entries(typeDefinition).forEach((tuple2) => { // each prop definition
-      //     const propName = tuple2[0]
-      //     const targetTypeName = tuple2[1].refTargetTypeId
-      //     if (targetTypeName && targetTypeName === typeName) {
-      //       Object.entries(state.project.instances[tName]).forEach((tuple3) => { // each prop instance
-      //         tuple3[1][propName].values = []
-      //       })
-      //     }
-      //   })
-      // })
-
-      registerChange(state, state.project.types[typeId], 'TypeWrapper', '', '')
-
-      delete state.project.types[typeId]
-      delete state.project.instances[typeId]
+      delete state.project.types[tId]
+      delete state.project.instances[tId]
     },
     CREATE_TYPE_PROPERTY(state, typeName: string) {
       registerInstancesMutation(state)
@@ -319,15 +295,7 @@ export default typesAndInstances({
      *====================================================================== */
     createType(state) {
       const tId = utils.getUniqueId(state.state)
-      function mutate(
-        eT: EntityTypes,
-        tId: string,
-        iId = '',
-        pN = '',
-      ) {
-
-      }
-      this.commit('CREATE_TYPE', { sbj: null, tId, eT: 'TypeWrapper', iId: '', pN: '' })
+      mutate('CREATE_TYPE', {}, 'TypeWrapper', tId)
     },
     removeType(state, p: { tId: string }) {
       const { tId } = p
@@ -345,8 +313,7 @@ export default typesAndInstances({
           })
       })
 
-      const sbj = state.getters.getType({ tId })
-      this.commit('CREATE_TYPE', { sbj, tId, eT: 'TypeWrapper', iId: '', pN: '' })
+      mutate('REMOVE_TYPE', {}, 'TypeWrapper', tId)
     },
     renameType(state, p: { tId: string, newName: string }) {
       const { tId, newName } = p
@@ -354,8 +321,7 @@ export default typesAndInstances({
         this.dispatch('changePropValues') // ARGS
       })
 
-      const sbj = state.getters.getType({ tId })
-      this.commit('RENAME_TYPE', { sbj, tId, eT: 'TypeWrapper', iId: '', pN: '', newName })
+      mutate('RENAME_TYPE', { newName }, 'TypeWrapper', tId)
     },
     createProp(state, p: { tId }) {
       this.commit('CREATE_TYPE_PROPERTY', { sbj: null, tId, eT: 'TypeWrapper', iId: '', pN: '' })

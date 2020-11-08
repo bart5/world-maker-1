@@ -100,7 +100,7 @@ export function registerChange(
   state: ApplicationState,
   // entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
   entityCopy: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
-  entityType: EntityTypes,
+  entityType: EntityType,
   typeId: string,
   instanceId = '',
   propName = ''
@@ -128,18 +128,6 @@ export function registerChange(
   }
 
   state.currentTransaction.changes.push(change)
-}
-
-export function getContext(
-  entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
-  entityType: EntityTypes,
-  typeId: string,
-  instanceId = '',
-  propName = ''
-) {
-  return {
-
-  }
 }
 
 /**
