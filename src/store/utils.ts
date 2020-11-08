@@ -181,7 +181,7 @@ export function revertChange(
 /**
  * Get all props of type A that reference type B
  */
-export function getPropsOfAWithRefToB(
+export function getPropsOfTypeAWithRefToTypeB(
   st: ActionContext<ApplicationState, ApplicationState>,
   p: {
     typeAId?: string, typeBId?: string, instAId?: string, instBId?: string,
@@ -201,29 +201,41 @@ export function getPropsOfAWithRefToB(
   return propNames
 }
 
-export function getInstancesReferencingInstance(
+// We want to get all instances where at least one of it'd ref-type props
+// has right now given instance as it's value
+export function getReferencingInstances(
   targetInstId: string,
   st: ActionContext<ApplicationState, ApplicationState>
 ) {
-  const referencingIds: string[] = []
+  const referencingInstancesIds: string[] = []
+
   const instanceType: TypeWrapper = st.getters.getType({ instanceId: targetInstId })
-  Object.entries(st.state.project.instances).forEach(([typeId, instancesList]) => {
-    if (targetInstId in instancesList) return
 
-    const propNames = getPropsOfAWithRefToB({ typeAId: typeId, typeBId: instanceType.id }, st)
+  const potentialRefPointers: Array<{ typeId: string, props: string[] }> = []
 
-    oToA(instancesList).forEach((inst) => {
-      propNames.some((propName) => {
-        if (inst[propName].values.includes(targetInstId)) {
-          referencingIds.push(inst.id.values[0])
-          return true
-        }
-        return false
-      })
+  oToA(st.state.project.types).forEach((wrapper) => {
+    const pointer = {
+      typeId: wrapper.id,
+      props: [] as string[]
+    }
+
+    oToA(wrapper.definition).forEach((propDef) => {
+      if (propDef.refTargetTypeId === instanceType.id) {
+        pointer.props.push(propDef.name)
+      }
+    })
+
+    if (pointer.props.length > 0) potentialRefPointers.push(pointer)
+  })
+
+  potentialRefPointers.forEach(({ typeId, props }) => {
+    oToA(st.state.project.instances[typeId]).forEach((instance) => {
+      const hasActiveRef = props.some((propName) => instance[propName].values.length > 0)
+      if (hasActiveRef) referencingInstancesIds.push(instance.id.values[0])
     })
   })
 
-  return referencingIds
+  return referencingInstancesIds
 }
 
 export function getNewTypeData(): TypeDefinition {
