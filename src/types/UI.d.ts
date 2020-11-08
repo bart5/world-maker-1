@@ -263,7 +263,7 @@ interface InstanceList {
 interface MutArgs {
   newName?: string;
   newType?: ValueType;
-  newTarget?: string; // propRefTargetTypeId
+  newTargetId?: string; // propRefTargetTypeId
   value?: Values;
 }
 
