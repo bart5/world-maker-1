@@ -299,7 +299,7 @@ export default typesAndInstances({
       const tId = utils.getUniqueId(state.state)
       mutate('CREATE_TYPE', {}, 'TypeWrapper', tId)
     },
-    removeType(state, p: { tId: string }) {
+    removeType(state, p: { tId: string }) { // OK
       const { tId } = p
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
         this.dispatch('removeInstance', { tId, iId })
@@ -321,11 +321,11 @@ export default typesAndInstances({
 
       mutate('REMOVE_TYPE', {}, 'TypeWrapper', tId)
     },
-    renameType(state, p: { tId: string, newName: string }) {
+    renameType(state, p: { tId: string, newName: string }) { // OK
       const { tId, newName } = p
 
-      utils.oToA(state.state.project.instances[typeId]).forEach((instance) => {
-        this.dispatch('changePropValues') // IMPLEMENT
+      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+        this.dispatch('changePropValue', { tId, iId, pN: 'meta_typeName', value: newName })
       })
 
       mutate('RENAME_TYPE', { newName }, 'TypeWrapper', tId)
@@ -400,7 +400,7 @@ export default typesAndInstances({
       // REMEMBER TO REMOVE refTargetTypeId
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
     },
-    changePropRefTargetType(state, p: { tId: string, pN: string, newTargetId: string }) {
+    changePropRefTargetType(state, p: { tId: string, pN: string, newTargetId: string }) { // OK
       const { tId, pN, newTargetId } = p
       // Removing values from all instances with this prop.
 
@@ -413,10 +413,10 @@ export default typesAndInstances({
 
       mutate('CHANGE_PROP_REF_TARGET_TYPE', { newTargetId }, 'PropDefinition', tId, '', pN)
     },
-    changePropValue(state, p: { tId: string, pN: string, value: Values }) {
-      const { tId, pN, value } = p
+    changePropValue(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
+      const { tId, iId, pN, value } = p
 
-      mutate('CHANGE_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
+      mutate('CHANGE_PROP_VALUE', { value }, 'InstanceProp', tId, iId, pN)
     },
     addPropValue(state, p: { tId: string, pN: string, value: Values }) {
       const { tId, pN, value } = p
@@ -457,83 +457,84 @@ export default typesAndInstances({
      *
      *====================================================================== */
 
-    addPropRefValue(state, p: { tId: string, pN: string, value: Values }) {
+    addPropRefValue(state, p: { tId: string, pN: string, value: Values }) { // OK
       const { tId, pN, value } = p
 
       mutate('ADD_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
 
-      const instA = state.getters.getInstance(p.aId)
-      const instB = state.getters.getInstance(p.bId)
+      const iA = state.getters.getInstance({ typeId: tId })
+      const iB = state.getters.getInstance(value)
 
-      this.dispatch('updateMetaOfRefsFromInstAToInstB', { iA: instA, iB: instB })
+      this.dispatch('updateMetaOfRefsFromInstAToInstB', { iA, iB })
     },
-    removePropRefValue(state, p: { tId: string, pN: string, value: Values }) {
+    removePropRefValue(state, p: { tId: string, pN: string, value: Values }) { // OK
       const { tId, pN, value } = p
 
       mutate('REMOVE_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
 
-      const instA = state.getters.getInstance(p.aId)
-      const instB = state.getters.getInstance(p.bId)
+      const iA = state.getters.getInstance({ typeId: tId })
+      const iB = state.getters.getInstance(value)
 
-      this.dispatch('updateMetaOfRefsFromInstAToInstB', { iA: instA, iB: instB })
+      this.dispatch('updateMetaOfRefsFromInstAToInstB', { iA, iB })
     },
 
-    removeAllRefsFromInstAtoInstB(state, p: { aId: string, bId: string }) {
-      const { aId, bId } = p
+    removeAllRefsFromInstAtoInstB(state, p: { aIId: string, bIId: string }) { // OK
+      const { aIId, bIId } = p
+      const tId = state.getters.getType({}, aIId)
 
-      const props = utils.getPropsOfTypeAWithRefToTypeB(state, { instAId: aId, instBId: bId })
+      const props = utils.getPropsOfTypeAWithRefToTypeB(state, { instAId: aIId, instBId: bIId })
 
-      props.forEach((propName) => {
-        this.dispatch('removePropRefValue', { aId, aPropName: propName, bId })
+      props.forEach((pN) => {
+        this.dispatch('removePropRefValue', { tId, pN, value: bIId })
       })
     },
-    removeAllRefsFromInstA(state, p: { iId: string }) {
+    removeAllRefsFromInstA(state, p: { iId: string }) { // OK
       const { iId } = p
       const type: TypeWrapper = state.getters.getType({ instanceId: iId })
 
       const referencedInstances = state.state.project.instances[type.id][iId].meta_isReferencing.values
 
-      referencedInstances.forEach((bId) => {
-        this.dispatch('removeAllRefsFromInstAtoInstB', { aId: iId, bId })
+      referencedInstances.forEach((bIId) => {
+        this.dispatch('removeAllRefsFromInstAtoInstB', { aIId: iId, bIId })
       })
     },
-    removeAllRefsToInstA(state, p: { iId: string }) {
+    removeAllRefsToInstA(state, p: { iId: string }) { // OK
       const { iId } = p
       const type: TypeWrapper = state.getters.getType({ instanceId: iId })
 
       const referencingInstances = state.state.project.instances[type.id][iId].meta_isReferencedBy.values
 
       referencingInstances.forEach((bId) => {
-        this.dispatch('removeAllRefsFromInstAtoInstB', { aId: bId, bId: iId })
+        this.dispatch('removeAllRefsFromInstAtoInstB', { aIId: bId, bIId: iId })
       })
     },
 
-    removeAllRefsFromEveryPropA(state, p: { tId: string, pN: string }) { // ALL ARGS
+    removeAllRefsFromEveryPropA(state, p: { tId: string, pN: string }) { // OK
       const { tId, pN } = p
 
       utils.oToA(state.state.project.instances[tId]).forEach((instance) => {
-
         instance[pN].values.forEach((v) => {
           this.dispatch('removePropRefValue', { tId, pN, value: v })
         })
       })
     },
 
-    updateMetaOfRefsFromInstAToInstB(state, p: { iA: Instance, iB: Instance }) {
+    updateMetaOfRefsFromInstAToInstB(state, p: { iA: Instance, iB: Instance }) { // OK
       const { iA, iB } = p
       const propsToCheck = utils.getPropsOfTypeAWithRefToTypeB(state, { instAId: iA.id.values[0], instBId: iB.id.values[0] })
-      this.commit('UPDATE_REF_META_FROM_A_TO_B', { iA, iB, propsToCheck })
+      const tId = state.getters.getType({}, iA.id.values[0])
+      mutate('UPDATE_REF_META_FROM_A_TO_B', { iA, iB, propsToCheck }, 'Instance', tId)
     },
 
     addPropToInstance(state, payload) {
       this.commit('ADD_PROP_TO_INSTANCE', payload)
     },
 
-    moveTypePropUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-      this.commit('MOVE_TYPE_PROP_UP', payload)
-    },
-    moveTypePropDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-      this.commit('MOVE_TYPE_PROP_DOWN', payload)
-    },
+    // moveTypePropUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
+    //   this.commit('MOVE_TYPE_PROP_UP', payload)
+    // },
+    // moveTypePropDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
+    //   this.commit('MOVE_TYPE_PROP_DOWN', payload)
+    // },
   },
 });
