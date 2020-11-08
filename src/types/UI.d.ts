@@ -260,14 +260,18 @@ interface InstanceList {
   [instanceId: string]: Instance;
 }
 
+interface MutArgs {
+  newName?: string;
+  newType?: ValueType;
+  newTarget?: string; // propRefTargetTypeId
+  value?: Values;
+  isRef?: boolean
+}
+
 interface MutCtx extends MutArgs {
   tId: string;
   iId: string;
   pN: string;
-}
-
-interface MutArgs {
-  newName?: string;
 }
 
 interface InstanceBasics {

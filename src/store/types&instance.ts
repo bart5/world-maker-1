@@ -253,10 +253,10 @@ export default typesAndInstances({
 
       delete state.project.instances[payload.typeName][payload.instanceId]
     },
-    ADD_REF_FROM_A_TO_B(state, p: { instA: Instance, aPropName: string, instBId: string }) {
-      const { instA, aPropName, instBId } = p
-      instA[aPropName].values.pushUnique(instBId)
-    },
+    // ADD_REF_FROM_A_TO_B(state, p: { instA: Instance, aPropName: string, instBId: string }) {
+    //   const { instA, aPropName, instBId } = p
+    //   instA[aPropName].values.pushUnique(instBId)
+    // },
     ADD_REF_META_FROM_A_TO_B(state, p: { instA: Instance, instB: Instance }) {
       const { instA, instB } = p
       instA.meta_isReferencing.values.pushUnique(instB.id.values[0])
@@ -300,7 +300,7 @@ export default typesAndInstances({
     removeType(state, p: { tId: string }) {
       const { tId } = p
       utils.oToA(state.state.project.instances[tId]).forEach((instance) => {
-        this.dispatch('removeInstance') // ARGS
+        this.dispatch('removeInstance') // IMPLEMENT
       })
 
       // tell propDefs of other types that this type is no longer available
@@ -309,7 +309,7 @@ export default typesAndInstances({
 
         utils.getPropsOfAWithRefToB(state, { typeAId: typeWrapper.id, typeBId: tId })
           .forEach((propName) => {
-            this.dispatch('changePropRefTargetType') // ARGS
+            this.dispatch('changePropRefTargetType') // IMPLEMENT
           })
       })
 
@@ -317,38 +317,45 @@ export default typesAndInstances({
     },
     renameType(state, p: { tId: string, newName: string }) {
       const { tId, newName } = p
+
       utils.oToA(state.state.project.instances[typeId]).forEach((instance) => {
-        this.dispatch('changePropValues') // ARGS
+        this.dispatch('changePropValues') // IMPLEMENT
       })
 
       mutate('RENAME_TYPE', { newName }, 'TypeWrapper', tId)
     },
-    createProp(state, p: { tId }) {
-      this.commit('CREATE_TYPE_PROPERTY', { sbj: null, tId, eT: 'TypeWrapper', iId: '', pN: '' })
-      this.commit('CREATE_TYPE_PROPERTY', typeName)
-      utils.oToA(state.state.project.instances[typeId]).forEach((instance) => {
-        this.dispatch('addPropToInstance') // ARGS
+    createProp(state, p: { tId: string }) {
+      const { tId } = p
+      mutate('CREATE_TYPE_PROPERTY', {}, 'PropDefinition', tId)
+
+      utils.oToA(state.state.project.instances[tId]).forEach((instance) => {
+        this.dispatch('addPropToInstance') // IMPLEMENT
       })
     },
-    removeProp(state, payload: { propName: string, instanceId: string, revert: boolean }) {
-      const { propName, instanceId, revert } = payload
+    removeProp(state, p: { tId: string, pN: string }) {
+      const { tId, pN } = p
 
-      this.dispatch('removeAllRefsFromPropA') // ARGS
+      this.dispatch('removeAllRefsFromPropA') // IMPLEMENT
 
-      const instance = state.getters.getInstance(instanceId)
-      this.commit('REMOVE_PROP', { propName, instance })
+      mutate('REMOVE_PROP', {}, 'PropDefinition', tId, '', pN)
     },
-    renameProp(state, payload: { propName: string, instanceId: string, revert: boolean }) {
-      // rename prop in type and instances
-      this.commit('RENAME_PROP') // ARGS
+    renameProp(state, p: { tId: string, pN: string, newName: string }) {
+      const { tId, pN, newName } = p
+      mutate('RENAME_PROP', { newName }, 'PropDefinition', tId, '', pN)
     },
-    changePropValueType(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
-      this.commit('CHANGE_PROP_VALUE_TYPE')
+    changePropValueType(state, p: { tId: string, pN: string, newType: ValueType }) {
+      const { tId, pN, newType } = p
+      mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
     },
-    changePropToArray(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+    changePropToArray(state, p: { tId: string, pN: string }) {
+      const { tId, pN } = p
+      mutate('CHANGE_PROP_TO_ARRAY', {}, 'PropDefinition', tId, '', pN)
       this.commit('CHANGE_PROP_TO_ARRAY')
     },
-    changePropToSingle(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+    changePropToSingle(state, p: { tId: string, pN: string }) {
+      const { tId, pN } = p
+
+      // IMPLEMENT
       const values: string[]
       const toRemove = values.splice(1)
       if (isRef) {
@@ -360,71 +367,97 @@ export default typesAndInstances({
           this.dispatch('removePropValue')
         })
       }
-      this.commit('CHANGE_PROP_TO_SINGLE')
+
+      mutate('CHANGE_PROP_TO_SINGLE', {}, 'PropDefinition', tId, '', pN)
     },
-    changePropValueTypeToRef(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+    changePropValueTypeToRef(state, p: { tId: string, pN: string }) {
+      const { tId, pN } = p
+
+      // IMPLEMENT
       const values: string[]
       values.forEach((v) => {
         this.dispatch('removePropRefValue')
       })
-      this.commit('CHANGE_PROP_VALUE_TYPE_TO_REF') // REMEMBER TO ADD refTargetTypeId
+
+      // REMEMBER TO ADD refTargetTypeId
+      mutate('CHANGE_PROP_VALUE_TYPE_TO_REF', {}, 'PropDefinition', tId, '', pN)
     },
-    changePropValueTypeFromRef(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+    changePropValueTypeFromRef(state, p: { tId: string, pN: string, newType: ValueType }) {
+      const { tId, pN, newType } = p
+
+      // IMPLEMENT
       const values: string[]
       values.forEach((v) => {
         this.dispatch('removePropValue')
       })
-      this.commit('CHANGE_PROP_VALUE_TYPE') // REMEMBER TO REMOVE refTargetTypeId
+
+      // REMEMBER TO REMOVE refTargetTypeId
+      mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
     },
-    changePropRefTargetType(state, payload: { oldPropName: string, newProp: PropDefinition, typeName: string }) {
+    changePropRefTargetType(state, p: { tId: string, pN: string, newTarget: string }) {
+      const { tId, pN, newTarget } = p
+
+      // IMPLEMENT
       const values: string[]
       values.forEach((v) => {
         this.dispatch('removePropRefValue')
       })
-      this.commit('CHANGE_PROP_REF_TARGET_TYPE')
+
+      mutate('CHANGE_PROP_REF_TARGET_TYPE', { newTarget }, 'PropDefinition', tId, '', pN)
     },
-    addPropRefValue(state, p: { aId: string, aPropName: string, bId: string }) {
+    // addPropRefValue(state, p: { aId: string, aPropName: string, bId: string }) {
+    addPropRefValue(state, p: { tId: string, pN: string, value: Values }) {
+      const { tId, pN, value } = p
+
+      mutate('ADD_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
+
       const instA = state.getters.getInstance(p.aId)
       const instB = state.getters.getInstance(p.bId)
-      // this.commit('ADD_REF_FROM_A_TO_B', { instA, aPropName: p.aPropName, instBId: p.bId })
-      this.commit('ADD_PROP_VALUE')
       this.dispatch('addRefMetaFromAtoB', { instA, instB })
     },
-    removePropRefValue(state, p: { aId: string, aPropName: string, bId: string }) {
+    removePropRefValue(state, p: { tId: string, pN: string, value: Values }) {
+      const { tId, pN, value } = p
+
+      mutate('REMOVE_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
+
       const instA = state.getters.getInstance(p.aId)
       const instB = state.getters.getInstance(p.bId)
-      // this.commit('REMOVE_REF_FROM_A_TO_B', { instA, aPropName: p.aPropName, instBId: p.bId })
-      this.commit('REMOVE_PROP_VALUE')
       this.dispatch('removeRefMetaFromAToB', { instA, instB })
     },
-    changePropValue(state, typeName: string) {
-      this.commit('CHANGE_PROP_VALUE', typeName)
+    changePropValue(state, p: { tId: string, pN: string, value: Values }) {
+      const { tId, pN, value } = p
+
+      mutate('CHANGE_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
     },
-    addPropValue(state, typeName: string) {
+    // SHOULDN'T WE INFER THIS isRef here instead of requiring?
+    addPropValue(state, p: { tId: string, pN: string, value: Values, isRef: boolean }) {
+      const { tId, pN, value, isRef } = p
       if (isRef) {
-        this.dispatch('addPropRefValue')
+        this.dispatch('addPropRefValue', p)
       } else {
-        this.commit('ADD_PROP_VALUE')
-      }
-      this.commit('CHANGE_PROP_VALUES', typeName)
-    },
-    removePropValue(state, typeName: string) {
-      if (isRef) {
-        this.dispatch('removePropRefValue')
-      } else {
-        this.commit('REMOVE_PROP_VALUE')
+        mutate('ADD_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
       }
     },
-    createInstance(state, typeName: string) {
-      this.commit('CREATE_TYPE_INSTANCE', typeName)
+    removePropValue(state, p: { tId: string, pN: string, value: Values, isRef: boolean }) {
+      const { tId, pN, value, isRef } = p
+      if (isRef) {
+        this.dispatch('removePropRefValue', p)
+      } else {
+        mutate('REMOVE_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
+      }
     },
-    removeInstance(state, payload: { typeName: string, instanceId: string }) {
-      const { typeName, instanceId } = payload
+    createInstance(state, p: { tId: string }) {
+      const { tId } = p
+      this.commit('CREATE_TYPE_INSTANCE', p)
+      mutate('REMOVE_PROP_VALUE', {}, 'InstanceProp', tId)
+    },
+    removeInstance(state, p: { tId: string, iId: string }) {
+      const { tId, iId } = p
 
       this.dispatch('removeAllRefsFromA') // args
       this.dispatch('removeAllRefsToA') // args
 
-      this.commit('REMOVE_TYPE_INSTANCE', payload)
+      mutate('REMOVE_TYPE_INSTANCE', {}, 'InstanceProp', tId, iId)
     },
     /* =====================================================================
      *
