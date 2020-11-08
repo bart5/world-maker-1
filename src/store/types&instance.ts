@@ -1,6 +1,5 @@
 import { ActionContext, createStore } from 'vuex';
 import * as utils from './utils';
-import { registerChange } from './utils'
 import { revertChange } from './utils'
 import initialState from './state';
 import { mutate } from './transactions';
@@ -196,10 +195,9 @@ export default typesAndInstances({
       })
       state.currentTransaction = null
     },
-    // CREATE_TYPE(state, p: { sbj: TypeWrapper, tId: string, eT: EntityType, iId: string, pN: string }) {
-    CREATE_TYPE(state, p: MutCtx) {
-      registerInstancesMutation(state)
+    CREATE_TYPE(state, p: { tId: string }) { // OK
       const { tId } = p
+      registerInstancesMutation(state)
 
       const uniqueName = utils.getUniqueTypeName(state)
 
@@ -210,7 +208,7 @@ export default typesAndInstances({
       }
       state.project.instances[tId] = {}
     },
-    RENAME_TYPE(state, p: MutCtx) {
+    RENAME_TYPE(state, p: { tId: string, newName: string }) { // OK
       registerInstancesMutation(state)
       const { tId, newName } = p
 
@@ -221,11 +219,12 @@ export default typesAndInstances({
         instance.meta_typeName.values = [newName]
       })
     },
-    REMOVE_TYPE(state, p: MutCtx) {
+    REMOVE_TYPE(state, p: { tId: string }) { // OK
       const { tId } = p
       registerInstancesMutation(state)
 
       delete state.project.types[tId]
+      // At this point all instance are removed
       delete state.project.instances[tId]
     },
     CREATE_TYPE_PROPERTY(state, typeName: string) {
@@ -254,10 +253,11 @@ export default typesAndInstances({
 
       state.project.instances[tId][iId] = utils.getNewInstanceData(state, tN, iId)
     },
-    REMOVE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
+    REMOVE_INSTANCE(state, p: { tId: string, iId: string }) {
+      const { tId, iId } = p
       registerInstancesMutation(state)
 
-      delete state.project.instances[payload.typeName][payload.instanceId]
+      delete state.project.instances[tId][iId]
     },
     UPDATE_REF_META_FROM_A_TO_B(state, p: { iA: Instance, iB: Instance, propsToCheck: string[] }) {
       const { iA, iB, propsToCheck } = p
@@ -468,7 +468,7 @@ export default typesAndInstances({
       this.dispatch('removeAllRefsFromInstA', { iId })
       this.dispatch('removeAllRefsToInstA', { iId })
 
-      mutate('REMOVE_TYPE_INSTANCE', {}, 'InstanceProp', tId, iId)
+      mutate('REMOVE_INSTANCE', {}, 'Instance', tId, iId)
     },
     /* =====================================================================
      *

@@ -19,14 +19,6 @@ interface UiData {
   activeWorkspaceId: workspaceId;
 }
 
-interface SDOpContext {
-
-}
-
-interface Packet {
-
-}
-
 interface Transaction {
   changeType: ChangeType;
   changes: Array<Change>;

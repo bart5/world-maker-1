@@ -94,43 +94,6 @@ export function getChangeId() {
 }
 
 /**
- * Always register before StaticData (types or instances) MUTATION!
- */
-export function registerChange(
-  state: ApplicationState,
-  // entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
-  entityCopy: TypeWrapper | PropDefinition | Instance | InstanceProp | null,
-  entityType: EntityType,
-  typeId: string,
-  instanceId = '',
-  propName = ''
-) {
-  if (!state.currentTransaction) return
-
-  // let entityBeforeCopy
-
-  // if (entityType === 'TypeWrapper') {
-  //   entityBeforeCopy = copyTypeWrapper(entityBefore as TypeWrapper)
-  // } else if (entityType === 'PropDefinition') {
-  //   entityBeforeCopy = copyPropDef(entityBefore as PropDefinition)
-  // } else if (entityType === 'Instance') {
-  //   entityBeforeCopy = copyInstance(entityBefore as Instance)
-  // } else /* (entityType === 'InstanceProp') */ {
-  //   entityBeforeCopy = copyInstanceProp(entityBefore as InstanceProp)
-  // }
-
-  const change: Change = {
-    entityBefore: entityCopy,
-    entityType,
-    typeId,
-    instanceId,
-    propName
-  }
-
-  state.currentTransaction.changes.push(change)
-}
-
-/**
  * We assume that changes can only be reverted
  * one by one. You cannot jump to arbitrary point
  * in the past.
@@ -147,6 +110,9 @@ export function revertChange(
         delete state.project.types[change.typeId]
       } else {
         state.project.types[change.typeId] = entity
+        if (!state.project.instances[change.typeId]) {
+          state.project.instances[change.typeId] = {}
+        }
       }
       break;
     case 'PropDefinition': // typeId, propName
@@ -250,12 +216,8 @@ export function getNewTypeData(): TypeDefinition {
 }
 
 export function getInitialPropValues(propDef: PropDefinition) {
-  if (propDef.valueType === 'int32') {
-    if (propDef.isRef) {
-      return []
-    }
-    return [0]
-  }
+  if (propDef.valueType === 'int32') return [0]
+  if (propDef.valueType === 'ref') return ['']
   if (propDef.valueType === 'flt') return [0]
   if (propDef.valueType === 'string') return ['placeholder']
   return [false]
@@ -275,7 +237,7 @@ export function getNewInstanceData(state: ApplicationState, typeName: string, ui
   }, {})
   return {
     ...instance,
-    id: getInstanceProp('int32', 'id', [uid]),
+    id: getInstanceProp<[string]>('int32', 'id', [uid]),
     meta_isBoundTo: getInstanceProp('int32', 'meta_isBound', [], true),
     meta_typeName: getInstanceProp('string', 'meta_typeName', [typeName]),
     meta_isReferencing: getInstanceProp('int32', 'meta_isReferencing', [], true),
@@ -284,19 +246,19 @@ export function getNewInstanceData(state: ApplicationState, typeName: string, ui
   }
 }
 
-export function getInstanceProp(
-  valueType: 'int32' | 'string' | 'flt' | 'bool', name: string, values: Array<number | string | boolean>, isArray?: boolean
-): InstanceProp {
-  return getProp(valueType, name, values, isArray) as InstanceProp;
+export function getInstanceProp<T extends Values = Values>(
+  valueType: ValueType, name: string, values: T, isArray?: boolean
+): InstanceProp<T> {
+  return getProp<T>(valueType, name, values, isArray) as InstanceProp<T>;
 }
-export function getTypeDefProp(
-  valueType: 'int32' | 'string' | 'flt' | 'bool', name: string, isArray?: boolean
+export function getTypeDefProp<T = Values>(
+  valueType: ValueType, name: string, isArray?: boolean
 ): PropDefinition {
-  return getProp(valueType, name, null, isArray);
+  return getProp<T>(valueType, name, null, isArray);
 }
-export function getProp(
-  valueType: 'int32' | 'string' | 'flt' | 'bool', name: string, values?: Array<number | string | boolean> | null, isArray?: boolean
-): InstanceProp | PropDefinition {
+export function getProp<T = Values>(
+  valueType: ValueType, name: string, values?: T | null, isArray?: boolean
+): InstanceProp<T> | PropDefinition {
   return {
     valueType,
     name,
@@ -307,31 +269,39 @@ export function getProp(
 
 export function getMockedTypesDefinitions(): TypesDefinitions {
   return {
-    type1: {
-      id: getTypeDefProp('int32', 'id'),
-      meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
-      meta_typeName: getTypeDefProp('string', 'meta_typeName'),
-      meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
-      meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
-      meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
-      prop1: getTypeDefProp('int32', 'prop1'),
-      prop2: getTypeDefProp('int32', 'prop2')
+    111111: {
+      id: '111111',
+      name: 'type1',
+      definition: {
+        id: getTypeDefProp('int32', 'id'),
+        meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
+        meta_typeName: getTypeDefProp('string', 'meta_typeName'),
+        meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
+        meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
+        meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
+        prop1: getTypeDefProp('int32', 'prop1'),
+        prop2: getTypeDefProp('int32', 'prop2')
+      }
     },
-    type2: {
-      id: getTypeDefProp('int32', 'id'),
-      meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
-      meta_typeName: getTypeDefProp('string', 'meta_typeName'),
-      meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
-      meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
-      meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
-      prop1: getTypeDefProp('int32', 'prop1'),
-      prop2: getTypeDefProp('flt', 'prop2'),
-      prop3: getTypeDefProp('string', 'prop3'),
-      prop4: getTypeDefProp('bool', 'prop4'),
-      prop5: getTypeDefProp('int32', 'prop5', true),
-      prop6: getTypeDefProp('flt', 'prop6', true),
-      prop7: getTypeDefProp('string', 'prop7', true),
-      prop8: getTypeDefProp('bool', 'prop8', true),
+    222222: {
+      id: '222222',
+      name: 'type1',
+      definition: {
+        id: getTypeDefProp('int32', 'id'),
+        meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
+        meta_typeName: getTypeDefProp('string', 'meta_typeName'),
+        meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
+        meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
+        meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
+        prop1: getTypeDefProp('int32', 'prop1'),
+        prop2: getTypeDefProp('flt', 'prop2'),
+        prop3: getTypeDefProp('string', 'prop3'),
+        prop4: getTypeDefProp('bool', 'prop4'),
+        prop5: getTypeDefProp('int32', 'prop5', true),
+        prop6: getTypeDefProp('flt', 'prop6', true),
+        prop7: getTypeDefProp('string', 'prop7', true),
+        prop8: getTypeDefProp('bool', 'prop8', true),
+      }
     },
   }
 }
@@ -386,7 +356,7 @@ export function getMockedInstance(typeName: string, typeId: number, types?: Type
     }
   }
 
-  const props = types ? types[typeName] : getMockedTypesDefinitions()[typeName]
+  const props = types ? types[typeId].definition : getMockedTypesDefinitions()[typeName].definition
   const Instance: Instance = Object.keys(props).reduce((acc, k) => {
     return {
       ...acc,
@@ -426,6 +396,7 @@ export function getNewProjectTemplate() {
   const project: Project = {
     instances: getMockedInstances(),
     types: getMockedTypesDefinitions(),
+    recentChanges: [],
     uiData: {
       ...getNewProjectUiData()
     }
