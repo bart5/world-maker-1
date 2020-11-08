@@ -344,9 +344,14 @@ export default typesAndInstances({
 
       this.dispatch('removeAllRefsFromEveryPropA', p)
 
+      // Need to also remove prop from every single Instance
+      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+        this.dispatch('removeInstanceProp', { tId, iId, pN })
+      })
+
       mutate('REMOVE_PROP', {}, 'PropDefinition', tId, '', pN)
     },
-    renameProp(state, p: { tId: string, pN: string, newName: string }) {
+    renameProp(state, p: { tId: string, pN: string, newName: string }) { // OK
       const { tId, pN, newName } = p
 
       // Need to change this prop name in every single existing instance
@@ -356,30 +361,45 @@ export default typesAndInstances({
 
       mutate('RENAME_PROP', { newName }, 'PropDefinition', tId, '', pN)
     },
-    changePropValueType(state, p: { tId: string, pN: string, newType: ValueType }) {
+    changePropValueType(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
       const { tId, pN, newType } = p
+
+      // Need to change prop valueType in every single existing instance
+      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+        this.dispatch('changeInstancePropData', { tId, iId, pN, newType })
+      })
+
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
     },
-    changePropToArray(state, p: { tId: string, pN: string }) {
-      const { tId, pN } = p
-      mutate('CHANGE_PROP_TO_ARRAY', {}, 'PropDefinition', tId, '', pN)
-      this.commit('CHANGE_PROP_TO_ARRAY')
-    },
-    changePropToSingle(state, p: { tId: string, pN: string }) {
+    changePropToArray(state, p: { tId: string, pN: string }) { // OK
       const { tId, pN } = p
 
-      // IMPLEMENT
-      const values: string[]
-      const toRemove = values.splice(1)
-      if (isRef) {
-        toRemove.forEach((v) => {
-          this.dispatch('removePropRefValue')
-        })
-      } else {
-        toRemove.forEach((v) => {
-          this.dispatch('removePropValue')
-        })
-      }
+      // Need to change prop arity in every single existing instance
+      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+        this.dispatch('changeInstancePropData', { tId, iId, pN, isArray: true })
+      })
+
+      mutate('CHANGE_PROP_TO_ARRAY', {}, 'PropDefinition', tId, '', pN)
+    },
+    changePropToSingle(state, p: { tId: string, pN: string }) { // OK
+      const { tId, pN } = p
+      const isRef = state.getters.isPropARef(tId, pN)
+
+      // Remove values from prop in all instances.
+      Object.entries(state.state.project.instances[tId]).forEach(([, instance]) => {
+        const valuesToRemove = instance[pN].values.splice(1) // all but first (change in place)
+        if (isRef) {
+          // And in case of ref we will do special stuff ofc.
+          valuesToRemove.forEach((v) => this.dispatch('removePropRefValue', { tId, pN, value: v }))
+        } else {
+          valuesToRemove.forEach((v) => this.dispatch('removePropValue', { tId, pN, value: v }))
+        }
+      })
+
+      // Need to change prop arity in every single existing instance
+      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+        this.dispatch('changeInstancePropData', { tId, iId, pN, isArray: false })
+      })
 
       mutate('CHANGE_PROP_TO_SINGLE', {}, 'PropDefinition', tId, '', pN)
     },
@@ -545,9 +565,14 @@ export default typesAndInstances({
       mutate('ADD_PROP_TO_INSTANCE', { prop }, 'Instance', tId, iId)
     },
 
-    changeInstancePropData(state, p: { tId: string, iId: string, pN: string, newName: string }) { // OK
-      const { tId, iId, pN, newName } = p
-      mutate('CHANGE_INSTANCE_PROP_DATA', { newName }, 'InstanceProp', tId, iId, pN)
+    changeInstancePropData(state, p: { tId: string, iId: string, pN: string, newName?: string, newType?: ValueType, isArray?: boolean }) { // OK
+      const { tId, iId, pN, newName, newType, isArray } = p
+      mutate('CHANGE_INSTANCE_PROP_DATA', { newName, newType, isArray }, 'InstanceProp', tId, iId, pN)
+    },
+
+    removeInstanceProp(state, p: { tId: string, iId: string, pN: string }) { // OK
+      const { tId, iId, pN } = p
+      mutate('REMOVE_INSTANCE_PROP', {}, 'InstanceProp', tId, iId, pN)
     },
 
     // moveTypePropUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {

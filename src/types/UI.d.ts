@@ -269,6 +269,7 @@ interface MutArgs {
   iB?: Instance;
   propsToCheck?: string[];
   prop?: PropDefinition;
+  isArray?: boolean;
 }
 
 interface MutCtx extends MutArgs {
