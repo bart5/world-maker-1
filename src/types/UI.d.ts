@@ -265,7 +265,6 @@ interface MutArgs {
   newType?: ValueType;
   newTarget?: string; // propRefTargetTypeId
   value?: Values;
-  isRef?: boolean
 }
 
 interface MutCtx extends MutArgs {
