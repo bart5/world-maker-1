@@ -268,6 +268,7 @@ interface MutArgs {
   iA?: Instance;
   iB?: Instance;
   propsToCheck?: string[];
+  prop?: PropDefinition;
 }
 
 interface MutCtx extends MutArgs {

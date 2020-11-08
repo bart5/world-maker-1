@@ -330,15 +330,16 @@ export default typesAndInstances({
 
       mutate('RENAME_TYPE', { newName }, 'TypeWrapper', tId)
     },
-    createProp(state, p: { tId: string }) {
+    createProp(state, p: { tId: string }) { // OK
       const { tId } = p
-      mutate('CREATE_TYPE_PROPERTY', {}, 'PropDefinition', tId)
+      const prop = {} as PropDefinition
+      mutate('CREATE_TYPE_PROPERTY', { prop }, 'PropDefinition', tId)
 
-      utils.oToA(state.state.project.instances[tId]).forEach((instance) => {
-        this.dispatch('addPropToInstance') // IMPLEMENT
+      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+        this.dispatch('addPropToInstance', { tId, iId, prop })
       })
     },
-    removeProp(state, p: { tId: string, pN: string }) {
+    removeProp(state, p: { tId: string, pN: string }) { // OK
       const { tId, pN } = p
 
       this.dispatch('removeAllRefsFromEveryPropA', p)
@@ -347,6 +348,12 @@ export default typesAndInstances({
     },
     renameProp(state, p: { tId: string, pN: string, newName: string }) {
       const { tId, pN, newName } = p
+
+      // Need to change this prop name in every single existing instance
+      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+        this.dispatch('changeInstancePropData', { tId, iId, pN, newName })
+      })
+
       mutate('RENAME_PROP', { newName }, 'PropDefinition', tId, '', pN)
     },
     changePropValueType(state, p: { tId: string, pN: string, newType: ValueType }) {
@@ -523,11 +530,24 @@ export default typesAndInstances({
       const { iA, iB } = p
       const propsToCheck = utils.getPropsOfTypeAWithRefToTypeB(state, { instAId: iA.id.values[0], instBId: iB.id.values[0] })
       const tId = state.getters.getType({}, iA.id.values[0])
-      mutate('UPDATE_REF_META_FROM_A_TO_B', { iA, iB, propsToCheck }, 'Instance', tId)
+      // This is so far an exception - a mutation that makes changes to more than one (here exactly two)
+      // entities.
+      // For now I'll handle it in a dirty way.
+      // If case of multiple entities mutation at once will be more prevalent I can change 'mutate'.
+      // mutate('UPDATE_REF_META_FROM_A_TO_B', { iA, iB, propsToCheck }, 'Instance', tId)
+      mutate(null, {}, 'Instance', tId, iA.id.values[0])
+      mutate(null, {}, 'Instance', tId, iB.id.values[0])
+      this.commit('UPDATE_REF_META_FROM_A_TO_B', { iA, iB, propsToCheck })
     },
 
-    addPropToInstance(state, payload) {
-      this.commit('ADD_PROP_TO_INSTANCE', payload)
+    addPropToInstance(state, p: { tId: string, iId: string, prop: PropDefinition }) { // OK
+      const { tId, iId, prop } = p
+      mutate('ADD_PROP_TO_INSTANCE', { prop }, 'Instance', tId, iId)
+    },
+
+    changeInstancePropData(state, p: { tId: string, iId: string, pN: string, newName: string }) { // OK
+      const { tId, iId, pN, newName } = p
+      mutate('CHANGE_INSTANCE_PROP_DATA', { newName }, 'InstanceProp', tId, iId, pN)
     },
 
     // moveTypePropUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
