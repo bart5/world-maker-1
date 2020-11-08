@@ -35,6 +35,9 @@ export default typesAndInstances({
     getTypeDefinition: (state, getters) => (type: { typeId: string, typeName: string }) => {
       return getters.getType(type)?.definition
     },
+    getTypeName: (state, getters) => (type: { typeId: string, typeName: string }, instanceId?: string) => {
+      return (getters.getType(type, instanceId) as TypeWrapper).name
+    },
     getPropDefinition: (state, getters) => (type: { typeId: string, typeName: string }, propName: string) => {
       return getters.getType(type)?.definition[propName]
     },
@@ -245,11 +248,11 @@ export default typesAndInstances({
         }
       })
     },
-    CREATE_TYPE_INSTANCE(state, typeName: string) {
+    CREATE_INSTANCE(state, p: { tId: string, iId: string, tN: string, }) {
+      const { tId, iId, tN } = p
       registerInstancesMutation(state)
-      const uniqueInstanceId = utils.getUniqueInstanceId(state)
 
-      state.project.instances[typeId].definition[uniqueInstanceId] = utils.getNewInstanceData(state, typeName, uniqueInstanceId)
+      state.project.instances[tId][iId] = utils.getNewInstanceData(state, tN, iId)
     },
     REMOVE_TYPE_INSTANCE(state, payload: { typeName: string, instanceId: string }) {
       registerInstancesMutation(state)
@@ -367,14 +370,16 @@ export default typesAndInstances({
 
       if (isRef) {
         this.dispatch('changePropValueTypeFromRef', p)
+        return
       } else if (newType === 'ref') {
         this.dispatch('changePropValueTypeToRef', p)
-      } else {
-        // Need to change prop valueType in every single existing instance
-        Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-          this.dispatch('changeInstancePropData', { tId, iId, pN, newType })
-        })
+        return
       }
+
+      // Need to change prop valueType in every single existing instance
+      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+        this.dispatch('changeInstancePropData', { tId, iId, pN, newType })
+      })
 
       // REMEMBER TO ADD/REMOVE refTargetTypeId
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
@@ -430,7 +435,7 @@ export default typesAndInstances({
       mutate('CHANGE_PROP_VALUE', { value }, 'InstanceProp', tId, iId, pN)
     },
 
-    addPropValue(state, p: { tId: string, pN: string, value: Values }) {
+    addPropValue(state, p: { tId: string, pN: string, value: Values }) { // OK
       const { tId, pN, value } = p
       const isRef = state.getters.isPropARef(tId, pN)
 
@@ -440,7 +445,7 @@ export default typesAndInstances({
         mutate('ADD_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
       }
     },
-    removePropValue(state, p: { tId: string, pN: string, value: Values }) {
+    removePropValue(state, p: { tId: string, pN: string, value: Values }) { // OK
       const { tId, pN, value } = p
       const isRef = state.getters.isPropARef(tId, pN)
 
@@ -450,12 +455,14 @@ export default typesAndInstances({
         mutate('REMOVE_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
       }
     },
-    createInstance(state, p: { tId: string }) {
+    createInstance(state, p: { tId: string }) { // OK
       const { tId } = p
-      this.commit('CREATE_TYPE_INSTANCE', p)
-      mutate('REMOVE_PROP_VALUE', {}, 'InstanceProp', tId)
+      const iId = utils.getUniqueId(state.state)
+      const tN = state.getters.getTypeName({ typeId: tId })
+
+      mutate('CREATE_INSTANCE', { tN }, 'Instance', tId, iId)
     },
-    removeInstance(state, p: { tId: string, iId: string }) {
+    removeInstance(state, p: { tId: string, iId: string }) { // OK
       const { tId, iId } = p
 
       this.dispatch('removeAllRefsFromInstA', { iId })
@@ -572,6 +579,8 @@ export default typesAndInstances({
         // And then change value type of prop to ref
         this.dispatch('changeInstancePropData', { tId, iId, pN, newType: 'ref' })
       })
+
+      mutate('CHANGE_PROP_VALUE_TYPE', { newType: 'ref' }, 'PropDefinition', tId, '', pN)
     },
     changePropValueTypeFromRef(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
       const { tId, pN, newType } = p
@@ -585,6 +594,8 @@ export default typesAndInstances({
         // And then change value type of prop to ref
         this.dispatch('changeInstancePropData', { tId, iId, pN, newType })
       })
+
+      mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
     },
 
     // moveTypePropUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {

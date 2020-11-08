@@ -270,6 +270,7 @@ interface MutArgs {
   propsToCheck?: string[];
   prop?: PropDefinition;
   isArray?: boolean;
+  tN?: string; // a type name for creating new instance of a type
 }
 
 interface MutCtx extends MutArgs {

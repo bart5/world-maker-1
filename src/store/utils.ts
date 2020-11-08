@@ -448,7 +448,7 @@ export function copyTypeDef(source: TypeDefinition) {
   }, {} as TypeDefinition)
 }
 
-export function copyPropDef(source: PropDefinition) {
+export function copyPropDef(source: PropDefinition): PropDefinition {
   return {
     ...source,
   }
@@ -461,7 +461,7 @@ export function copyInstance(source: Instance) {
   }, {} as Instance)
 }
 
-export function copyInstanceProp(source: InstanceProp) {
+export function copyInstanceProp(source: InstanceProp): InstanceProp {
   return {
     ...source,
     values: [...source.values]
