@@ -159,7 +159,7 @@ export default typesAndInstances({
         return getters.getters.getFilteredInstances({ typeName, prop, isReferencedById, isReferencingId, instances })
       }
       if (typeName) {
-        instances.filter((i) => i.meta_typeId[0] === typeName)
+        instances.filter((i) => getters.getTypeName({ typeId: i.meta_typeId[0] }) === typeName)
         return getters.getters.getFilteredInstances({ prop, isReferencedById, isReferencingId, instances })
       }
       if (prop) {
@@ -214,10 +214,6 @@ export default typesAndInstances({
 
       const type = state.project.types[tId]
       type.name = newName
-
-      Object.entries(state.project.instances[tId]).forEach(([, instance]) => {
-        instance.meta_typeId = [newName]
-      })
     },
     REMOVE_TYPE(state, p: { tId: string }) { // OK
       const { tId } = p
@@ -245,7 +241,6 @@ export default typesAndInstances({
       const { tId, pN, newName } = p
       registerInstancesMutation(state)
 
-      // At this point prop is already renamed in all instances
       state.project.types[tId].definition[newName] = state.project.types[tId].definition[pN]
       delete state.project.types[tId].definition[pN]
     },
@@ -336,16 +331,12 @@ export default typesAndInstances({
     renameType(state, p: { tId: string, newName: string }) { // OK
       const { tId, newName } = p
 
-      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changePropValue', { tId, iId, pN: 'meta_typeId', value: newName })
-      })
-
       mutate('RENAME_TYPE', { newName }, 'TypeWrapper', tId)
     },
     createProp(state, p: { tId: string }) { // OK
       const { tId } = p
       const uniquePropName = utils.getUniquePropName(state.state, tId)
-      const prop = utils.getTypeDefProp('int32', uniquePropName)
+      const prop = utils.getPropDef('int32', uniquePropName)
       mutate('CREATE_PROP', { prop }, 'PropDefinition', tId)
 
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
@@ -359,18 +350,13 @@ export default typesAndInstances({
 
       // Need to also remove prop from every single Instance
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('removePropValues', { tId, iId, pN })
+        this.dispatch('removePropFromInstance', { tId, iId, pN })
       })
 
       mutate('REMOVE_PROP', {}, 'PropDefinition', tId, '', pN)
     },
     renameProp(state, p: { tId: string, pN: string, newName: string }) { // OK
       const { tId, pN, newName } = p
-
-      // Need to change this prop name in every single existing instance
-      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changePropValuesData', { tId, iId, pN, newName })
-      })
 
       mutate('RENAME_PROP', { newName }, 'PropDefinition', tId, '', pN)
     },
@@ -386,21 +372,11 @@ export default typesAndInstances({
         return
       }
 
-      // Need to change prop valueType in every single existing instance
-      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changePropValuesData', { tId, iId, pN, newType })
-      })
-
       // REMEMBER TO ADD/REMOVE refTargetTypeId
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
     },
     changePropToArray(state, p: { tId: string, pN: string }) { // OK
       const { tId, pN } = p
-
-      // Need to change prop arity in every single existing instance
-      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changePropValuesData', { tId, iId, pN, isArray: true })
-      })
 
       mutate('CHANGE_PROP_TO_ARRAY', {}, 'PropDefinition', tId, '', pN)
     },
@@ -417,11 +393,6 @@ export default typesAndInstances({
         } else {
           valuesToRemove.forEach((v) => this.dispatch('removePropValue', { tId, pN, value: v }))
         }
-      })
-
-      // Need to change prop arity in every single existing instance
-      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changePropValuesData', { tId, iId, pN, isArray: false })
       })
 
       mutate('CHANGE_PROP_TO_SINGLE', {}, 'PropDefinition', tId, '', pN)
@@ -572,7 +543,7 @@ export default typesAndInstances({
       mutate('CHANGE_INSTANCE_PROP_DATA', { newName, newType, isArray }, 'PropValues', tId, iId, pN)
     },
 
-    removePropValues(state, p: { tId: string, iId: string, pN: string }) { // OK
+    removePropFromInstance(state, p: { tId: string, iId: string, pN: string }) { // OK
       const { tId, iId, pN } = p
       mutate('REMOVE_INSTANCE_PROP', {}, 'PropValues', tId, iId, pN)
     },
@@ -581,13 +552,10 @@ export default typesAndInstances({
       const { tId, pN } = p
 
       // For this prop in all instance
-      Object.entries(state.state.project.instances[tId]).forEach(([iId, instance]) => {
+      Object.entries(state.state.project.instances[tId]).forEach(([, instance]) => {
         // Remove all values
         const valuesToRemove = instance[pN]
         valuesToRemove.forEach((v) => this.dispatch('removePropValue', { tId, pN, value: v }))
-
-        // And then change value type of prop to ref
-        this.dispatch('changePropValuesData', { tId, iId, pN, newType: 'ref' })
       })
 
       mutate('CHANGE_PROP_VALUE_TYPE', { newType: 'ref' }, 'PropDefinition', tId, '', pN)
@@ -596,13 +564,10 @@ export default typesAndInstances({
       const { tId, pN, newType } = p
 
       // For this prop in all instance
-      Object.entries(state.state.project.instances[tId]).forEach(([iId, instance]) => {
+      Object.entries(state.state.project.instances[tId]).forEach(([, instance]) => {
         // Remove all values
         const valuesToRemove = instance[pN]
         valuesToRemove.forEach((v) => this.dispatch('removePropRefValue', { tId, pN, value: v }))
-
-        // And then change value type of prop to ref
-        this.dispatch('changePropValuesData', { tId, iId, pN, newType })
       })
 
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)

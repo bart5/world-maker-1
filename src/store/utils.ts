@@ -206,12 +206,12 @@ export function getReferencingInstances(
 
 export function getNewTypeData(): TypeDefinition {
   return {
-    id: getTypeDefProp('int32', 'id'),
-    meta_typeId: getTypeDefProp('string', 'meta_typeId'),
-    meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
-    meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
-    meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
-    meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
+    id: getPropDef('int32', 'id'),
+    meta_typeId: getPropDef('int32', 'meta_typeId'),
+    meta_isBoundTo: getPropDef('int32', 'meta_isBoundTo', true),
+    meta_isReferencing: getPropDef('int32', 'meta_isReferencing', true),
+    meta_isReferencedBy: getPropDef('int32', 'meta_isReferencedBy', true),
+    meta_isLocked: getPropDef('bool', 'meta_isLocked'),
   }
 }
 
@@ -223,46 +223,31 @@ export function getInitialPropValues(propDef: PropDefinition) {
   return [false]
 }
 
-export function getNewInstanceData(state: ApplicationState, typeName: string, uid: string): Instance {
-  const instance = Object.entries(state.project.types[typeName]).reduce((acc, tuple) => {
-    if (tuple[0] === 'id' || tuple[0] === 'meta_isBound' || tuple[0] === 'meta_typeId') {
-      return acc
-    }
+export function getNewInstanceData(state: ApplicationState, tId: string, uid: string): Instance {
+  const instance = Object.entries(state.project.types[tId].definition).reduce((acc, [pN]) => {
+    if (pN === 'id' || pN.includes('meta')) return acc
     return {
       ...acc,
-      [tuple[0]]: getPropValues(
-        tuple[1].valueType, tuple[1].name, getInitialPropValues(tuple[1]), tuple[1].isArray
-      ),
+      [pN]: [],
     }
   }, {})
   return {
     ...instance,
-    id: getPropValues<[string]>('int32', 'id', [uid]),
-    meta_isBoundTo: getPropValues('int32', 'meta_isBound', [], true),
-    meta_typeId: getPropValues('string', 'meta_typeId', [typeName]),
-    meta_isReferencing: getPropValues('int32', 'meta_isReferencing', [], true),
-    meta_isReferencedBy: getPropValues('int32', 'meta_isReferencedBy', [], true),
-    meta_isLocked: getPropValues('bool', 'meta_isLocked', [false]),
+    id: [uid],
+    meta_isBoundTo: [],
+    meta_typeId: [tId],
+    meta_isReferencing: [],
+    meta_isReferencedBy: [],
+    meta_isLocked: [false],
   }
 }
 
-export function getPropValues<T extends Values = Values>(
-  valueType: ValueType, name: string, values: T, isArray?: boolean
-): PropValues<T> {
-  return getProp<T>(valueType, name, values, isArray) as PropValues<T>;
-}
-export function getTypeDefProp<T = Values>(
+export function getPropDef<T = Values>(
   valueType: ValueType, name: string, isArray?: boolean
 ): PropDefinition {
-  return getProp<T>(valueType, name, null, isArray);
-}
-export function getProp<T = Values>(
-  valueType: ValueType, name: string, values?: T | null, isArray?: boolean
-): PropValues<T> | PropDefinition {
   return {
     valueType,
     name,
-    ...(values || []),
     ...(isArray ? { isArray } : {})
   }
 }
@@ -273,34 +258,34 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
       id: '111111',
       name: 'type1',
       definition: {
-        id: getTypeDefProp('int32', 'id'),
-        meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
-        meta_typeId: getTypeDefProp('string', 'meta_typeId'),
-        meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
-        meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
-        meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
-        prop1: getTypeDefProp('int32', 'prop1'),
-        prop2: getTypeDefProp('int32', 'prop2')
+        id: getPropDef('int32', 'id'),
+        meta_isBoundTo: getPropDef('int32', 'meta_isBoundTo', true),
+        meta_typeId: getPropDef('int32', 'meta_typeId'),
+        meta_isReferencing: getPropDef('int32', 'meta_isReferencing', true),
+        meta_isReferencedBy: getPropDef('int32', 'meta_isReferencedBy', true),
+        meta_isLocked: getPropDef('bool', 'meta_isLocked'),
+        prop1: getPropDef('int32', 'prop1'),
+        prop2: getPropDef('int32', 'prop2')
       }
     },
     222222: {
       id: '222222',
       name: 'type1',
       definition: {
-        id: getTypeDefProp('int32', 'id'),
-        meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
-        meta_typeId: getTypeDefProp('string', 'meta_typeId'),
-        meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
-        meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
-        meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
-        prop1: getTypeDefProp('int32', 'prop1'),
-        prop2: getTypeDefProp('flt', 'prop2'),
-        prop3: getTypeDefProp('string', 'prop3'),
-        prop4: getTypeDefProp('bool', 'prop4'),
-        prop5: getTypeDefProp('int32', 'prop5', true),
-        prop6: getTypeDefProp('flt', 'prop6', true),
-        prop7: getTypeDefProp('string', 'prop7', true),
-        prop8: getTypeDefProp('bool', 'prop8', true),
+        id: getPropDef('int32', 'id'),
+        meta_isBoundTo: getPropDef('int32', 'meta_isBoundTo', true),
+        meta_typeId: getPropDef('int32', 'meta_typeId'),
+        meta_isReferencing: getPropDef('int32', 'meta_isReferencing', true),
+        meta_isReferencedBy: getPropDef('int32', 'meta_isReferencedBy', true),
+        meta_isLocked: getPropDef('bool', 'meta_isLocked'),
+        prop1: getPropDef('int32', 'prop1'),
+        prop2: getPropDef('flt', 'prop2'),
+        prop3: getPropDef('string', 'prop3'),
+        prop4: getPropDef('bool', 'prop4'),
+        prop5: getPropDef('int32', 'prop5', true),
+        prop6: getPropDef('flt', 'prop6', true),
+        prop7: getPropDef('string', 'prop7', true),
+        prop8: getPropDef('bool', 'prop8', true),
       }
     },
   }
@@ -349,19 +334,14 @@ export function getMockedInstance(typeName: string, typeId: number, types?: Type
       return Array(length).map(() => getValue(valueType)) as ValueType[]
     }
 
-    return {
-      valueType: prop.valueType,
-      name: prop.name,
-      ...(prop.isArray ? { isArray: true } : {}),
-      values: getValues(prop.valueType, prop.isArray),
-    }
+    return getValues(prop.valueType, prop.isArray)
   }
 
   const props = types ? types[typeId].definition : getMockedTypesDefinitions()[typeName].definition
-  const Instance: Instance = Object.keys(props).reduce((acc, k) => {
+  const Instance: Instance = Object.entries(props).reduce((acc, [pN, pDef]) => {
     return {
       ...acc,
-      [props[k].name]: assignValues(props[k])
+      [pN]: assignValues(pDef)
     }
   }, {} as Instance)
 
