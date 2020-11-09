@@ -1,8 +1,7 @@
 import { ActionContext, createStore } from 'vuex';
 import * as utils from './utils';
 import initialState from './state';
-import { mutate } from './transactions';
-import { revertChange } from './transactions';
+import { mutate, revertChange } from './transactions';
 
 const registerInstancesMutation = (state: ApplicationState) => {
   state.projectInstancesMutated = true
@@ -17,78 +16,59 @@ export default typesAndInstances({
     projectTypes(state) {
       return state.project.types
     },
-    getTypeById: (state) => (typeId: string) => {
-      return (Object.entries(state.project.types).find(([id]) => id === typeId) || [null])[0]
+    getTypeById: (state) => (p: { tId: string }) => {
+      const { tId } = p
+      return (Object.entries(state.project.types).find(([id]) => id === tId) || [null])[0]
     },
-    getTypeByName: (state) => (typeName: string) => {
-      return (Object.entries(state.project.types).find(([, wrapper]) => wrapper.name === typeName) || [null])[0]
+    getTypeByName: (state) => (p: { tN: string }) => {
+      const { tN } = p
+      return (Object.entries(state.project.types).find(([, wrapper]) => wrapper.name === tN) || [null])[0]
     },
-    getType: (state, getters) => (type: { typeId: string, typeName: string }, instanceId?: string) => {
-      if (type.typeId) {
-        return getters.getTypeById(type.typeId)
-      } else if (type.typeName) {
-        return getters.getTypeByName(type.typeName)
-      }
-      return getters.getInstanceType(instanceId)
+    getType: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
+      const { tId, tN, iId } = p
+      if (tId) return getters.getTypeById({ tId })
+      if (tN) return getters.getTypeByName({ tN })
+      return getters.getInstanceType(iId)
     },
-    getTypeDefinition: (state, getters) => (type: { typeId: string, typeName: string }) => {
-      return getters.getType(type)?.definition
+    getTypeDefinition: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
+      return getters.getType(p)?.definition
     },
-    getTypeName: (state, getters) => (type: { typeId: string, typeName: string }, instanceId?: string) => {
-      return (getters.getType(type, instanceId) as TypeWrapper).name
+    getTypeName: (state, getters) => (p: { tId: string, iId: string }) => {
+      return (getters.getType(p) as TypeWrapper).name
     },
-    getPropDefinition: (state, getters) => (type: { typeId: string, typeName: string }, propName: string) => {
-      return getters.getType(type)?.definition[propName]
+    getPropDefinition: (state, getters) => (p: { tId: string, tN: string, iId: string, pN: string }) => {
+      const { pN } = p
+      return getters.getType(p)?.definition[pN]
     },
-    getInstanceByTypeId: (state) => (typeId: string, instanceId: string) => {
-      return state.project.instances[typeId][instanceId]
+    getInstanceByTypeId: (state) => (p: { tId: string, iId: string }) => {
+      const { tId, iId } = p
+      return state.project.instances[tId][iId]
     },
-    getInstanceByTypeName: (state, getters) => (typeName: string, instanceId: string) => {
-      return getters.getInstanceByTypeId(getters.getType({ typeName }).id, instanceId)
+    getInstanceByTypeName: (state, getters) => (p: { tN: string, iId: string }) => {
+      const { tN, iId } = p
+      return getters.getInstanceByTypeId(getters.getType({ tN }).id, iId)
     },
-    getInstance: (state, getters) => (instanceId: string, type?: { typeId: string, typeName: string }) => {
-      if (type && type.typeId) {
-        return getters.getInstanceByTypeId(type.typeId, instanceId)
-      } else if (type && type.typeName) {
-        return getters.getInstanceByTypeName(type.typeName, instanceId)
-      }
+    getInstance: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
+      const { tId, tN, iId } = p
+
+      if (tId) return getters.getInstanceByTypeId({ tId, iId })
+      if (tN) return getters.getInstanceByTypeName({ tN, iId })
+
       const instance: Instance[] = []
       utils.oToA(state.project.instances).some((instanceList) => {
-        return instanceId in instanceList && instance.push(instanceList[instanceId])
+        return iId in instanceList && instance.push(instanceList[iId])
       })
       return instance[0]
     },
-    getInstanceType: (state, getters) => (instanceId: string) => {
-      const type: TypeWrapper[] = []
-      Object.entries(state.project.instances).some(([typeId, instanceList]) => {
-        return instanceId in instanceList && type.push(getters.getType({ typeId }))
-      })
-      return type[0]
+    getPropTarget: (state, getters) => (p: { tId: string, iId: string, pN: string }) => {
+      const { pN } = p
+      const type = getters.getType(p)
+      return type.definition[pN].refTargetTypeId
     },
-    getPropRefTarget: () => (
-      p: { propName: string, typeId: string, instanceId: string },
-      st: ActionContext<ApplicationState, ApplicationState>
-    ) => {
-      const { propName, typeId, instanceId } = p
-      let type: TypeWrapper
-      if (typeId) {
-        type = st.getters.getTypeById(typeId)
-      } else {
-        type = st.getters.getInstanceType(instanceId)
-      }
-      return type.definition[propName].refTargetTypeId
-    },
-    getAllInstancesByTypeId: (state) => (typeId: string) => {
-      return utils.oToA<Instance>(state.project.instances[typeId])
-    },
-    getAllInstancesByTypeName: (state, getters) => (typeName: string) => {
-      return utils.oToA<Instance>(state.project.instances[getters.getTypeByName(typeName).id])
-    },
-    getAllInstancesOfType: (state, getters) => (type: { typeId: string, typeName: string }) => {
-      if (type.typeId) {
-        return getters.getAllInstancesByTypeId(type.typeId)
-      }
-      return getters.getAllInstancesByTypeName(type.typeName)
+    getInstancesOfType: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
+      const { tId } = p
+      if (tId) return state.project.instances[tId]
+      return state.project.instances[(getters.getType(p) as TypeWrapper).id]
     },
     getInstancesWithEmptyValues: (state) => {
       const instances: { instanceId: string, typeId: string }[] = []
@@ -126,7 +106,7 @@ export default typesAndInstances({
     isPropARef: (state, getters) => (tId: string, pN: string) => {
       return (getters.getType({ typeId: tId }) as TypeWrapper).definition[pN].valueType === 'ref'
     },
-    getFilteredInstances: (state, getters) => (
+    getFilteresInstances: (state, getters) => (
       payload: {
         instanceId: string,
         typeName: string,
@@ -136,18 +116,22 @@ export default typesAndInstances({
         instances: Instance[]
       }
     ) => {
+      const instancesIds: string[] = Object.entries(state.project.instances).reduce((acc, [, iL]) => {
+        return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
+      }, [] as string[])
       const { instanceId, typeName, prop, isReferencedById, isReferencingId } = payload
-      let { instances } = payload
-      if (!instances) {
-        instances = []
-        Object.entries(state.project.instances).forEach(([, instanceList]) => {
-          instances.push(
-            ...Object.entries(instanceList).map(([, instance]) => instance)
-          )
-        })
-      }
+      // let { instances } = payload
+      // if (!instances) {
+      //   instances = []
+      // Object.entries(state.project.instances).forEach(([, instanceList]) => {
+      //   instances.push(
+      //     ...Object.entries(instanceList).map(([, instance]) => instance)
+      //   )
+      // })
+      // }
       if (instanceId) {
         let match: any = null
+        getters.getInstance
         instances.some((i) => {
           if (i.id[0] === instanceId) {
             match = i
