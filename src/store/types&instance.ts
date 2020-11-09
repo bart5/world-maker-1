@@ -248,16 +248,57 @@ export default typesAndInstances({
       const { tId, pN, newType } = p
       registerInstancesMutation(state)
 
-      // At this point type is alrea changed in all instances
+      // If it was ref before remove it's target Id.
+      // If it becomes ref the target will be set in separate action.
+      if (state.project.types[tId].definition[pN].valueType === 'ref') {
+        state.project.types[tId].definition[pN].refTargetTypeId = ''
+      }
+
+      // At this point type is already changed in all instances
       state.project.types[tId].definition[pN].valueType = newType
     },
-    CREATE_INSTANCE(state, p: { tId: string, iId: string, tN: string, }) {
+    CHANGE_PROP_ARITY(state, p: { tId: string, pN: string, isArray: boolean }) { // OK
+      const { tId, pN, isArray } = p
+      registerInstancesMutation(state)
+
+      // At this point arity is already changed in all instances
+      state.project.types[tId].definition[pN].isArray = isArray
+    },
+    CHANGE_PROP_REF_TARGET_TYPE(state, p: { tId: string, pN: string, newTargetId: string }) { // OK
+      const { tId, pN, newTargetId } = p
+      registerInstancesMutation(state)
+
+      // At this point all instances refs business is resolved
+      state.project.types[tId].definition[pN].refTargetTypeId = newTargetId
+    },
+    CHANGE_PROP_VALUE(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
+      const { tId, iId, pN, value } = p
+      registerInstancesMutation(state)
+
+      // At this point all instances refs business is resolved
+      state.project.instances[tId][iId][pN] = value
+    },
+    ADD_PROP_VALUE(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
+      const { tId, iId, pN, value } = p
+      registerInstancesMutation(state)
+
+      // At this point all instances refs business is resolved
+      state.project.instances[tId][iId][pN].pushUnique(value[0])
+    },
+    REMOVE_PROP_VALUE(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
+      const { tId, iId, pN, value } = p
+      registerInstancesMutation(state)
+
+      // At this point all instances refs business is resolved
+      state.project.instances[tId][iId][pN].remove(value[0])
+    },
+    CREATE_INSTANCE(state, p: { tId: string, iId: string, tN: string, }) { // Ok
       const { tId, iId, tN } = p
       registerInstancesMutation(state)
 
       state.project.instances[tId][iId] = utils.getNewInstanceData(state, tN, iId)
     },
-    REMOVE_INSTANCE(state, p: { tId: string, iId: string }) {
+    REMOVE_INSTANCE(state, p: { tId: string, iId: string }) { // OK
       const { tId, iId } = p
       registerInstancesMutation(state)
 
@@ -280,9 +321,6 @@ export default typesAndInstances({
         iB.meta_isReferencedBy.remove(iAId)
       }
     },
-    REMOVE_PROP_VALUE(state) {
-      /*  */
-    }
   },
   actions: {
     change(state, p: { changeType: ChangeType, context: any }) {
@@ -372,13 +410,12 @@ export default typesAndInstances({
         return
       }
 
-      // REMEMBER TO ADD/REMOVE refTargetTypeId
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
     },
     changePropToArray(state, p: { tId: string, pN: string }) { // OK
       const { tId, pN } = p
 
-      mutate('CHANGE_PROP_TO_ARRAY', {}, 'PropDefinition', tId, '', pN)
+      mutate('CHANGE_PROP_ARITY', { isArray: true }, 'PropDefinition', tId, '', pN)
     },
     changePropToSingle(state, p: { tId: string, pN: string }) { // OK
       const { tId, pN } = p
@@ -395,12 +432,12 @@ export default typesAndInstances({
         }
       })
 
-      mutate('CHANGE_PROP_TO_SINGLE', {}, 'PropDefinition', tId, '', pN)
+      mutate('CHANGE_PROP_ARITY', { isArray: false }, 'PropDefinition', tId, '', pN)
     },
     changePropRefTargetType(state, p: { tId: string, pN: string, newTargetId: string }) { // OK
       const { tId, pN, newTargetId } = p
-      // Removing values from all instances with this prop.
 
+      // Removing values from all instances with this prop.
       // Meta is also cleaned-up.
       utils.oToA(state.state.project.instances[tId]).forEach((instance) => {
         instance[pN].forEach((v) => {
@@ -415,25 +452,24 @@ export default typesAndInstances({
 
       mutate('CHANGE_PROP_VALUE', { value }, 'PropValues', tId, iId, pN)
     },
-
-    addPropValue(state, p: { tId: string, pN: string, value: Values }) { // OK
-      const { tId, pN, value } = p
+    addPropValue(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
+      const { tId, iId, pN, value } = p
       const isRef = state.getters.isPropARef(tId, pN)
 
       if (isRef) {
         this.dispatch('addPropRefValue', p)
       } else {
-        mutate('ADD_PROP_VALUE', { value }, 'PropValues', tId, '', pN)
+        mutate('ADD_PROP_VALUE', { value }, 'PropValues', tId, iId, pN)
       }
     },
-    removePropValue(state, p: { tId: string, pN: string, value: Values }) { // OK
-      const { tId, pN, value } = p
+    removePropValue(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
+      const { tId, iId, pN, value } = p
       const isRef = state.getters.isPropARef(tId, pN)
 
       if (isRef) {
         this.dispatch('removePropRefValue', p)
       } else {
-        mutate('REMOVE_PROP_VALUE', { value }, 'PropValues', tId, '', pN)
+        mutate('REMOVE_PROP_VALUE', { value }, 'PropValues', tId, iId, pN)
       }
     },
     createInstance(state, p: { tId: string }) { // OK

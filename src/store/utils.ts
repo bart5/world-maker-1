@@ -243,12 +243,13 @@ export function getNewInstanceData(state: ApplicationState, tId: string, uid: st
 }
 
 export function getPropDef<T = Values>(
-  valueType: ValueType, name: string, isArray?: boolean
+  valueType: ValueType, name: string, isArray = false, refTargetTypeId = ''
 ): PropDefinition {
   return {
     valueType,
     name,
-    ...(isArray ? { isArray } : {})
+    isArray,
+    refTargetTypeId
   }
 }
 

@@ -238,9 +238,9 @@ interface TypeDefinition extends TypeBasics {
 interface PropDefinition {
   valueType: ValueType;
   name: string;
-  isArray?: bool;
+  isArray: bool;
   // isRef?: boolean;
-  refTargetTypeId?: string,
+  refTargetTypeId: string,
   order?: number;
 }
 
@@ -269,6 +269,14 @@ interface MutCtx extends MutArgs {
   tId: string;
   iId: string;
   pN: string;
+}
+
+interface PublicActionsContext {
+
+}
+
+interface PublicGettersContext {
+
 }
 
 interface InstanceBasics {
