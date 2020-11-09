@@ -323,7 +323,7 @@ export default typesAndInstances({
     },
   },
   actions: {
-    change(state, p: { changeType: ChangeType, context: any }) {
+    publicAction(state, p: { changeType: ChangeType, context: any }) {
       const { changeType, context } = p
       this.dispatch('openTransaction', changeType)
       this.dispatch(changeType, context)

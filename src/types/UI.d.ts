@@ -66,42 +66,24 @@ type ChangeType =
   // 1 step:
   //  1) change arity in prop definition, change arity in props of all instances. Trim values.
   //    (subjects = typeWrapper + [all instances of type])
-  | 'changePropValueTypeToRef'
-  // 2 steps:
-  //  1) Remove *values* from props all instances.
-  //    (subjects = [all instances of type])
-  //  2) Change ValueType in prop of type and props of all instances.
-  //    (subjects = typeWrapper + [all instances of type])
-  | 'changePropValueTypeFromRef'
-  // 2 steps:
-  //  1) Remove *ref values* from prop in all instances of type.
-  //    (subjects = [all instances of type] + [other through meta])
-  //  2) Change ValueType in prop of type and props of all instances.
-  //    (subjects = typeWrapper + [all instances of type])
   | 'changePropRefTargetType'
   // 2 steps:
   //  1) Remove *ref values* from prop in all instances of type.
   //    (subjects = [all instances of type] + [other through meta])
   //  2) Change refTargetType in prop of type and props of all instances.
   //    (subjects = typeWrapper + [all instances of type])
-  | 'addPropRefValue'
-  // 1 step:
-  //  1) Add prop ref value
-  //    (subjects = instance + referenced instance through meta)
-  | 'removePropRefValue'
-  // 1 step:
-  //  1) Remove prop ref value
-  //    (subjects = instance + referenced instance through meta)
-  | 'changePropValues'
+  | 'changePropValue'
   // 1 step:
   //  1) Change prop values
   //    (subjects = instance)
-  | 'changePropOrder'
+  | 'addPropValue'
+  | 'removePropValue'
+  | 'createInstance'
+  | 'removeInstance'
+  // | 'changePropOrder'
   // 1 step:
   //  1) Change prop definition order and re-shuffle other
   //    (subjects = type)
-  | 'createInstance'
-  | 'removeInstance'
 
 type EntityType = 'TypeWrapper' | 'PropDefinition' | 'Instance' | 'PropValues'
 
@@ -272,7 +254,13 @@ interface MutCtx extends MutArgs {
 }
 
 interface PublicActionsContext {
-
+  tId: string;
+  iId: string;
+  pN: string;
+  newName?: string;
+  newType?: ValueType;
+  newTargetId?: string;
+  value?: Values;
 }
 
 interface PublicGettersContext {
