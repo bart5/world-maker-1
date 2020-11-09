@@ -52,20 +52,40 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop } from 'vue-property-decorator';
+import { Prop, Watch } from 'vue-property-decorator';
 import ObjectDisplay from '@/views/ObjectDisplay.vue'
 
 @Options({})
 export default class PropertyTypeEditor extends Vue {
-  @Prop() prop!: PropDefinition
+  @Prop() tId!: string
+  @Prop() iId!: string
+  @Prop() pDef!: PropDefinition
 
-  @Prop() editable!: boolean
+  get pV() {
+    return this.$store.getters.getPV({ tId: this, iId: this.iId, pN: this.pDef.name })
+  }
 
-  @Prop() typeName!: string
+  _pDef: PropDefinition = { ...this.pDef }
+  @Watch('pDef', { immediate: true })
+  updatePDef(newPDef: PropDefinition) {
+    this._pDef = { ...newPDef }
+  }
 
-  @Prop() isLocked!: boolean
+  get _pN() { return this._pDef.name }
+  get _pVT() { return this._pDef.valueType }
+  get _pRTTID() { return this._pDef.refTargetTypeId }
 
-  localProp: PropDefinition = { ...this.prop }
+  get context() {
+    return {
+      tId: this,
+      iId: this.iId,
+      pN: this.pDef.name,
+      newName: this._pDef.name,
+      newType: this._pDef.valueType,
+      newTargetId: this._pDef.refTargetTypeId,
+      value: this.pV,
+    }
+  }
 
   refTarget = '';
 
@@ -73,15 +93,30 @@ export default class PropertyTypeEditor extends Vue {
 
   objectDisplay = ObjectDisplay
 
-  get displayProps() {
-    return {
-      typeName: this.localProp.refTargetTypeId,
-      entityType: 'type',
-      editable: this.editable,
+  selectedType: ValueType = this.localProp.valueType
+
+  @Watch('_pVT')
+  adjustNameToRefConvention(newType: ValueType) {
+    if (newType === 'ref') {
+      this._pN = this._pN.name.replace('ref_', '')
+      this.localProp.isRef = false
+    } else {
+
     }
   }
 
-  selectedType: ValueType = this.localProp.valueType
+  onSelectType() {
+    if (this._pDef.name.startsWith('ref_')) {
+      this.localProp.name = this.localProp.name.replace('ref_', '')
+      this.localProp.isRef = false
+      delete this.localProp.refTargetTypeId
+    } else {
+      this.localProp.name = 'ref_' + this.localProp.name
+      this.localProp.isRef = true
+      this.localProp.valueType = 'int32'
+      this.localProp.refTargetTypeId = this.projectTypes[0]
+    }
+  }
 
   toggleRef() {
     if (this.localProp.name.startsWith('ref_')) {

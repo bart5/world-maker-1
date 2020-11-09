@@ -36,9 +36,13 @@ export default typesAndInstances({
     getTypeName: (state, getters) => (p: { tId: string, iId: string }) => {
       return (getters.getType(p) as TypeWrapper).name
     },
-    getPropDefinition: (state, getters) => (p: { tId: string, tN: string, iId: string, pN: string }) => {
+    getPDef: (state, getters) => (p: { tId: string, tN: string, iId: string, pN: string }) => {
       const { pN } = p
       return getters.getType(p)?.definition[pN]
+    },
+    getPV: (state, getters) => (p: { tId: string, iId: string, pN: string }) => {
+      const { tId, iId, pN } = p
+      return (getters.getInstance({ tId, iId }) as Instance)[pN]
     },
     getInstanceByTypeId: (state) => (p: { tId: string, iId: string }) => {
       const { tId, iId } = p

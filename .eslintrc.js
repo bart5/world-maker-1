@@ -35,6 +35,7 @@ module.exports = {
     'prefer-destructuring': 0,
     'semi-style': 0,
     'no-extend-native': 0,
+    'lines-between-class-members': 0,
     // 'arrow-parens': 0,
     "@typescript-eslint/camelcase": 0,
     "@typescript-eslint/no-explicit-any": 0,

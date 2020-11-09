@@ -221,7 +221,6 @@ interface PropDefinition {
   valueType: ValueType;
   name: string;
   isArray: bool;
-  // isRef?: boolean;
   refTargetTypeId: string,
   order?: number;
 }
@@ -263,9 +262,9 @@ interface PublicActionContext {
   value?: Values;
 }
 
-interface PublicGettersContext {
+// interface PublicGettersContext {
 
-}
+// }
 
 interface InstanceBasics {
   id: PropValues<[string]>;
