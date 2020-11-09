@@ -5,7 +5,9 @@
 -->
   <div class="prop-wrapper">
     <div class="name">
-      <input type="text" v-model="localProp.name" @change="maybeUpdate">
+      <!-- prefix cannot be added manually and wont be accepted -->
+      <span class="ref-prefix"></span>
+      <input type="text" v-model="_pDef.name">
     </div>
     <div class="values">
       <div class="values-box">
@@ -41,8 +43,7 @@
         <option v-for="type in valueTypes" :key="type">{{ type }}</option>
       </select>
     </div>
-    <div class="target-type">
-    </div>
+    <div class="target-type"></div>
     <div class="arity-choice">
       <input type="checkbox" v-model="localProp.isArray" @change="maybeUpdate">
     </div>
@@ -52,136 +53,68 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator';
-import ObjectDisplay from '@/views/ObjectDisplay.vue'
+import { Prop } from 'vue-property-decorator';
+import { act } from '@/store/transactions'
 
 @Options({})
 export default class PropertyTypeEditor extends Vue {
   @Prop() tId!: string
   @Prop() iId!: string
+
   @Prop() pDef!: PropDefinition
+  get pV(): Values { return this.$store.getters.getPV({ tId: this, iId: this.iId, pN: this.pDef.name }) }
 
-  get pV() {
-    return this.$store.getters.getPV({ tId: this, iId: this.iId, pN: this.pDef.name })
+  changePropName(newName: string) {
+    if (this.pDef.name === newName) return
+    act('changePropName', this.getContext({ newName }))
+  }
+  changeType(newType: ValueType) {
+    if (this.pDef.valueType === newType) return
+    act('changePropType', this.getContext({ newType }))
+  }
+  changePropTargetType(newTargetId: string) {
+    if (this.pDef.refTargetTypeId === newTargetId) return
+    act('changePropTargetType', this.getContext({ newTargetId }))
+  }
+  changePropArity(isArray: boolean) {
+    if (this.pDef.isArray === isArray) return
+    if (isArray) act('changePropToArray', this.getContext({}))
+    else act('changePropToSingle', this.getContext({}))
+  }
+  changeValue(value: number | boolean | string) {
+    if (this.pV.includes(value)) return
+    act('changePropValue', this.getContext({ value }))
+  }
+  addValue(value: number | boolean | string) {
+    if (this.pV.includes(value)) return
+    act('addPropValue', this.getContext({ value }))
+  }
+  removeValue(value: number | boolean | string) {
+    if (!this.pV.includes(value)) return
+    act('removePropValue', this.getContext({ value }))
   }
 
-  _pDef: PropDefinition = { ...this.pDef }
-  @Watch('pDef', { immediate: true })
-  updatePDef(newPDef: PropDefinition) {
-    this._pDef = { ...newPDef }
-  }
-
-  get _pN() { return this._pDef.name }
-  get _pVT() { return this._pDef.valueType }
-  get _pRTTID() { return this._pDef.refTargetTypeId }
-
-  get context() {
+  // Universal sufficient parameters for every public action and getter
+  getContext(p: { newName?: string, newType?: ValueType, newTargetId?: string, value?: string | boolean | number }): PublicActionContext {
+    const { newName, newType, newTargetId, value } = p
     return {
-      tId: this,
+      tId: this.tId,
       iId: this.iId,
       pN: this.pDef.name,
-      newName: this._pDef.name,
-      newType: this._pDef.valueType,
-      newTargetId: this._pDef.refTargetTypeId,
-      value: this.pV,
+      newName,
+      newType,
+      newTargetId,
+      value: value ? [value] : undefined,
     }
   }
 
-  refTarget = '';
-
-  showRefTarget = false;
-
-  objectDisplay = ObjectDisplay
-
-  selectedType: ValueType = this.localProp.valueType
-
-  @Watch('_pVT')
-  adjustNameToRefConvention(newType: ValueType) {
-    if (newType === 'ref') {
-      this._pN = this._pN.name.replace('ref_', '')
-      this.localProp.isRef = false
-    } else {
-
-    }
-  }
-
-  onSelectType() {
-    if (this._pDef.name.startsWith('ref_')) {
-      this.localProp.name = this.localProp.name.replace('ref_', '')
-      this.localProp.isRef = false
-      delete this.localProp.refTargetTypeId
-    } else {
-      this.localProp.name = 'ref_' + this.localProp.name
-      this.localProp.isRef = true
-      this.localProp.valueType = 'int32'
-      this.localProp.refTargetTypeId = this.projectTypes[0]
-    }
-  }
-
-  toggleRef() {
-    if (this.localProp.name.startsWith('ref_')) {
-      this.localProp.name = this.localProp.name.replace('ref_', '')
-      this.localProp.isRef = false
-      delete this.localProp.refTargetTypeId
-    } else {
-      this.localProp.name = 'ref_' + this.localProp.name
-      this.localProp.isRef = true
-      this.localProp.valueType = 'int32'
-      this.localProp.refTargetTypeId = this.projectTypes[0]
-    }
-  }
-
-  toggleShowRefTarget() {
-    this.showRefTarget = !this.showRefTarget
-  }
-
-  updatelocalProp() {
-    console.log('updating local property')
-    if (this.isRef && this.selectedType !== 'int32') {
-      this.toggleRef()
-    }
-    this.localProp.valueType = this.selectedType
-  }
-
-  get isDisabled() {
-    return this.prop.name.includes('meta_')
-  }
-
-  get basicTypes() {
-    return [
-      'int32', 'flt', 'string', 'bool'
-    ]
-  }
+  get basicTypes() { return ['int32', 'flt', 'string', 'bool', 'ref'] }
 
   get projectTypes() {
     return Object.keys(this.$store.getters.projectTypes)
   }
 
-  get isRef() {
-    return this.localProp.isRef
-  }
-
-  get isArray() {
-    return this.localProp.isArray
-  }
-
-  get isDirty() {
-    return this.prop.name !== this.localProp.name
-      || this.prop.valueType !== this.localProp.valueType
-      || this.prop.isArray !== this.localProp.isArray
-  }
-
-  maybeUpdate() {
-    if (this.isDirty) this.updateProperty()
-  }
-
-  updateProperty() {
-    this.$store.dispatch('updateTypeProperty', { oldPropName: this.prop.name, typeName: this.typeName, newProp: this.localProp })
-  }
-
-  selectProperty() {
-    this.$emit('select-property', this.prop.name)
-  }
+  get isRef() { return this.pDef.valueType === 'ref' }
 }
 </script>
 

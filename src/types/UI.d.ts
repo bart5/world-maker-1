@@ -45,16 +45,16 @@ type ActionType =
   //
   //  1) remove all references from property to other instances
   //  2) Remove property from type and instances
-  | 'renameProp'
+  | 'changePropName'
   // 1 step:
   //  1) rename prop in type, rename prop in all instances. (subjects = typeWrapper + [all instances of type])
-  | 'changePropValueType' // cast with trimmed precision
-  // | 'changePropValueType_int32<->flt' // cast with trimmed precision
-  // | 'changePropValueType_int32<->string' // literal cast
-  // | 'changePropValueType_int32<->bool' // cast to 1 or 0 and true or false
-  // | 'changePropValueType_flt<->string' // literal cast
-  // | 'changePropValueType_flt<->bool' // cast to 1 or 0 and true or false
-  // | 'changePropValueType_string<->bool' // cast to 'true' or 'false' and (from string) true or false
+  | 'changePropType' // cast with trimmed precision
+  // | 'changePropType_int32<->flt' // cast with trimmed precision
+  // | 'changePropType_int32<->string' // literal cast
+  // | 'changePropType_int32<->bool' // cast to 1 or 0 and true or false
+  // | 'changePropType_flt<->string' // literal cast
+  // | 'changePropType_flt<->bool' // cast to 1 or 0 and true or false
+  // | 'changePropType_string<->bool' // cast to 'true' or 'false' and (from string) true or false
   // 1 step:
   //  1) change valueType in typeWrapper and props of instances. cast props values.
   //    (subjects = typeWrapper + [all instances of type])
@@ -66,7 +66,7 @@ type ActionType =
   // 1 step:
   //  1) change arity in prop definition, change arity in props of all instances. Trim values.
   //    (subjects = typeWrapper + [all instances of type])
-  | 'changePropRefTargetType'
+  | 'changePropTargetType'
   // 2 steps:
   //  1) Remove *ref values* from prop in all instances of type.
   //    (subjects = [all instances of type] + [other through meta])

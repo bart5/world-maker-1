@@ -370,7 +370,7 @@ export default typesAndInstances({
             // about references for the type we are about to remove.
             //  I assume that empty string will make sense - if handled properly it will yield
             // no instances available to ref
-            this.dispatch('changePropRefTargetType', { tId, pN, newTargetId: '' })
+            this.dispatch('changePropTargetType', { tId, pN, newTargetId: '' })
           })
       })
 
@@ -403,20 +403,20 @@ export default typesAndInstances({
 
       mutate('REMOVE_PROP', {}, 'PropDefinition', tId, '', pN)
     },
-    renameProp(state, p: { tId: string, pN: string, newName: string }) { // OK
+    changePropName(state, p: { tId: string, pN: string, newName: string }) { // OK
       const { tId, pN, newName } = p
 
       mutate('RENAME_PROP', { newName }, 'PropDefinition', tId, '', pN)
     },
-    changePropValueType(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
+    changePropType(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
       const { tId, pN, newType } = p
       const isRef = state.getters.isPropARef(tId, pN)
 
       if (isRef) {
-        this.dispatch('changePropValueTypeFromRef', p)
+        this.dispatch('changePropTypeFromRef', p)
         return
       } else if (newType === 'ref') {
-        this.dispatch('changePropValueTypeToRef', p)
+        this.dispatch('changePropTypeToRef', p)
         return
       }
 
@@ -444,7 +444,7 @@ export default typesAndInstances({
 
       mutate('CHANGE_PROP_ARITY', { isArray: false }, 'PropDefinition', tId, '', pN)
     },
-    changePropRefTargetType(state, p: { tId: string, pN: string, newTargetId: string }) { // OK
+    changePropTargetType(state, p: { tId: string, pN: string, newTargetId: string }) { // OK
       const { tId, pN, newTargetId } = p
 
       // Removing values from all instances with this prop.
@@ -593,8 +593,15 @@ export default typesAndInstances({
       mutate('REMOVE_INSTANCE_PROP', {}, 'PropValues', tId, iId, pN)
     },
 
-    changePropValueTypeToRef(state, p: { tId: string, pN: string }) { // OK
-      const { tId, pN } = p
+    changePropTypeToRef(state, p: { tId: string, pN: string }) { // OK
+      const { tId } = p
+      let { pN } = p
+
+      // In c++ we rely on convention that all referencing props start with _ref
+      if (pN.startsWith('ref_')) {
+        this.dispatch('changePropName', { tId, pN, newName: ('ref_' + pN) })
+        pN = 'ref_' + pN
+      }
 
       // For this prop in all instance
       Object.entries(state.state.project.instances[tId]).forEach(([, instance]) => {
@@ -605,8 +612,15 @@ export default typesAndInstances({
 
       mutate('CHANGE_PROP_VALUE_TYPE', { newType: 'ref' }, 'PropDefinition', tId, '', pN)
     },
-    changePropValueTypeFromRef(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
-      const { tId, pN, newType } = p
+    changePropTypeFromRef(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
+      const { tId, newType } = p
+      let { pN } = p
+
+      // In c++ we rely on convention that all referencing props start with _ref
+      if (pN.startsWith('ref_')) {
+        this.dispatch('changePropName', { tId, pN, newName: pN.replace('ref_', '') })
+        pN = pN.replace('ref_', '')
+      }
 
       // For this prop in all instance
       Object.entries(state.state.project.instances[tId]).forEach(([, instance]) => {
