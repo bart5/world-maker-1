@@ -116,46 +116,58 @@ export default typesAndInstances({
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
 
-      const {iId, tN, prop, isReferencedById, isReferencingId } = p
+      const { iId, tN, prop, isReferencedById, isReferencingId } = p
 
       if (iId) {
         instancesIds = instancesIds.filter((instanceId) => iId === instanceId)
       }
       if (tN) {
         const iL = getters.getInstancesListOfType({ tN }) as InstanceList
-        instancesIds = instancesIds.filter((instanceId) => Object.entries(iL).some(([iId]) => instanceId === iId))
+        instancesIds = instancesIds.filter((instanceId) => Object.entries(iL).some(([_iId]) => instanceId === _iId))
       }
       if (prop) {
         const { pN, pV } = prop
-        const matchByProp = (iId: string) => {
-          const instance = getters.getInstance({ iId }) as Instance
+        const matchByProp = (_iId: string) => {
+          const instance = getters.getInstance({ iId: _iId }) as Instance
           return Object.entries(instance).some(([pName, pValues]) => pName === pN && pValues.some((v) => v === pV))
         }
         instancesIds.filter(matchByProp)
       }
+      // Get all referenced by given instance
       if (isReferencedById) {
-        const instanceTypeId = (getters.getType({ iId: isReferencedById }) as TypeWrapper).id
+        // This instance that is referencing other we look for
         const instance = getters.getInstance({ iId: isReferencedById }) as Instance
-        const propsWtithRefs = Object.entries(instance
-        instances.filter((i) => i.meta_isReferencedBy.some((v) => v === isReferencedById))
-        return getters.getters.getFilteredInstances({ isReferencingId, instances })
+        // We conveniently have all that data in meta field
+        instancesIds.filter((_iId) => instance.meta_isReferencing.some((instanceId) => _iId === instanceId))
       }
+      // Get all instances that reference specific instance
       if (isReferencingId) {
-        instances.filter((i) => i.meta_isReferencing.some((v) => v === isReferencingId))
-        return getters.getters.getFilteredInstances({ instances })
+        // This instance that is referenced by other we look for
+        const instance = getters.getInstance({ iId: isReferencingId }) as Instance
+        // And again all conveniently is already in meta
+        instancesIds.filter((_iId) => instance.meta_isReferencedBy.some((instanceId) => _iId === instanceId))
       }
-      return instances
+      // Get actual instances
+      return Object.entries(state.project.instances).reduce((acc, [, iL]) => {
+        return [
+          ...acc,
+          ...instancesIds.reduce((_acc, _iId) => {
+            if (_iId in iL) return [...acc, iL[_iId]]
+            return _acc
+          }, [] as Instance[])
+        ]
+      }, [] as Instance[])
     },
     /**
      * Get all props of type A that reference type B
      */
     getPropsOfTypeAWithRefToTypeB: (state, getters) => (
-      p: { tAId?: string, tBId?: string, iAId?: string, iBId?: string, }
+      p: { tAId?: string, tBId?: string, iAId?: string, iBId?: string, tA?: TypeWrapper, tB?: TypeWrapper }
     ) => {
       const { tAId, iAId, iBId } = p
-      let { tBId } = p
-      const tA: TypeWrapper = getters.getType({ typeId: tAId }, iAId)
-      const tB: TypeWrapper = getters.getType({ typeId: tBId }, iBId)
+      let { tBId, tA, tB } = p
+      tA = tA || getters.getType({ typeId: tAId }, iAId) as TypeWrapper
+      tB = tB || getters.getType({ typeId: tBId }, iBId) as TypeWrapper
       tBId = tBId || tB.id
       const propNames: string[] = []
       Object.entries(tA.definition).forEach(([, prop]) => {
