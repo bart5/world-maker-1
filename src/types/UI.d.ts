@@ -20,11 +20,11 @@ interface UiData {
 }
 
 interface Transaction {
-  changeType: ChangeType;
+  actionType: ActionType;
   changes: Array<Change>;
 }
 
-type ChangeType =
+type ActionType =
   | 'createType'
   // 1 step:
   //  1) creates type. (subjects = typeWrapper to remove)
@@ -253,10 +253,10 @@ interface MutCtx extends MutArgs {
   pN: string;
 }
 
-interface PublicActionsContext {
+interface PublicActionContext {
   tId: string;
-  iId: string;
-  pN: string;
+  iId?: string;
+  pN?: string;
   newName?: string;
   newType?: ValueType;
   newTargetId?: string;
@@ -280,13 +280,6 @@ interface Instance extends InstanceBasics {
 }
 
 type PropValues<T = Values> = T;
-
-// interface PropValues<T = Values> {
-//   // valueType: ValueType;
-//   // name: string;
-//   // isArray?: bool;
-//   values: T;
-// }
 
 interface PropForExport<T = Values> {
   valueType: ValueType;

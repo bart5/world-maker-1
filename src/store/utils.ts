@@ -89,61 +89,6 @@ export function getUniqueId(state: ApplicationState) {
   return uid
 }
 
-export function getChangeId() {
-  return Date.now().toString();
-}
-
-/**
- * We assume that changes can only be reverted
- * one by one. You cannot jump to arbitrary point
- * in the past.
- */
-export function revertChange(
-  state: ApplicationState,
-  change: Change,
-) {
-  let entity
-  switch (change.entityType) {
-    case 'TypeWrapper': // tId
-      entity = change.entityBefore as TypeWrapper
-      if (entity === null) {
-        delete state.project.types[change.tId]
-      } else {
-        state.project.types[change.tId] = entity
-        if (!state.project.instances[change.tId]) {
-          state.project.instances[change.tId] = {}
-        }
-      }
-      break;
-    case 'PropDefinition': // tId, pN
-      entity = change.entityBefore as PropDefinition
-      if (entity === null) {
-        delete state.project.types[change.tId].definition[change.pN]
-      } else {
-        state.project.types[change.tId].definition[change.pN] = entity
-      }
-      break;
-    case 'Instance': // tId, iId
-      entity = change.entityBefore as Instance
-      if (entity === null) {
-        delete state.project.instances[change.tId][change.iId]
-      } else {
-        state.project.instances[change.tId][change.iId] = entity
-      }
-      break;
-    case 'PropValues': // tId, iId, pN
-      entity = change.entityBefore as PropValues
-      if (entity === null) {
-        delete state.project.instances[change.tId][change.iId][change.pN]
-      } else {
-        state.project.instances[change.tId][change.iId][change.pN] = entity
-      }
-      break;
-    default:
-      Error(`Unknown entity type of the change: ${change.entityType}.`)
-  }
-}
-
 /**
  * Get all props of type A that reference type B
  */

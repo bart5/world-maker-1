@@ -1,8 +1,8 @@
 import { ActionContext, createStore } from 'vuex';
 import * as utils from './utils';
-import { revertChange } from './utils'
 import initialState from './state';
 import { mutate } from './transactions';
+import { revertChange } from './transactions';
 
 const registerInstancesMutation = (state: ApplicationState) => {
   state.projectInstancesMutated = true
@@ -181,10 +181,10 @@ export default typesAndInstances({
     }
   },
   mutations: {
-    OPEN_TRANSACTION(state, changeType: ChangeType) {
+    OPEN_TRANSACTION(state, actionType: ActionType) {
       if (state.currentTransaction) return
       state.currentTransaction = {
-        changeType,
+        actionType,
         changes: []
       }
     },
@@ -194,6 +194,14 @@ export default typesAndInstances({
         ...state.currentTransaction
       })
       state.currentTransaction = null
+    },
+    REVERT_LAST_CHANGE(state) {
+      const lastTransaction = state.project.recentChanges.pop()
+      if (!lastTransaction) return
+      while (lastTransaction.changes.length) {
+        const changeToRevert = lastTransaction.changes.pop() as Change
+        revertChange(changeToRevert)
+      }
     },
     CREATE_TYPE(state, p: { tId: string }) { // OK
       const { tId } = p
@@ -323,14 +331,14 @@ export default typesAndInstances({
     },
   },
   actions: {
-    publicAction(state, p: { changeType: ChangeType, context: any }) {
-      const { changeType, context } = p
-      this.dispatch('openTransaction', changeType)
-      this.dispatch(changeType, context)
-      this.dispatch('closeTransaction', changeType)
+    publicAction(state, p: { actionType: ActionType, context: PublicActionContext }) {
+      const { actionType, context } = p
+      this.dispatch('openTransaction', actionType)
+      this.dispatch(actionType, context)
+      this.dispatch('closeTransaction', actionType)
     },
-    openTransaction(state, changeType: ChangeType) {
-      state.commit('OPEN_TRANSACTION', changeType)
+    openTransaction(state, actionType: ActionType) {
+      state.commit('OPEN_TRANSACTION', actionType)
     },
     closeTransaction(state) {
       state.commit('CLOSE_TRANSACTION')
@@ -607,6 +615,10 @@ export default typesAndInstances({
       })
 
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
+    },
+
+    revertLastChange() {
+      this.commit('REVERT_LAST_CHANGE')
     },
 
     // moveTypePropUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
