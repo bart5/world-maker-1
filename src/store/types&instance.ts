@@ -95,9 +95,9 @@ export default typesAndInstances({
 
       Object.entries(state.project.instances).forEach(([typeId, instanceList]) => { // for each type instance
         Object.entries(instanceList).forEach(([instanceId, instance]) => {
-          Object.entries(instance).forEach(([propName, prop]) => {
+          Object.entries(instance).forEach(([propName, values]) => {
             if (!propName.includes('meta') || propName !== 'id') {
-              if (!prop.values.length) {
+              if (!values.length) {
                 instances.push({
                   instanceId,
                   typeId
@@ -149,7 +149,7 @@ export default typesAndInstances({
       if (instanceId) {
         let match: any = null
         instances.some((i) => {
-          if (i.id.values[0] === instanceId) {
+          if (i.id[0] === instanceId) {
             match = i
             return true
           }
@@ -159,22 +159,22 @@ export default typesAndInstances({
         return getters.getters.getFilteredInstances({ typeName, prop, isReferencedById, isReferencingId, instances })
       }
       if (typeName) {
-        instances.filter((i) => i.meta_typeName.values[0] === typeName)
+        instances.filter((i) => i.meta_typeId[0] === typeName)
         return getters.getters.getFilteredInstances({ prop, isReferencedById, isReferencingId, instances })
       }
       if (prop) {
         const matchByPropValue = (i: Instance) => {
-          return Object.entries(i).some((p) => p[0] === prop.name && p[1].values.some((v) => v === prop.value))
+          return Object.entries(i).some(([pId, pValues]) => pId === prop.name && pValues.some((v) => v === prop.value))
         }
         instances.filter(matchByPropValue)
         return getters.getters.getFilteredInstances({ isReferencedById, isReferencingId, instances })
       }
       if (isReferencedById) {
-        instances.filter((i) => i.meta_isReferencedBy.values.some((v) => v === isReferencedById))
+        instances.filter((i) => i.meta_isReferencedBy.some((v) => v === isReferencedById))
         return getters.getters.getFilteredInstances({ isReferencingId, instances })
       }
       if (isReferencingId) {
-        instances.filter((i) => i.meta_isReferencing.values.some((v) => v === isReferencingId))
+        instances.filter((i) => i.meta_isReferencing.some((v) => v === isReferencingId))
         return getters.getters.getFilteredInstances({ instances })
       }
       return instances
@@ -216,7 +216,7 @@ export default typesAndInstances({
       type.name = newName
 
       Object.entries(state.project.instances[tId]).forEach(([, instance]) => {
-        instance.meta_typeName.values = [newName]
+        instance.meta_typeId = [newName]
       })
     },
     REMOVE_TYPE(state, p: { tId: string }) { // OK
@@ -227,25 +227,34 @@ export default typesAndInstances({
       // At this point all instance are removed
       delete state.project.instances[tId]
     },
-    CREATE_TYPE_PROPERTY(state, typeName: string) {
+    CREATE_PROP(state, p: { tId: string, prop: PropDefinition }) { // OK
+      const { tId, prop } = p
       registerInstancesMutation(state)
-      const uniquePropName = utils.getUniquePropName(state, typeName)
 
-      // Adding prop to type definition
-      state.project.types[typeName] = {
-        ...state.project.types[typeName],
-        [uniquePropName]: utils.getTypeDefProp('int32', uniquePropName)
-      }
+      // Prop is added to all existing instances in separate step
+      state.project.types[tId].definition[prop.name] = prop
+    },
+    REMOVE_PROP(state, p: { tId: string, pN: string }) { // OK
+      const { tId, pN } = p
+      registerInstancesMutation(state)
 
-      // Adding prop to all instances
-      Object.entries(state.project.instances[typeName]).forEach((tuple) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        let instance = tuple[1]
-        instance = {
-          ...instance,
-          uniquePropName: utils.getInstanceProp('int32', uniquePropName, [0])
-        }
-      })
+      // At this point prop is already removed from all instances
+      delete state.project.types[tId].definition[pN]
+    },
+    RENAME_PROP(state, p: { tId: string, pN: string, newName: string }) { // OK
+      const { tId, pN, newName } = p
+      registerInstancesMutation(state)
+
+      // At this point prop is already renamed in all instances
+      state.project.types[tId].definition[newName] = state.project.types[tId].definition[pN]
+      delete state.project.types[tId].definition[pN]
+    },
+    CHANGE_PROP_VALUE_TYPE(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
+      const { tId, pN, newType } = p
+      registerInstancesMutation(state)
+
+      // At this point type is alrea changed in all instances
+      state.project.types[tId].definition[pN].valueType = newType
     },
     CREATE_INSTANCE(state, p: { tId: string, iId: string, tN: string, }) {
       const { tId, iId, tN } = p
@@ -261,19 +270,19 @@ export default typesAndInstances({
     },
     UPDATE_REF_META_FROM_A_TO_B(state, p: { iA: Instance, iB: Instance, propsToCheck: string[] }) {
       const { iA, iB, propsToCheck } = p
-      const iAId = iA.id.values[0]
-      const iBId = iB.id.values[0]
+      const iAId = iA.id[0]
+      const iBId = iB.id[0]
 
       const aReferencesB = propsToCheck.some((propName) => {
-        return iA[propName].values.includes(iBId)
+        return iA[propName].includes(iBId)
       })
 
       if (aReferencesB) {
-        iA.meta_isReferencing.values.pushUnique(iBId)
-        iB.meta_isReferencedBy.values.pushUnique(iAId)
+        iA.meta_isReferencing.pushUnique(iBId)
+        iB.meta_isReferencedBy.pushUnique(iAId)
       } else {
-        iA.meta_isReferencing.values.remove(iBId)
-        iB.meta_isReferencedBy.values.remove(iAId)
+        iA.meta_isReferencing.remove(iBId)
+        iB.meta_isReferencedBy.remove(iAId)
       }
     },
     REMOVE_PROP_VALUE(state) {
@@ -328,15 +337,16 @@ export default typesAndInstances({
       const { tId, newName } = p
 
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changePropValue', { tId, iId, pN: 'meta_typeName', value: newName })
+        this.dispatch('changePropValue', { tId, iId, pN: 'meta_typeId', value: newName })
       })
 
       mutate('RENAME_TYPE', { newName }, 'TypeWrapper', tId)
     },
     createProp(state, p: { tId: string }) { // OK
       const { tId } = p
-      const prop = {} as PropDefinition
-      mutate('CREATE_TYPE_PROPERTY', { prop }, 'PropDefinition', tId)
+      const uniquePropName = utils.getUniquePropName(state.state, tId)
+      const prop = utils.getTypeDefProp('int32', uniquePropName)
+      mutate('CREATE_PROP', { prop }, 'PropDefinition', tId)
 
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
         this.dispatch('addPropToInstance', { tId, iId, prop })
@@ -349,7 +359,7 @@ export default typesAndInstances({
 
       // Need to also remove prop from every single Instance
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('removeInstanceProp', { tId, iId, pN })
+        this.dispatch('removePropValues', { tId, iId, pN })
       })
 
       mutate('REMOVE_PROP', {}, 'PropDefinition', tId, '', pN)
@@ -359,7 +369,7 @@ export default typesAndInstances({
 
       // Need to change this prop name in every single existing instance
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changeInstancePropData', { tId, iId, pN, newName })
+        this.dispatch('changePropValuesData', { tId, iId, pN, newName })
       })
 
       mutate('RENAME_PROP', { newName }, 'PropDefinition', tId, '', pN)
@@ -378,7 +388,7 @@ export default typesAndInstances({
 
       // Need to change prop valueType in every single existing instance
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changeInstancePropData', { tId, iId, pN, newType })
+        this.dispatch('changePropValuesData', { tId, iId, pN, newType })
       })
 
       // REMEMBER TO ADD/REMOVE refTargetTypeId
@@ -389,7 +399,7 @@ export default typesAndInstances({
 
       // Need to change prop arity in every single existing instance
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changeInstancePropData', { tId, iId, pN, isArray: true })
+        this.dispatch('changePropValuesData', { tId, iId, pN, isArray: true })
       })
 
       mutate('CHANGE_PROP_TO_ARRAY', {}, 'PropDefinition', tId, '', pN)
@@ -400,7 +410,7 @@ export default typesAndInstances({
 
       // Remove values from prop in all instances.
       Object.entries(state.state.project.instances[tId]).forEach(([, instance]) => {
-        const valuesToRemove = instance[pN].values.splice(1) // all but first (change in place)
+        const valuesToRemove = instance[pN].splice(1) // all but first (change in place)
         if (isRef) {
           // And in case of ref we will do special stuff ofc.
           valuesToRemove.forEach((v) => this.dispatch('removePropRefValue', { tId, pN, value: v }))
@@ -411,7 +421,7 @@ export default typesAndInstances({
 
       // Need to change prop arity in every single existing instance
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
-        this.dispatch('changeInstancePropData', { tId, iId, pN, isArray: false })
+        this.dispatch('changePropValuesData', { tId, iId, pN, isArray: false })
       })
 
       mutate('CHANGE_PROP_TO_SINGLE', {}, 'PropDefinition', tId, '', pN)
@@ -422,7 +432,7 @@ export default typesAndInstances({
 
       // Meta is also cleaned-up.
       utils.oToA(state.state.project.instances[tId]).forEach((instance) => {
-        instance[pN].values.forEach((v) => {
+        instance[pN].forEach((v) => {
           this.dispatch('removePropRefValue', { tId, pN, value: v })
         })
       })
@@ -432,7 +442,7 @@ export default typesAndInstances({
     changePropValue(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
       const { tId, iId, pN, value } = p
 
-      mutate('CHANGE_PROP_VALUE', { value }, 'InstanceProp', tId, iId, pN)
+      mutate('CHANGE_PROP_VALUE', { value }, 'PropValues', tId, iId, pN)
     },
 
     addPropValue(state, p: { tId: string, pN: string, value: Values }) { // OK
@@ -442,7 +452,7 @@ export default typesAndInstances({
       if (isRef) {
         this.dispatch('addPropRefValue', p)
       } else {
-        mutate('ADD_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
+        mutate('ADD_PROP_VALUE', { value }, 'PropValues', tId, '', pN)
       }
     },
     removePropValue(state, p: { tId: string, pN: string, value: Values }) { // OK
@@ -452,7 +462,7 @@ export default typesAndInstances({
       if (isRef) {
         this.dispatch('removePropRefValue', p)
       } else {
-        mutate('REMOVE_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
+        mutate('REMOVE_PROP_VALUE', { value }, 'PropValues', tId, '', pN)
       }
     },
     createInstance(state, p: { tId: string }) { // OK
@@ -479,7 +489,7 @@ export default typesAndInstances({
     addPropRefValue(state, p: { tId: string, pN: string, value: Values }) { // OK
       const { tId, pN, value } = p
 
-      mutate('ADD_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
+      mutate('ADD_PROP_VALUE', { value }, 'PropValues', tId, '', pN)
 
       const iA = state.getters.getInstance({ typeId: tId })
       const iB = state.getters.getInstance(value)
@@ -489,7 +499,7 @@ export default typesAndInstances({
     removePropRefValue(state, p: { tId: string, pN: string, value: Values }) { // OK
       const { tId, pN, value } = p
 
-      mutate('REMOVE_PROP_VALUE', { value }, 'InstanceProp', tId, '', pN)
+      mutate('REMOVE_PROP_VALUE', { value }, 'PropValues', tId, '', pN)
 
       const iA = state.getters.getInstance({ typeId: tId })
       const iB = state.getters.getInstance(value)
@@ -511,7 +521,7 @@ export default typesAndInstances({
       const { iId } = p
       const type: TypeWrapper = state.getters.getType({ instanceId: iId })
 
-      const referencedInstances = state.state.project.instances[type.id][iId].meta_isReferencing.values
+      const referencedInstances = state.state.project.instances[type.id][iId].meta_isReferencing
 
       referencedInstances.forEach((bIId) => {
         this.dispatch('removeAllRefsFromInstAtoInstB', { aIId: iId, bIId })
@@ -521,7 +531,7 @@ export default typesAndInstances({
       const { iId } = p
       const type: TypeWrapper = state.getters.getType({ instanceId: iId })
 
-      const referencingInstances = state.state.project.instances[type.id][iId].meta_isReferencedBy.values
+      const referencingInstances = state.state.project.instances[type.id][iId].meta_isReferencedBy
 
       referencingInstances.forEach((bId) => {
         this.dispatch('removeAllRefsFromInstAtoInstB', { aIId: bId, bIId: iId })
@@ -532,7 +542,7 @@ export default typesAndInstances({
       const { tId, pN } = p
 
       utils.oToA(state.state.project.instances[tId]).forEach((instance) => {
-        instance[pN].values.forEach((v) => {
+        instance[pN].forEach((v) => {
           this.dispatch('removePropRefValue', { tId, pN, value: v })
         })
       })
@@ -540,15 +550,15 @@ export default typesAndInstances({
 
     updateMetaOfRefsFromInstAToInstB(state, p: { iA: Instance, iB: Instance }) { // OK
       const { iA, iB } = p
-      const propsToCheck = utils.getPropsOfTypeAWithRefToTypeB(state, { instAId: iA.id.values[0], instBId: iB.id.values[0] })
-      const tId = state.getters.getType({}, iA.id.values[0])
+      const propsToCheck = utils.getPropsOfTypeAWithRefToTypeB(state, { instAId: iA.id[0], instBId: iB.id[0] })
+      const tId = state.getters.getType({}, iA.id[0])
       // This is so far an exception - a mutation that makes changes to more than one (here exactly two)
       // entities.
       // For now I'll handle it in a dirty way.
       // If case of multiple entities mutation at once will be more prevalent I can change 'mutate'.
       // mutate('UPDATE_REF_META_FROM_A_TO_B', { iA, iB, propsToCheck }, 'Instance', tId)
-      mutate(null, {}, 'Instance', tId, iA.id.values[0])
-      mutate(null, {}, 'Instance', tId, iB.id.values[0])
+      mutate(null, {}, 'Instance', tId, iA.id[0])
+      mutate(null, {}, 'Instance', tId, iB.id[0])
       this.commit('UPDATE_REF_META_FROM_A_TO_B', { iA, iB, propsToCheck })
     },
 
@@ -557,14 +567,14 @@ export default typesAndInstances({
       mutate('ADD_PROP_TO_INSTANCE', { prop }, 'Instance', tId, iId)
     },
 
-    changeInstancePropData(state, p: { tId: string, iId: string, pN: string, newName?: string, newType?: ValueType, isArray?: boolean }) { // OK
+    changePropValuesData(state, p: { tId: string, iId: string, pN: string, newName?: string, newType?: ValueType, isArray?: boolean }) { // OK
       const { tId, iId, pN, newName, newType, isArray } = p
-      mutate('CHANGE_INSTANCE_PROP_DATA', { newName, newType, isArray }, 'InstanceProp', tId, iId, pN)
+      mutate('CHANGE_INSTANCE_PROP_DATA', { newName, newType, isArray }, 'PropValues', tId, iId, pN)
     },
 
-    removeInstanceProp(state, p: { tId: string, iId: string, pN: string }) { // OK
+    removePropValues(state, p: { tId: string, iId: string, pN: string }) { // OK
       const { tId, iId, pN } = p
-      mutate('REMOVE_INSTANCE_PROP', {}, 'InstanceProp', tId, iId, pN)
+      mutate('REMOVE_INSTANCE_PROP', {}, 'PropValues', tId, iId, pN)
     },
 
     changePropValueTypeToRef(state, p: { tId: string, pN: string }) { // OK
@@ -573,11 +583,11 @@ export default typesAndInstances({
       // For this prop in all instance
       Object.entries(state.state.project.instances[tId]).forEach(([iId, instance]) => {
         // Remove all values
-        const valuesToRemove = instance[pN].values
+        const valuesToRemove = instance[pN]
         valuesToRemove.forEach((v) => this.dispatch('removePropValue', { tId, pN, value: v }))
 
         // And then change value type of prop to ref
-        this.dispatch('changeInstancePropData', { tId, iId, pN, newType: 'ref' })
+        this.dispatch('changePropValuesData', { tId, iId, pN, newType: 'ref' })
       })
 
       mutate('CHANGE_PROP_VALUE_TYPE', { newType: 'ref' }, 'PropDefinition', tId, '', pN)
@@ -588,11 +598,11 @@ export default typesAndInstances({
       // For this prop in all instance
       Object.entries(state.state.project.instances[tId]).forEach(([iId, instance]) => {
         // Remove all values
-        const valuesToRemove = instance[pN].values
+        const valuesToRemove = instance[pN]
         valuesToRemove.forEach((v) => this.dispatch('removePropRefValue', { tId, pN, value: v }))
 
         // And then change value type of prop to ref
-        this.dispatch('changeInstancePropData', { tId, iId, pN, newType })
+        this.dispatch('changePropValuesData', { tId, iId, pN, newType })
       })
 
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)

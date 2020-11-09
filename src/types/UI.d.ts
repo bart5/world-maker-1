@@ -37,7 +37,7 @@ type ChangeType =
   //  5) remove the type itself
   | 'renameType'
   // 1 step:
-  //  1) changes name in typeWrapper and meta_typeName in all instances. (subjects = typeWrapper + [all instances of type])
+  //  1) changes name in typeWrapper and meta_typeId in all instances. (subjects = typeWrapper + [all instances of type])
   | 'createProp'
   // 1 step:
   //  1) create prop for type and create props for all instances. (subjects = typeWrapper + [all instances of type])
@@ -103,14 +103,14 @@ type ChangeType =
   | 'createInstance'
   | 'removeInstance'
 
-type EntityType = 'TypeWrapper' | 'PropDefinition' | 'Instance' | 'InstanceProp'
+type EntityType = 'TypeWrapper' | 'PropDefinition' | 'Instance' | 'PropValues'
 
 interface Change {
-  entityBefore: TypeWrapper | PropDefinition | Instance | InstanceProp | null;
+  entityBefore: TypeWrapper | PropDefinition | Instance | PropValues | null;
   entityType: EntityType
-  typeId: string;
-  instanceId: string;
-  propName: string;
+  tId: string;
+  iId: string;
+  pN: string;
 }
 
 interface Project {
@@ -225,10 +225,10 @@ interface TypesDefinitions {
 
 interface TypeBasics {
   id: PropDefinition;
-  // meta_typeName: PropDefinition;
-  // meta_isBoundTo: PropDefinition;
-  // meta_isReferencing: PropDefinition;
-  // meta_isReferencedBy: PropDefinition;
+  meta_typeId: PropDefinition;
+  meta_isBoundTo: PropDefinition;
+  meta_isReferencing: PropDefinition;
+  meta_isReferencedBy: PropDefinition;
 }
 
 interface TypeDefinition extends TypeBasics {
@@ -272,18 +272,27 @@ interface MutCtx extends MutArgs {
 }
 
 interface InstanceBasics {
-  id: InstanceProp<[string]>;
-  meta_typeName: InstanceProp<[string]>;
-  meta_isBoundTo: InstanceProp<string[]>;
-  meta_isReferencing: InstanceProp<string[]>;
-  meta_isReferencedBy: InstanceProp<string[]>;
+  id: PropValues<[string]>;
+  meta_typeId: PropValues<[string]>;
+  meta_isBoundTo: PropValues<string[]>;
+  meta_isReferencing: PropValues<string[]>;
+  meta_isReferencedBy: PropValues<string[]>;
 }
 
 interface Instance extends InstanceBasics {
-  [propName: string]: InstanceProp;
+  [propName: string]: PropValues;
 }
 
-interface InstanceProp<T = Values> {
+type PropValues<T = Values> = T;
+
+// interface PropValues<T = Values> {
+//   // valueType: ValueType;
+//   // name: string;
+//   // isArray?: bool;
+//   values: T;
+// }
+
+interface PropForExport<T = Values> {
   valueType: ValueType;
   name: string;
   isArray?: bool;

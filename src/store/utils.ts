@@ -53,10 +53,10 @@ export function getUniqueTypeName(state: ApplicationState) {
   return getNewName()
 }
 
-export function getUniquePropName(state: ApplicationState, typeName: string) {
+export function getUniquePropName(state: ApplicationState, tId: string) {
   let affix = 1
   const getNewName = () => 'NewProp' + affix
-  const isUnique = (n: string) => !Object.keys(state.project.types[typeName]).some((tn) => tn === n)
+  const isUnique = (n: string) => !Object.keys(state.project.types[tId]).some((tn) => tn === n)
   while (!isUnique(getNewName()) && affix < 1000) {
     affix++
   }
@@ -104,39 +104,39 @@ export function revertChange(
 ) {
   let entity
   switch (change.entityType) {
-    case 'TypeWrapper': // typeId
+    case 'TypeWrapper': // tId
       entity = change.entityBefore as TypeWrapper
       if (entity === null) {
-        delete state.project.types[change.typeId]
+        delete state.project.types[change.tId]
       } else {
-        state.project.types[change.typeId] = entity
-        if (!state.project.instances[change.typeId]) {
-          state.project.instances[change.typeId] = {}
+        state.project.types[change.tId] = entity
+        if (!state.project.instances[change.tId]) {
+          state.project.instances[change.tId] = {}
         }
       }
       break;
-    case 'PropDefinition': // typeId, propName
+    case 'PropDefinition': // tId, pN
       entity = change.entityBefore as PropDefinition
       if (entity === null) {
-        delete state.project.types[change.typeId].definition[change.propName]
+        delete state.project.types[change.tId].definition[change.pN]
       } else {
-        state.project.types[change.typeId].definition[change.propName] = entity
+        state.project.types[change.tId].definition[change.pN] = entity
       }
       break;
-    case 'Instance': // typeId, instanceId
+    case 'Instance': // tId, iId
       entity = change.entityBefore as Instance
       if (entity === null) {
-        delete state.project.instances[change.typeId][change.instanceId]
+        delete state.project.instances[change.tId][change.iId]
       } else {
-        state.project.instances[change.typeId][change.instanceId] = entity
+        state.project.instances[change.tId][change.iId] = entity
       }
       break;
-    case 'InstanceProp': // typeId, instanceId, propName
-      entity = change.entityBefore as InstanceProp
+    case 'PropValues': // tId, iId, pN
+      entity = change.entityBefore as PropValues
       if (entity === null) {
-        delete state.project.instances[change.typeId][change.instanceId][change.propName]
+        delete state.project.instances[change.tId][change.iId][change.pN]
       } else {
-        state.project.instances[change.typeId][change.instanceId][entity.name] = entity
+        state.project.instances[change.tId][change.iId][change.pN] = entity
       }
       break;
     default:
@@ -196,8 +196,8 @@ export function getReferencingInstances(
 
   potentialRefPointers.forEach(({ typeId, props }) => {
     oToA(st.state.project.instances[typeId]).forEach((instance) => {
-      const hasActiveRef = props.some((propName) => instance[propName].values.length > 0)
-      if (hasActiveRef) referencingInstancesIds.push(instance.id.values[0])
+      const hasActiveRef = props.some((propName) => instance[propName].length > 0)
+      if (hasActiveRef) referencingInstancesIds.push(instance.id[0])
     })
   })
 
@@ -207,7 +207,7 @@ export function getReferencingInstances(
 export function getNewTypeData(): TypeDefinition {
   return {
     id: getTypeDefProp('int32', 'id'),
-    meta_typeName: getTypeDefProp('string', 'meta_typeName'),
+    meta_typeId: getTypeDefProp('string', 'meta_typeId'),
     meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
     meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
     meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
@@ -225,31 +225,31 @@ export function getInitialPropValues(propDef: PropDefinition) {
 
 export function getNewInstanceData(state: ApplicationState, typeName: string, uid: string): Instance {
   const instance = Object.entries(state.project.types[typeName]).reduce((acc, tuple) => {
-    if (tuple[0] === 'id' || tuple[0] === 'meta_isBound' || tuple[0] === 'meta_typeName') {
+    if (tuple[0] === 'id' || tuple[0] === 'meta_isBound' || tuple[0] === 'meta_typeId') {
       return acc
     }
     return {
       ...acc,
-      [tuple[0]]: getInstanceProp(
+      [tuple[0]]: getPropValues(
         tuple[1].valueType, tuple[1].name, getInitialPropValues(tuple[1]), tuple[1].isArray
       ),
     }
   }, {})
   return {
     ...instance,
-    id: getInstanceProp<[string]>('int32', 'id', [uid]),
-    meta_isBoundTo: getInstanceProp('int32', 'meta_isBound', [], true),
-    meta_typeName: getInstanceProp('string', 'meta_typeName', [typeName]),
-    meta_isReferencing: getInstanceProp('int32', 'meta_isReferencing', [], true),
-    meta_isReferencedBy: getInstanceProp('int32', 'meta_isReferencedBy', [], true),
-    meta_isLocked: getInstanceProp('bool', 'meta_isLocked', [false]),
+    id: getPropValues<[string]>('int32', 'id', [uid]),
+    meta_isBoundTo: getPropValues('int32', 'meta_isBound', [], true),
+    meta_typeId: getPropValues('string', 'meta_typeId', [typeName]),
+    meta_isReferencing: getPropValues('int32', 'meta_isReferencing', [], true),
+    meta_isReferencedBy: getPropValues('int32', 'meta_isReferencedBy', [], true),
+    meta_isLocked: getPropValues('bool', 'meta_isLocked', [false]),
   }
 }
 
-export function getInstanceProp<T extends Values = Values>(
+export function getPropValues<T extends Values = Values>(
   valueType: ValueType, name: string, values: T, isArray?: boolean
-): InstanceProp<T> {
-  return getProp<T>(valueType, name, values, isArray) as InstanceProp<T>;
+): PropValues<T> {
+  return getProp<T>(valueType, name, values, isArray) as PropValues<T>;
 }
 export function getTypeDefProp<T = Values>(
   valueType: ValueType, name: string, isArray?: boolean
@@ -258,7 +258,7 @@ export function getTypeDefProp<T = Values>(
 }
 export function getProp<T = Values>(
   valueType: ValueType, name: string, values?: T | null, isArray?: boolean
-): InstanceProp<T> | PropDefinition {
+): PropValues<T> | PropDefinition {
   return {
     valueType,
     name,
@@ -275,7 +275,7 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
       definition: {
         id: getTypeDefProp('int32', 'id'),
         meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
-        meta_typeName: getTypeDefProp('string', 'meta_typeName'),
+        meta_typeId: getTypeDefProp('string', 'meta_typeId'),
         meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
         meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
         meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
@@ -289,7 +289,7 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
       definition: {
         id: getTypeDefProp('int32', 'id'),
         meta_isBoundTo: getTypeDefProp('int32', 'meta_isBoundTo', true),
-        meta_typeName: getTypeDefProp('string', 'meta_typeName'),
+        meta_typeId: getTypeDefProp('string', 'meta_typeId'),
         meta_isReferencing: getTypeDefProp('int32', 'meta_isReferencing', true),
         meta_isReferencedBy: getTypeDefProp('int32', 'meta_isReferencedBy', true),
         meta_isLocked: getTypeDefProp('bool', 'meta_isLocked'),
@@ -308,7 +308,7 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
 
 export function getMockedInstance(typeName: string, typeId: number, types?: TypesDefinitions): Instance {
   const id = Date.now().toString().substring(3).substring(-1)
-  const assignValues = (prop: PropDefinition): InstanceProp => {
+  const assignValues = (prop: PropDefinition): PropValues => {
     const getValues = (valueType: ValueType, isArray?: boolean) => {
       const getValue = (vT: ValueType) => {
         if (vT === 'int32') {
@@ -339,8 +339,9 @@ export function getMockedInstance(typeName: string, typeId: number, types?: Type
           }
 
           return getSentence()
+        } else /* (if (vT === 'boolean')) */ {
+          return Boolean(Math.round(Math.random()))
         }
-        return Boolean(Math.round(Math.random()))
       }
 
       const length = isArray ? (Math.round(Math.random() * 4)) : 1;
@@ -371,7 +372,7 @@ export function getMockedInstances(): Instances {
   const getType = (typeName: string, typeId: number) => {
     const instance = getMockedInstance(typeName, typeId)
     return {
-      [(instance.id as InstanceProp).values[0] as number]: {
+      [(instance.id as PropValues)[0] as number]: {
         ...instance
       }
     }
@@ -427,16 +428,13 @@ export function copyPropDef(source: PropDefinition): PropDefinition {
 
 export function copyInstance(source: Instance) {
   return Object.entries(source).reduce((acc, [propName, prop]) => {
-    acc[propName] = copyInstanceProp(prop)
+    acc[propName] = copyPropValues(prop)
     return acc
   }, {} as Instance)
 }
 
-export function copyInstanceProp(source: InstanceProp): InstanceProp {
-  return {
-    ...source,
-    values: [...source.values]
-  }
+export function copyPropValues(source: PropValues): PropValues {
+  return [...source]
 }
 
 export function assertNever(x: never): never {

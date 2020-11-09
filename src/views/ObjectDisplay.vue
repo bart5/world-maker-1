@@ -52,7 +52,7 @@ export default class ObjectDisplay extends Vue {
     return this.typeDefinition || this.typeInstnace as TypeDefinition | Instance
   }
 
-  get selectedProp(): PropDefinition | InstanceProp {
+  get selectedProp(): PropDefinition | PropValues {
     return Object.keys(this.props).filter((k) => this.props[k].name === this.selectedName).map((k) => this.props[k])[0]
   }
 

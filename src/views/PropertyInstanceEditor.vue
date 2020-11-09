@@ -64,13 +64,13 @@ import ObjectDisplay from '@/views/ObjectDisplay.vue'
   components: {},
 })
 export default class TypePropertyEditor extends Vue {
-  @Prop() prop!: InstanceProp
+  @Prop() prop!: PropValues
 
   @Prop() editable!: boolean
 
   @Prop() typeName!: string
 
-  localProperty: InstanceProp = { ...this.prop }
+  localProperty: PropValues = { ...this.prop }
 
   objectDisplay = ObjectDisplay
 
