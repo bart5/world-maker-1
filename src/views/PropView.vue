@@ -1,63 +1,52 @@
 <template>
-  <div class="property-wrapper">
-    <div class="property-box">
-      <div class="isRef-field">
-        <input
-          :disabled="!editable"
-          type="checkbox"
-          :checked="isRef"
-          @click="toggleRef"
-          @change="maybeUpdate"
-        >
-      </div>
-      <div class="name-field">
-        <input
-          :disabled="!editable"
-          type="text"
-          v-model="localProp.name"
-          @change="maybeUpdate"
-        >
-      </div>
-      <div class="type-field">
-        <select
-          :disabled="!editable"
-          class="selector type-selector"
-          v-model="selectedType"
-          @change="updatelocalProp(); maybeUpdate()"
-        >
-          <option v-for="type in basicTypes" :key="type">
-            {{ type }}
-          </option>
-        </select>
-        <select
-          v-if="isRef"
-          :disabled="!editable"
-          class="selector type-reference"
-          v-model="localProp.refTargetTypeId"
-          @change="maybeUpdate"
-        >
-          <option v-for="type in projectTypes" :key="type">
-            {{ type }}
-          </option>
-        </select>
-      </div>
-      <div class="isArray-field">
-        <input
-          :disabled="!editable"
-          type="checkbox"
-          v-model="localProp.isArray"
-          @change="maybeUpdate"
-        >
-      </div>
-      <div v-if="isRef" class="show-ref-target button">
-        <button @click="toggleShowRefTarget">Show ref</button>
+<!-- This component is meant for:
+  1) Edition of Types
+  2) Rudimentary display of Instances - they should be edited in their dedicated viewers
+-->
+  <div class="prop-wrapper">
+    <div class="name">
+      <input type="text" v-model="localProp.name" @change="maybeUpdate">
+    </div>
+    <div class="values">
+      <div class="values-box">
+        <div class="top-field">
+          <!-- Show first value if user is not interacting -->
+          <div class="first-value">
+            <span class="value"></span>
+            <span class="is-more">...</span>
+          </div>
+          <!-- On interaction show input instead -->
+          <div class="value-input">
+            <input type="" :checked="" @click="" @change="">
+          </div>
+        </div>
+        <!-- List is shown when user interacts with value field -->
+        <div class="values-list">
+          <!-- Button in top-right beyond the list to unroll or collapse it -->
+          <div class="show-all-button"></div>
+          <!-- Show current value(s) when you are in search mode -->
+          <!-- Mark value on red if it's not array and it will be replaced -->
+          <div class="value-selected">
+            <div class="value"></div>
+            <div class="remove-value-button"></div>
+          </div>
+          <!-- Below only for refs -->
+          <div class="value-available"></div>
+        </div>
       </div>
     </div>
-    <component
-      v-if="isRef && showRefTarget"
-      v-bind:is="objectDisplay"
-      v-bind="displayProps"
-    />
+    <div class="value-type">
+      <input type="checkbox" :checked="isRef" @click="toggleRef" @change="maybeUpdate">
+      <select class="selector type-selector" v-model="selectedType" @change="updatelocalProp(); maybeUpdate()">
+        <option v-for="type in valueTypes" :key="type">{{ type }}</option>
+      </select>
+    </div>
+    <div class="target-type">
+    </div>
+    <div class="arity-choice">
+      <input type="checkbox" v-model="localProp.isArray" @change="maybeUpdate">
+    </div>
+    <div class="delete-prop"></div>
   </div>
 </template>
 
@@ -66,9 +55,7 @@ import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator';
 import ObjectDisplay from '@/views/ObjectDisplay.vue'
 
-@Options({
-  components: {},
-})
+@Options({})
 export default class PropertyTypeEditor extends Vue {
   @Prop() prop!: PropDefinition
 

@@ -7,9 +7,6 @@ export const transactionHandler = {
   init(vm: Vue) {
     this.store = vm.$store
   },
-  act(actionType: ActionType, context: PublicActionContext) {
-    this.store.dispatch('publicAction', { actionType, context })
-  },
   mutate(
     mN: string | null, // mutation name
     args: MutArgs,
@@ -39,6 +36,9 @@ export const transactionHandler = {
     if (mN !== null) {
       this.store.commit(mN, { tId, iId, pN, ...args })
     }
+  },
+  act(actionType: ActionType, context: PublicActionContext) {
+    this.store.dispatch('publicAction', { actionType, context })
   },
   registerChange(
     entityCopy: TypeWrapper | PropDefinition | Instance | PropValues | null,

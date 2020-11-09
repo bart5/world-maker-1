@@ -1,4 +1,4 @@
-import { ActionContext, createStore } from 'vuex';
+import { createStore } from 'vuex';
 import * as utils from './utils';
 import initialState from './state';
 import { mutate, revertChange } from './transactions';
@@ -343,7 +343,7 @@ export default typesAndInstances({
     },
     /* =====================================================================
      *
-     *                    PUBLIC CHANGES API START
+     *                    PUBLIC ACTIONS START
      *
      *====================================================================== */
     createType(state) { // OK
@@ -495,7 +495,7 @@ export default typesAndInstances({
     },
     /* =====================================================================
      *
-     *                    PUBLIC CHANGES API END
+     *                    PUBLIC ACTIONS END
      *
      *====================================================================== */
 
@@ -568,8 +568,7 @@ export default typesAndInstances({
       // This is so far an exception - a mutation that makes changes to more than one (here exactly two)
       // entities.
       // For now I'll handle it in a dirty way.
-      // If case of multiple entities mutation at once will be more prevalent I can change 'mutate'.
-      // mutate('UPDATE_REF_META_FROM_A_TO_B', { iA, iB, propsToCheck }, 'Instance', tId)
+      // If multiple entities mutation case will be more prevalent I can change 'mutate'.
       mutate(null, {}, 'Instance', tId, iA.id[0])
       mutate(null, {}, 'Instance', tId, iB.id[0])
       this.commit('UPDATE_REF_META_FROM_A_TO_B', { iA, iB, propsToCheck })
