@@ -89,29 +89,6 @@ export function getUniqueId(state: ApplicationState) {
   return uid
 }
 
-/**
- * Get all props of type A that reference type B
- */
-export function getPropsOfTypeAWithRefToTypeB(
-  st: ActionContext<ApplicationState, ApplicationState>,
-  p: {
-    typeAId?: string, typeBId?: string, instAId?: string, instBId?: string,
-  },
-) {
-  const { instAId, instBId, typeAId } = p
-  let { typeBId } = p
-  const typeA: TypeWrapper = st.getters.getType({ typeId: typeAId }, instAId)
-  const typeB: TypeWrapper = st.getters.getType({ typeId: typeBId }, instBId)
-  typeBId = typeBId || typeB.id
-  const propNames: string[] = []
-  Object.entries(typeA.definition).forEach(([, prop]) => {
-    if (prop.refTargetTypeId === typeBId) {
-      propNames.push(prop.name)
-    }
-  })
-  return propNames
-}
-
 // We want to get all instances where at least one of it'd ref-type props
 // has right now given instance as it's value
 export function getReferencingInstances(

@@ -65,7 +65,7 @@ export default typesAndInstances({
       const type = getters.getType(p)
       return type.definition[pN].refTargetTypeId
     },
-    getInstancesOfType: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
+    getInstancesListOfType: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
       const { tId } = p
       if (tId) return state.project.instances[tId]
       return state.project.instances[(getters.getType(p) as TypeWrapper).id]
@@ -107,53 +107,36 @@ export default typesAndInstances({
       return (getters.getType({ typeId: tId }) as TypeWrapper).definition[pN].valueType === 'ref'
     },
     getFilteresInstances: (state, getters) => (
-      payload: {
-        instanceId: string,
-        typeName: string,
-        prop: { name: string, value: string | number | boolean },
-        isReferencedById: string,
-        isReferencingId: string,
-        instances: Instance[]
+      p: { iId: string, tN: string,
+        prop: { pN: string, pV: string | number | boolean },
+        isReferencedById: string, isReferencingId: string,
       }
     ) => {
-      const instancesIds: string[] = Object.entries(state.project.instances).reduce((acc, [, iL]) => {
+      let instancesIds: string[] = Object.entries(state.project.instances).reduce((acc, [, iL]) => {
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
-      const { instanceId, typeName, prop, isReferencedById, isReferencingId } = payload
-      // let { instances } = payload
-      // if (!instances) {
-      //   instances = []
-      // Object.entries(state.project.instances).forEach(([, instanceList]) => {
-      //   instances.push(
-      //     ...Object.entries(instanceList).map(([, instance]) => instance)
-      //   )
-      // })
-      // }
-      if (instanceId) {
-        let match: any = null
-        getters.getInstance
-        instances.some((i) => {
-          if (i.id[0] === instanceId) {
-            match = i
-            return true
-          }
-          return false
-        })
-        instances = match ? [match] : []
-        return getters.getters.getFilteredInstances({ typeName, prop, isReferencedById, isReferencingId, instances })
+
+      const {iId, tN, prop, isReferencedById, isReferencingId } = p
+
+      if (iId) {
+        instancesIds = instancesIds.filter((instanceId) => iId === instanceId)
       }
-      if (typeName) {
-        instances.filter((i) => getters.getTypeName({ typeId: i.meta_typeId[0] }) === typeName)
-        return getters.getters.getFilteredInstances({ prop, isReferencedById, isReferencingId, instances })
+      if (tN) {
+        const iL = getters.getInstancesListOfType({ tN }) as InstanceList
+        instancesIds = instancesIds.filter((instanceId) => Object.entries(iL).some(([iId]) => instanceId === iId))
       }
       if (prop) {
-        const matchByPropValue = (i: Instance) => {
-          return Object.entries(i).some(([pId, pValues]) => pId === prop.name && pValues.some((v) => v === prop.value))
+        const { pN, pV } = prop
+        const matchByProp = (iId: string) => {
+          const instance = getters.getInstance({ iId }) as Instance
+          return Object.entries(instance).some(([pName, pValues]) => pName === pN && pValues.some((v) => v === pV))
         }
-        instances.filter(matchByPropValue)
-        return getters.getters.getFilteredInstances({ isReferencedById, isReferencingId, instances })
+        instancesIds.filter(matchByProp)
       }
       if (isReferencedById) {
+        const instanceTypeId = (getters.getType({ iId: isReferencedById }) as TypeWrapper).id
+        const instance = getters.getInstance({ iId: isReferencedById }) as Instance
+        const propsWtithRefs = Object.entries(instance
         instances.filter((i) => i.meta_isReferencedBy.some((v) => v === isReferencedById))
         return getters.getters.getFilteredInstances({ isReferencingId, instances })
       }
@@ -162,6 +145,25 @@ export default typesAndInstances({
         return getters.getters.getFilteredInstances({ instances })
       }
       return instances
+    },
+    /**
+     * Get all props of type A that reference type B
+     */
+    getPropsOfTypeAWithRefToTypeB: (state, getters) => (
+      p: { tAId?: string, tBId?: string, iAId?: string, iBId?: string, }
+    ) => {
+      const { tAId, iAId, iBId } = p
+      let { tBId } = p
+      const tA: TypeWrapper = getters.getType({ typeId: tAId }, iAId)
+      const tB: TypeWrapper = getters.getType({ typeId: tBId }, iBId)
+      tBId = tBId || tB.id
+      const propNames: string[] = []
+      Object.entries(tA.definition).forEach(([, prop]) => {
+        if (prop.refTargetTypeId === tBId) {
+          propNames.push(prop.name)
+        }
+      })
+      return propNames
     }
   },
   mutations: {
@@ -346,8 +348,8 @@ export default typesAndInstances({
       Object.entries(state.state.project.types).forEach(([typeId, wrapper]) => {
         if (typeId === tId) return
 
-        utils.getPropsOfTypeAWithRefToTypeB(state, { typeAId: wrapper.id, typeBId: tId })
-          .forEach((pN) => {
+        state.getters.getPropsOfTypeAWithRefToTypeB({ tAId: wrapper.id, tBId: tId })
+          .forEach((pN: string) => {
             //  This is slightly inefficient since it will also update metadata
             // about references for the type we are about to remove.
             //  I assume that empty string will make sense - if handled properly it will yield
@@ -510,9 +512,9 @@ export default typesAndInstances({
       const { aIId, bIId } = p
       const tId = state.getters.getType({}, aIId)
 
-      const props = utils.getPropsOfTypeAWithRefToTypeB(state, { instAId: aIId, instBId: bIId })
+      const props = state.getters.getPropsOfTypeAWithRefToTypeB({ iAId: aIId, iBId: bIId })
 
-      props.forEach((pN) => {
+      props.forEach((pN: string) => {
         this.dispatch('removePropRefValue', { tId, pN, value: bIId })
       })
     },
@@ -549,7 +551,7 @@ export default typesAndInstances({
 
     updateMetaOfRefsFromInstAToInstB(state, p: { iA: Instance, iB: Instance }) { // OK
       const { iA, iB } = p
-      const propsToCheck = utils.getPropsOfTypeAWithRefToTypeB(state, { instAId: iA.id[0], instBId: iB.id[0] })
+      const propsToCheck = state.getters.getPropsOfTypeAWithRefToTypeB({ iAId: iA.id[0], iBId: iB.id[0] })
       const tId = state.getters.getType({}, iA.id[0])
       // This is so far an exception - a mutation that makes changes to more than one (here exactly two)
       // entities.
