@@ -254,7 +254,7 @@ interface MutCtx extends MutArgs {
 }
 
 interface PublicActionContext {
-  tId: string;
+  tId?: string;
   iId?: string;
   pN?: string;
   newName?: string;

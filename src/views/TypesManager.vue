@@ -2,29 +2,23 @@
   <ModalWrapper>
     <h4>Types Manager</h4>
     <hr>
-    <button v-for="type in types" :key="type.id" @click="selectType(typeName)">
-      {{ type.name }}
-    </button>
+    <button v-for="type in types" :key="type.id" @click="selectType(typeName)">{{ type.name }}</button>
     <hr>
     <h3 v-if="selectedType">Selected type: {{ selectedType.name }}</h3>
     <TypeView
       v-if="!!selectedType"
       :typeName="selectedTypeName"
-      :editable="true"
     />
       <!-- :instanceId="instanceId" -->
     <hr>
     <h3>Type instances</h3>
-    <button v-for="instanceId in selectedInstances" :key="instanceId" @click="selectInstance(instanceId)">
-      {{ instanceId }}
-    </button>
+    <button v-for="instanceId in selectedInstances" :key="instanceId" @click="selectInstance(instanceId)">{{ instanceId }}</button>
     <hr>
     <h3>Selected instance details</h3>
     <TypeView
       v-if="!!selectedType"
       :typeName="selectedTypeName"
       :instanceId="selectedInstanceId"
-      :editable="true"
     />
     <hr>
     <hr>
@@ -33,6 +27,9 @@
     <hr>
     <h3>Raw types from project data:</h3>
     {{ projectTypes }}
+    <hr>
+    <h3>List of changes:</h3>
+    <div v-for="(change, i) in recentChanges" :key="i"> Change of type: {{ change.actionType }}</div>
   </ModalWrapper>
 </template>
 
@@ -40,6 +37,7 @@
 import { Options, Vue } from 'vue-class-component'
 import ModalWrapper from '@/views/ModalWrapper.vue'
 import TypeView from '@/views/TypeView.vue'
+import { act } from '@/store/transactions'
 
 @Options({
   components: {
@@ -48,36 +46,43 @@ import TypeView from '@/views/TypeView.vue'
   },
 })
 export default class TypesManager extends Vue {
-  selectedTypeName = ''
+  selectedTId = ''
+  selectedIId = ''
 
-  selectedInstanceId = ''
-
-  get projectTypes() {
-    return this.$store.getters.projectTypes
+  get types() {
+    return this.$store.getters.types as TypeWrapper[]
   }
 
   get selectedType() {
-    return this.projectTypes[this.selectedTypeName] || null
+    return this.$store.getters.getType({ tId: this.selectedTId })
   }
 
-  get selectedInstances() {
-    return this.$store.getters.getAllInstances(this.selectedTypeName)
+  get selectedInstance() {
+    return this.$store.getters.getInstance({ iId: this.selectedIId })
   }
 
-  selectType(typeName: string) {
-    this.selectedTypeName = typeName
+  selectType(tId: string) {
+    this.selectedTId = tId
+  }
+
+  selectInstance(iId: string) {
+    this.selectedIId = iId
   }
 
   createNewType() {
-    this.$store.dispatch('createType')
+    act('createType', {})
   }
 
-  renameType(oldTypeName: string, newTypeName: string) {
-    this.$store.dispatch('renameType', { oldTypeName, newTypeName })
+  renameType(tId: string, newName: string) {
+    act('renameType', { tId, newName })
   }
 
-  removeType(typeName: string) {
-    this.$store.dispatch('removeType', typeName)
+  removeType(tId: string) {
+    act('removeType', { tId })
+  }
+
+  get recentChanges() {
+    return this.$store.getters.recentChanges
   }
 }
 </script>

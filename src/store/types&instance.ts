@@ -180,6 +180,9 @@ export default typesAndInstances({
         }
       })
       return propNames
+    },
+    recentChanges: (state) => {
+      return state.project.recentChanges
     }
   },
   mutations: {
