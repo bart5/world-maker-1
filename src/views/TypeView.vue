@@ -25,7 +25,6 @@ export default class TypeView extends Vue {
   @Prop({}) iId!: string | undefined
 
   get type() {
-    console.log('getting type with: ', this.simpCtx)
     return this.$store.getters.getType(this.simpCtx)
   }
 

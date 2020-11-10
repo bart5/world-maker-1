@@ -63,8 +63,8 @@ export default UI({
     lastProjectLoadTime: (state) => {
       return state.ui.lastProjectLoadTime
     },
-    lastWindowClick: (state) => {
-      return state.ui.lastWindowClick
+    activeWidgetKey: (state) => {
+      return state.ui.activeWidgetKey
     }
   },
   mutations: {
@@ -299,8 +299,8 @@ export default UI({
     REFERENCE_FRAME_DATA(state, payload: { board: HTMLElement, workspace: HTMLElement }) {
       state.ui.frameData = payload
     },
-    REGISTER_WINDOW_CLICK(state) {
-      state.ui.lastWindowClick = Date.now()
+    SET_WIDGET_KEY(state, p: { widgetKey: number }) {
+      state.ui.activeWidgetKey = p.widgetKey
     },
     /* =========== APPLICATION DATA MUTATIONS =========== */
     SET_APPLICATION_DATA(state, data) {
@@ -543,8 +543,8 @@ export default UI({
     saveCurrentWorkspaceCamera() {
       this.commit('SET_CURRENT_WORKSPACE_CAMERA')
     },
-    registerWindowClick() {
-      this.commit('REGISTER_WINDOW_CLICK')
+    setWidgetKey(state, p: { widgetKey: number }) {
+      this.commit('SET_WIDGET_KEY', p)
     }
   },
   modules: {

@@ -3,14 +3,14 @@
   2) Rudimentary display of Instances - they should be edited in their dedicated viewers
 -->
 <template>
-  <div class="prop-wrapper" @click.capture="stopPropag">
-    <div class="name" @click.capture="startEdit('name')">
+  <div class="prop-wrapper">
+    <div class="name" @click="startEdit('name', $event)">
       <span v-if="!doesEdit('name')">{{ pDef.name }}</span>
       <input v-else type="text" :value="pDef.name.replace('ref_', '')" :ref="name-input"
         @input="getEValue(e, changePropName); stopEdit()" @keydown="validateNameInput"
       >
     </div>
-    <div v-if="iId" class="values" @click.capture="startEdit('values')">
+    <div v-if="iId" class="values" @click="startEdit('values', $event)">
       <div class="values-box">
         <div class="top-field">
           <!-- Show first value if user is not interacting -->
@@ -43,7 +43,7 @@
           <div class="value-selected" v-for="value in pV" :key="value">
             <div class="value">{{ value }}</div>
             <div class="remove-value-button">
-              <button @click.capture="removeValue(value)">X</button>
+              <button @click="removeValue(value)">X</button>
             </div>
           </div>
           <!-- Below only for refs -->
@@ -159,16 +159,26 @@ export default class PropView extends Vue {
     this.nameIsValid = !nameInput.match(insanityCheck)
   }
 
-  startEdit(editType: EditType) {
+  unwatch: any = null
+
+  startEdit(editType: EditType, e: MouseEvent) {
+    e.stopPropagation()
+    if (editType === this.editInProgress) return
+    if (this.unwatch) this.unwatch()
+
     this.editInProgress = editType
 
-    const unwatch = this.$watch('lastWindowClick', () => {
+    const widgetKey = Math.random()
+    this.$store.dispatch('setWidgetKey', { widgetKey }) // in order to active element from other components
+    this.unwatch = this.$watch('activeWidgetKey', (newKey: number) => {
+      if (newKey === widgetKey) return
       this.stopEdit()
-      unwatch()
+      this.unwatch()
     })
   }
 
   stopEdit() {
+    if (this.unwatch) this.unwatch()
     this.editInProgress = ''
   }
 
@@ -242,12 +252,8 @@ export default class PropView extends Vue {
     this.filteredInstances = this.$store.getters.filteredInstances({ tId, iId })
   }
 
-  stopPropag(e: MouseEvent) {
-    e.stopPropagation()
-  }
-
-  get lastWindowClick() {
-    return this.$store.getters.lastWindowClick
+  get activeWidgetKey() {
+    return this.$store.getters.activeWidgetKey
   }
 }
 </script>
@@ -271,29 +277,55 @@ export default class PropView extends Vue {
     height: 100%;
     padding: 1px;
     border: 1px solid darkgray;
+
+    &:hover {
+      cursor: pointer;
+    }
   }
 
   .name {
     width: 160px;
+    input {
+      width: 100%;
+    }
   }
   .values {
     flex-grow: 1;
     min-width: 240px;
-  }
-}
 
-.values-list {
-  display: flex;
-  flex-flow: column nowrap;
-  max-height: calc(6 * 24px);
-  overflow-y: scroll;
-  z-index: 2;
+    .values-box {
+      position: relative;
+      display: flex;
+      justify-content: flex-start;
+      width: 100%;
 
-  & > div {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    height: 24px;
+      .top-field, .top-field * {
+        display: flex;
+        justify-content: flex-start;
+        width: 100%;
+      }
+
+      .values-list {
+        position: absolute;
+        left: 0;
+        top: 100%;
+        width: 100%;
+        border: 1px solid darkslategray;
+        background: lightgray;
+        display: flex;
+        flex-flow: column nowrap;
+        max-height: calc(6 * 24px);
+        overflow-y: scroll;
+        z-index: 2;
+
+        & > div {
+          display: flex;
+          justify-content: flex-start;
+          align-items: center;
+          height: 24px;
+        }
+      }
+    }
   }
 }
 

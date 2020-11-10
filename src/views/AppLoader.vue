@@ -17,8 +17,8 @@ export default class AppLoader extends Vue {
     return this.$store.getters.applicationData
   }
 
-  registerWindowClick() {
-    this.$store.dispatch('registerWindowClick')
+  closeWidgets() {
+    this.$store.dispatch('setWidgetKey', {})
   }
 
   async mounted() {
@@ -26,7 +26,7 @@ export default class AppLoader extends Vue {
     transactionHandler.init(this)
     await this.$store.dispatch('asyncLoadApplicationData')
 
-    window.addEventListener('click', this.registerWindowClick)
+    window.addEventListener('click', this.closeWidgets)
 
     if (this.applicationData.lastProjectPath) {
       this.$store.dispatch('asyncOpenProjectFromPath', this.applicationData.lastProjectPath)

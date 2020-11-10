@@ -17,7 +17,7 @@ const initialState: ApplicationState = {
     lastProjectSaveTime: '',
     lastProjectLoadTime: '',
     frameData: null,
-    lastWindowClick: 0,
+    activeWidgetKey: 0,
   }
 }
 
