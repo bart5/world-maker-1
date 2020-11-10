@@ -10,7 +10,7 @@
         @input="getEValue(e, changePropName); stopEdit()" @keydown="validateNameInput"
       >
     </div>
-    <div class="values" @click.capture="startEdit('values')">
+    <div v-if="iId" class="values" @click.capture="startEdit('values')">
       <div class="values-box">
         <div class="top-field">
           <!-- Show first value if user is not interacting -->
@@ -82,7 +82,7 @@ import { act } from '@/store/transactions'
 type EditType = 'name' | 'values' | 'type' | 'target' | ''
 
 @Options({})
-export default class PropertyTypeEditor extends Vue {
+export default class PropView extends Vue {
   @Prop() tId!: string
   @Prop() iId!: string
 

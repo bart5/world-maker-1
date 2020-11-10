@@ -2,17 +2,12 @@
   <ModalWrapper>
     <h4>Types Manager</h4>
     <hr>
-    <button
-      class="type"
-      v-for="typeName in projectTypes"
-      :key="typeName"
-      @click="selectType(typeName)"
-    >
-      {{ typeName }}
+    <button v-for="type in types" :key="type.id" @click="selectType(typeName)">
+      {{ type.name }}
     </button>
     <hr>
     <h3 v-if="selectedType">Selected type: {{ selectedType.name }}</h3>
-    <ObjectDisplay
+    <TypeView
       v-if="!!selectedType"
       :typeName="selectedTypeName"
       :editable="true"
@@ -20,17 +15,12 @@
       <!-- :instanceId="instanceId" -->
     <hr>
     <h3>Type instances</h3>
-    <button
-      class="type"
-      v-for="instanceId in selectedInstances"
-      :key="instanceId"
-      @click="selectInstance(instanceId)"
-    >
+    <button v-for="instanceId in selectedInstances" :key="instanceId" @click="selectInstance(instanceId)">
       {{ instanceId }}
     </button>
     <hr>
     <h3>Selected instance details</h3>
-    <ObjectDisplay
+    <TypeView
       v-if="!!selectedType"
       :typeName="selectedTypeName"
       :instanceId="selectedInstanceId"
@@ -49,12 +39,12 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import ModalWrapper from '@/views/ModalWrapper.vue'
-import ObjectDisplay from '@/views/ObjectDisplay.vue'
+import TypeView from '@/views/TypeView.vue'
 
 @Options({
   components: {
     ModalWrapper,
-    ObjectDisplay
+    TypeView
   },
 })
 export default class TypesManager extends Vue {
