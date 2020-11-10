@@ -214,7 +214,7 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
   }
 }
 
-export function getMockedInstance(typeName: string, typeId: number, types?: TypesDefinitions): Instance {
+export function getMockedInstance(typeId: number, types?: TypesDefinitions): Instance {
   const id = Date.now().toString().substring(3).substring(-1)
   const assignValues = (prop: PropDefinition): PropValues => {
     const getValues = (valueType: ValueType, isArray?: boolean) => {
@@ -231,17 +231,18 @@ export function getMockedInstance(typeName: string, typeId: number, types?: Type
         } else if (vT === 'string') {
           const pieces = ['qe', 'ra', 'lok', 'nu', 've', 'zis', 'foc', 'wam', 'kud', 'ryx', 'kor'];
           const getWord = () => {
-            return new Array(Math.round(Math.random() * 5)).map((t) => {
-              t = pieces[Math.round(Math.random() * pieces.length)]
-              return t
-            }).join()
+            return Array(Math.round(Math.random() * 5)).fill(0).map((piece) => {
+              piece = pieces[Math.round(Math.random() * pieces.length)]
+              return piece
+            }).join('')
           }
 
           const getSentence = () => {
-            return (new Array(Math.round(Math.random() * 7)).map((w, i) => {
+            return (Array(Math.round(Math.random() * 7)).fill(0).map((w, i, ar) => {
               w = (i === 0
-                ? getWord().split('').map((l, li) => ((li === 0) ? l.toUpperCase() : l))
-                : getWord()) + (Math.random() < 0.2 ? ',' : '')
+                ? getWord().split('').map((l, li) => ((li === 0) ? l.toUpperCase() : l)).join('')
+                : getWord()) + ((Math.random() < 0.18 && i < ar.length - 1) ? ',' : '')
+              console.log('word: ', w)
               return w
             }).join(' ') + '.')
           }
@@ -254,26 +255,28 @@ export function getMockedInstance(typeName: string, typeId: number, types?: Type
 
       const length = isArray ? (Math.round(Math.random() * 4)) : 1;
 
-      return Array(length).map(() => getValue(valueType)) as ValueType[]
+      return Array(length).fill(0).map(() => getValue(valueType)) as ValueType[]
     }
 
     return getValues(prop.valueType, prop.isArray)
   }
 
-  const props = types ? types[typeId].definition : getMockedTypesDefinitions()[typeName].definition
+  const props = types ? types[typeId].definition : getMockedTypesDefinitions()[typeId].definition
+  console.log('props: ', props)
   const Instance: Instance = Object.entries(props).reduce((acc, [pN, pDef]) => {
     return {
       ...acc,
       [pN]: assignValues(pDef)
     }
   }, {} as Instance)
+  console.log('mocked instance: ', Instance)
 
   return Instance
 }
 
 export function getMockedInstances(): Instances {
-  const getType = (typeName: string, typeId: number) => {
-    const instance = getMockedInstance(typeName, typeId)
+  const getType = (typeId: number) => {
+    const instance = getMockedInstance(typeId)
     return {
       [(instance.id as PropValues)[0] as number]: {
         ...instance
@@ -282,16 +285,16 @@ export function getMockedInstances(): Instances {
   }
   return {
     type1: {
-      ...getType('type1', 0),
-      ...getType('type1', 0),
-      ...getType('type1', 0),
-      ...getType('type1', 0)
+      ...getType(111111),
+      ...getType(111111),
+      ...getType(111111),
+      ...getType(111111)
     },
     type2: {
-      ...getType('type2', 1),
-      ...getType('type2', 1),
-      ...getType('type2', 1),
-      ...getType('type2', 1)
+      ...getType(222222),
+      ...getType(222222),
+      ...getType(222222),
+      ...getType(222222)
     },
   }
 }

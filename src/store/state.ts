@@ -4,6 +4,7 @@ const initialState: ApplicationState = {
   projectUiDataMutated: false,
   projectInstancesMutated: false,
   projectEntityBindingsMutated: false,
+  currentTransaction: null,
   ui: {
     connectingInProgress: false,
     tileDeletionInProgress: false,
@@ -16,6 +17,7 @@ const initialState: ApplicationState = {
     lastProjectSaveTime: '',
     lastProjectLoadTime: '',
     frameData: null,
+    lastWindowClick: 0,
   }
 }
 

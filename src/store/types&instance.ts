@@ -24,11 +24,16 @@ export default typesAndInstances({
       const { tN } = p
       return (Object.entries(state.project.types).find(([, wrapper]) => wrapper.name === tN) || [null])[0]
     },
+    getTypeByInstance: (state) => (p: { iId: string }) => {
+      const { iId } = p
+      return utils.oToA(state.project.types).filter((tw) => iId in state.project.instances[tw.id])
+    },
     getType: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
       const { tId, tN, iId } = p
       if (tId) return getters.getTypeById({ tId })
       if (tN) return getters.getTypeByName({ tN })
-      return getters.getInstanceType(iId)
+      if (tId) return getters.getTypeByInstance({ iId })
+      return null
     },
     getTypeDefinition: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
       return getters.getType(p)?.definition
@@ -119,6 +124,8 @@ export default typesAndInstances({
       let instancesIds: string[] = Object.entries(state.project.instances).reduce((acc, [, iL]) => {
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
+      console.log('raw instances data: ', state.project.instances)
+      console.log('all instances ids: ', instancesIds)
 
       const { tId, tN, iId, prop, isReferencedById, isReferencingId } = p
 

@@ -2,34 +2,29 @@
   <ModalWrapper>
     <h4>Types Manager</h4>
     <hr>
-    <button v-for="type in types" :key="type.id" @click="selectType(typeName)">{{ type.name }}</button>
+    <h3>Types:</h3>
+      <button v-for="type in types" :key="type.id" @click="selectType(typeName)">{{ type.name }}</button>
     <hr>
-    <h3 v-if="selectedType">Selected type: {{ selectedType.name }}</h3>
-    <TypeView
-      v-if="!!selectedType"
-      :typeName="selectedTypeName"
-    />
-      <!-- :instanceId="instanceId" -->
+    <h3>Selected type: {{ selectedType && selectedType.name }}</h3>
+      <TypeView v-if="selectedType" :tId="selectedTId"/>
     <hr>
-    <h3>Type instances</h3>
-    <button v-for="instanceId in selectedInstances" :key="instanceId" @click="selectInstance(instanceId)">{{ instanceId }}</button>
+    <h3>Instances of selected type:</h3>
+      <button v-for="instance in selectedTypeInstances" :key="instance.id[0]" @click="selectInstance(instance.id[0])">{{ instance.id[0] }}</button>
     <hr>
-    <h3>Selected instance details</h3>
-    <TypeView
-      v-if="!!selectedType"
-      :typeName="selectedTypeName"
-      :instanceId="selectedInstanceId"
-    />
+    <h3>All Instances:</h3>
+      <button v-for="instance in allInstances" :key="instance.id[0]" @click="selectInstance(instance.id[0])">{{ instance.id[0] }}</button>
     <hr>
+    <h3>Selected instance:</h3>
+      <TypeView v-if="selectedInstance" :tId="selectedITId" :iId="selectedIId"/>
+    <hr>
+    <h3>Raw types:</h3>
+      {{ types }}
     <hr>
     <h3>Raw selected type:</h3>
-    {{ selectedType }}
-    <hr>
-    <h3>Raw types from project data:</h3>
-    {{ projectTypes }}
+      {{ selectedType }}
     <hr>
     <h3>List of changes:</h3>
-    <div v-for="(change, i) in recentChanges" :key="i"> Change of type: {{ change.actionType }}</div>
+      <div v-for="(change, i) in recentChanges" :key="i"> Change of type: {{ change.actionType }}</div>
   </ModalWrapper>
 </template>
 
@@ -48,6 +43,7 @@ import { act } from '@/store/transactions'
 export default class TypesManager extends Vue {
   selectedTId = ''
   selectedIId = ''
+  selectedITId = ''
 
   get types() {
     return this.$store.getters.types as TypeWrapper[]
@@ -55,6 +51,14 @@ export default class TypesManager extends Vue {
 
   get selectedType() {
     return this.$store.getters.getType({ tId: this.selectedTId })
+  }
+
+  get selectedTypeInstances() {
+    return this.$store.getters.getFilteredInstances({ tId: this.selectedTId })
+  }
+
+  get allInstances() {
+    return this.$store.getters.getFilteredInstances({})
   }
 
   get selectedInstance() {
@@ -65,7 +69,8 @@ export default class TypesManager extends Vue {
     this.selectedTId = tId
   }
 
-  selectInstance(iId: string) {
+  selectInstance(tId: string, iId: string) {
+    this.selectedITId = tId
     this.selectedIId = iId
   }
 
