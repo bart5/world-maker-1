@@ -1,15 +1,12 @@
 <template>
   <div class="type-wrapper">
-    <template v-if="entityType === 'type'">
-      <PropView
-        v-for="(prop, pN) in instance"
-        :tId="tId"
-        :iId="iId"
-        :pN="pN"
-        :key="pN"
-        @select-property="selectProp"
-      />
-    </template>
+    <PropView
+      v-for="(pDef, pN) in type.definition"
+      :tId="tId"
+      :iId="iId"
+      :pDef="pDef"
+      :key="pN"
+    />
   </div>
 </template>
 
@@ -27,8 +24,8 @@ export default class TypeView extends Vue {
   @Prop({}) tId!: string
   @Prop({}) iId!: string | undefined
 
-  get instance() {
-    return this.$store.getters.getInstance(this.simpCtx)
+  get type() {
+    return this.$store.getters.getType(this.simpCtx)
   }
 
   get simpCtx() {
@@ -45,12 +42,6 @@ export default class TypeView extends Vue {
   display: flex;
   flex-flow: column;
   width: 100%;
-
-  & > * {
-    display: flex;
-    flex-flow: column;
-    width: 100%;
-  }
 }
 
 </style>

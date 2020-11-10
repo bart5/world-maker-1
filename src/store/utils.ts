@@ -68,7 +68,8 @@ export function oToA<T>(o: {[k: string]: T}): Array<T> {
 }
 
 export function getUniqueId(state: ApplicationState) {
-  const getId = () => Date.now().toString().substring(3).substring(-1)
+  // const getId = () => Date.now().toString().substring(3).substring(-1)
+  const getId = () => Math.random().toString().substring(10)
   const isUnique = (id: string) => {
     const types = state.project.types
     return !Object.keys(types).some(([typeId]) => {
@@ -193,7 +194,7 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
     },
     222222: {
       id: '222222',
-      name: 'type1',
+      name: 'type2',
       definition: {
         id: getPropDef('int32', 'id'),
         meta_isBoundTo: getPropDef('int32', 'meta_isBoundTo', true),
@@ -215,7 +216,7 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
 }
 
 export function getMockedInstance(typeId: number, types?: TypesDefinitions): Instance {
-  const id = Date.now().toString().substring(3).substring(-1)
+  const id = Math.random().toString().substring(10)
   const assignValues = (prop: PropDefinition): PropValues => {
     const getValues = (valueType: ValueType, isArray?: boolean) => {
       const getValue = (vT: ValueType) => {
@@ -242,7 +243,6 @@ export function getMockedInstance(typeId: number, types?: TypesDefinitions): Ins
               w = (i === 0
                 ? getWord().split('').map((l, li) => ((li === 0) ? l.toUpperCase() : l)).join('')
                 : getWord()) + ((Math.random() < 0.18 && i < ar.length - 1) ? ',' : '')
-              console.log('word: ', w)
               return w
             }).join(' ') + '.')
           }
@@ -262,14 +262,12 @@ export function getMockedInstance(typeId: number, types?: TypesDefinitions): Ins
   }
 
   const props = types ? types[typeId].definition : getMockedTypesDefinitions()[typeId].definition
-  console.log('props: ', props)
   const Instance: Instance = Object.entries(props).reduce((acc, [pN, pDef]) => {
     return {
       ...acc,
       [pN]: assignValues(pDef)
     }
   }, {} as Instance)
-  console.log('mocked instance: ', Instance)
 
   return Instance
 }
@@ -277,20 +275,21 @@ export function getMockedInstance(typeId: number, types?: TypesDefinitions): Ins
 export function getMockedInstances(): Instances {
   const getType = (typeId: number) => {
     const instance = getMockedInstance(typeId)
+    const id = (instance.id as PropValues)[0] as number
     return {
-      [(instance.id as PropValues)[0] as number]: {
+      [id]: {
         ...instance
       }
     }
   }
   return {
-    type1: {
+    111111: {
       ...getType(111111),
       ...getType(111111),
       ...getType(111111),
       ...getType(111111)
     },
-    type2: {
+    222222: {
       ...getType(222222),
       ...getType(222222),
       ...getType(222222),
@@ -299,16 +298,15 @@ export function getMockedInstances(): Instances {
   }
 }
 
-export function getNewProjectTemplate() {
-  const project: Project = {
-    instances: getMockedInstances(),
-    types: getMockedTypesDefinitions(),
+export function getNewProjectTemplate(): Project {
+  return {
+    instances: { ...getMockedInstances() },
+    types: { ...getMockedTypesDefinitions() },
     recentChanges: [],
     uiData: {
       ...getNewProjectUiData()
     }
   }
-  return project
 }
 
 export function copyTypeWrapper(source: TypeWrapper): TypeWrapper {

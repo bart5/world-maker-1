@@ -18,7 +18,7 @@ export default typesAndInstances({
     },
     getTypeById: (state) => (p: { tId: string }) => {
       const { tId } = p
-      return (Object.entries(state.project.types).find(([id]) => id === tId) || [null])[0]
+      return state.project.types[tId]
     },
     getTypeByName: (state) => (p: { tN: string }) => {
       const { tN } = p
@@ -32,7 +32,13 @@ export default typesAndInstances({
       const { tId, tN, iId } = p
       if (tId) return getters.getTypeById({ tId })
       if (tN) return getters.getTypeByName({ tN })
-      if (tId) return getters.getTypeByInstance({ iId })
+      if (iId) return getters.getTypeByInstance({ iId })
+      return null
+    },
+    getTypeId: (state, getters) => (p: { tN: string, iId: string }) => {
+      const { tN, iId } = p
+      if (tN) return getters.getTypeByName({ tN })?.id
+      if (iId) return getters.getTypeByInstance({ iId })?.id
       return null
     },
     getTypeDefinition: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
@@ -134,6 +140,7 @@ export default typesAndInstances({
       }
       if (tN || tId) {
         const iL = getters.getInstancesListOfType({ tId, tN }) as InstanceList
+        console.log('instances list: ', iL)
         instancesIds = instancesIds.filter((instanceId) => Object.entries(iL).some(([_iId]) => instanceId === _iId))
       }
       if (prop) {
@@ -162,8 +169,11 @@ export default typesAndInstances({
       return Object.entries(state.project.instances).reduce((acc, [, iL]) => {
         return [
           ...acc,
-          ...instancesIds.reduce((_acc, _iId) => {
-            if (_iId in iL) return [...acc, iL[_iId]]
+          ...(Object.entries(iL)).reduce((_acc, [_iId]) => {
+            if (instancesIds.includes(_iId)) {
+              instancesIds.remove(_iId)
+              return [..._acc, iL[_iId]]
+            }
             return _acc
           }, [] as Instance[])
         ]

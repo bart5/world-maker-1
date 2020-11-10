@@ -3,7 +3,7 @@
     <h4>Types Manager</h4>
     <hr>
     <h3>Types:</h3>
-      <button v-for="type in types" :key="type.id" @click="selectType(typeName)">{{ type.name }}</button>
+      <button v-for="type in types" :key="type.id" @click="selectType(type.id)">{{ type.name }}</button>
     <hr>
     <h3>Selected type: {{ selectedType && selectedType.name }}</h3>
       <TypeView v-if="selectedType" :tId="selectedTId"/>
@@ -54,6 +54,8 @@ export default class TypesManager extends Vue {
   }
 
   get selectedTypeInstances() {
+    if (!this.selectedTId) return []
+    console.log('getting instances for type id: ', this.selectedTId)
     return this.$store.getters.getFilteredInstances({ tId: this.selectedTId })
   }
 
@@ -69,9 +71,9 @@ export default class TypesManager extends Vue {
     this.selectedTId = tId
   }
 
-  selectInstance(tId: string, iId: string) {
-    this.selectedITId = tId
+  selectInstance(iId: string) {
     this.selectedIId = iId
+    this.selectedITId = this.$store.getters.getTypeId({ iId })
   }
 
   createNewType() {

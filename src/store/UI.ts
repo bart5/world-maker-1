@@ -433,7 +433,7 @@ export default UI({
     async asyncLoadProject(state, { path, isNew }) {
       await state.dispatch('asyncSaveProject')
         .catch((e) => Error(`Failed saving project. \n${e}`))
-      const project = isNew
+      const project: Project = isNew
         ? { ...utils.getNewProjectTemplate() }
         : (
           await state.dispatch('asyncFetchProject', path)

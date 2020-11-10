@@ -1,8 +1,8 @@
-<template>
 <!-- This component is meant for:
   1) Edition of Types
   2) Rudimentary display of Instances - they should be edited in their dedicated viewers
 -->
+<template>
   <div class="prop-wrapper" @click.capture="stopPropag">
     <div class="name" @click.capture="startEdit('name')">
       <span v-if="!doesEdit('name')">{{ pDef.name }}</span>
@@ -25,8 +25,8 @@
           <template v-else>
             <div v-if="isBool" class="value-input">
               <select :value="pDef.valueType" @input="getEValue(e, changeValue, 'bool')">
-                <option :value="true">true<option/>
-                <option :value="false">false<option/>
+                <option :value="true">true</option>
+                <option :value="false">false</option>
               </select>
             </div>
             <div v-else class="value-input">
@@ -262,6 +262,7 @@ export default class PropView extends Vue {
   align-items: center;
   border: 1px solid slategray;
   overflow-y: visible;
+  justify-content: flex-start;
 
   & > div {
     display: flex;
