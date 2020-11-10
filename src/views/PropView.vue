@@ -4,10 +4,9 @@
   2) Rudimentary display of Instances - they should be edited in their dedicated viewers
 -->
   <div class="prop-wrapper">
-    <div class="name">
-      <span class="">{{}}</span>
-      <!-- prefix cannot be added manually and wont be accepted -->
-      <input type="text" :value="pDef.name.replace('ref_', '')" :ref="name-input"
+    <div class="name" @click="startEdit('name')">
+      <span v-if="!doesEdit('name')">{{ pDef.name }}</span>
+      <input v-else type="text" :value="pDef.name.replace('ref_', '')" :ref="name-input"
         @input="getEValue(e, changePropName)" @keydown="validateNameInput"
       >
     </div>
@@ -40,16 +39,21 @@
       </div>
     </div>
     <div class="value-type">
-      <input type="checkbox" :checked="isRef" @click="toggleRef" @change="maybeUpdate">
-      <select class="selector type-selector" v-model="selectedType" @change="updatelocalProp(); maybeUpdate()">
-        <option v-for="type in valueTypes" :key="type">{{ type }}</option>
+      <select class="type-selector" :value="pDef.valueType" @input="getEValue(e, changeType)">
+        <option v-for="vType in valueTypes" :key="vType">{{ vType }}</option>
       </select>
     </div>
-    <div class="target-type"></div>
-    <div class="arity-choice">
-      <input type="checkbox" v-model="localProp.isArray" @change="maybeUpdate">
+    <div class="target-type">
+      <select class="target-selector" :value="targetName" @input="getEValue(e, changeType)">
+        <option v-for="type in types" :key="type.id">{{ type.name }}</option>
+      </select>
     </div>
-    <div class="delete-prop"></div>
+    <div class="arity-choice">
+      <input type="checkbox" :value="pDef.isArray" @click="changePropArity">
+    </div>
+    <div class="delete-prop">
+      <button @click="removeProp">X</button>
+    </div>
   </div>
 </template>
 
@@ -58,6 +62,8 @@ import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator';
 import { act } from '@/store/transactions'
 
+type EditType = 'name' | 'values' | 'type' | 'target' | ''
+
 @Options({})
 export default class PropertyTypeEditor extends Vue {
   @Prop() tId!: string
@@ -65,6 +71,10 @@ export default class PropertyTypeEditor extends Vue {
 
   @Prop() pDef!: PropDefinition
   get pV(): Values { return this.$store.getters.getPV({ tId: this, iId: this.iId, pN: this.pDef.name }) }
+
+  get targetName() {
+    return this.$store.getters.getTypeName(this.simpCtx)
+  }
 
   changePropName(newName: string) {
     if (!this.nameIsValid) {
@@ -78,38 +88,45 @@ export default class PropertyTypeEditor extends Vue {
       newName = 'ref_' + newName
     }
     if (this.pDef.name === newName) return
-    act('changePropName', this.getContext({ newName }))
+    act('changePropName', this.getCtx({ newName }))
   }
   changeType(newType: ValueType) {
     if (this.pDef.valueType === newType) return
-    act('changePropType', this.getContext({ newType }))
+    act('changePropType', this.getCtx({ newType }))
   }
   changePropTargetType(newTargetId: string) {
     if (this.pDef.refTargetTypeId === newTargetId) return
-    act('changePropTargetType', this.getContext({ newTargetId }))
+    act('changePropTargetType', this.getCtx({ newTargetId }))
   }
   changePropArity(isArray: boolean) {
     if (this.pDef.isArray === isArray) return
-    if (isArray) act('changePropToArray', this.getContext({}))
-    else act('changePropToSingle', this.getContext({}))
+    if (isArray) act('changePropToArray', this.simpCtx)
+    else act('changePropToSingle', this.simpCtx)
   }
   changeValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
-    act('changePropValue', this.getContext({ value }))
+    act('changePropValue', this.getCtx({ value }))
   }
   addValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
-    act('addPropValue', this.getContext({ value }))
+    act('addPropValue', this.getCtx({ value }))
   }
   removeValue(value: number | boolean | string) {
     if (!this.pV.includes(value)) return
-    act('removePropValue', this.getContext({ value }))
+    act('removePropValue', this.getCtx({ value }))
+  }
+  removeProp() {
+    const accept = window.confirm('Do you really want to remove this property?\n Side effects accross project are possible.')
+    if (!accept) return
+    act('removeProp', this.simpCtx)
   }
 
   getEValue(e: UIEvent, cb: (v: any) => any, type: 'number' | 'bool') {
     const cast = (v: string) => (type ? (type === 'number' ? Number(v) : Boolean(v)) : v)
     cb(cast((e.target as HTMLInputElement).value))
   }
+
+  editInProgress: EditType = ''
 
   nameIsValid = true
 
@@ -123,8 +140,16 @@ export default class PropertyTypeEditor extends Vue {
     this.nameIsValid = !nameInput.match(insanityCheck)
   }
 
+  startEdit(editType: EditType) {
+    this.editInProgress = editType
+  }
+
+  doesEdit(editType: EditType) {
+    return this.editInProgress === editType
+  }
+
   // Universal sufficient parameters for every public action and getter
-  getContext(p: { newName?: string, newType?: ValueType, newTargetId?: string, value?: string | boolean | number }): PublicActionContext {
+  getCtx(p: { newName?: string, newType?: ValueType, newTargetId?: string, value?: string | boolean | number }): PublicActionContext {
     const { newName, newType, newTargetId, value } = p
     return {
       tId: this.tId,
@@ -137,10 +162,18 @@ export default class PropertyTypeEditor extends Vue {
     }
   }
 
-  get basicTypes() { return ['int32', 'flt', 'string', 'bool', 'ref'] }
+  get simpCtx() {
+    return {
+      tId: this.tId,
+      iId: this.iId,
+      pN: this.pDef.name
+    }
+  }
 
-  get projectTypes() {
-    return Object.keys(this.$store.getters.projectTypes)
+  get valueTypes() { return ['int32', 'flt', 'string', 'bool', 'ref'] }
+
+  get types() {
+    return this.$store.getters.types as TypeWrapper[]
   }
 
   get isRef() { return this.pDef.valueType === 'ref' }
@@ -148,16 +181,23 @@ export default class PropertyTypeEditor extends Vue {
 </script>
 
 <style lang="scss" scoped>
-.property-wrapper {
+.prop-wrapper {
   width: 100%;
   display: flex;
-  flex-flow: column nowrap;
+  flex-flow: row nowrap;
+  height: 32px;
+  padding: 2px;
+  align-items: center;
+  border: 1px solid slategray;
+
+  & > div {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100%;
+    padding: 1px;
+    border: 1px solid darkgray;
+  }
 }
 
-.property-box {
-  width: 100%;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-}
 </style>
