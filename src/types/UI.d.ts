@@ -124,6 +124,7 @@ interface UIState {
   lastProjectSaveTime: string;
   lastProjectLoadTime: string;
   frameData: { board: HTMLElement, workspace: HTMLElement } | null;
+  lastWindowClick: number;
 }
 
 interface WorkspaceConfiguration {

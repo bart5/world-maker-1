@@ -63,6 +63,9 @@ export default UI({
     lastProjectLoadTime: (state) => {
       return state.ui.lastProjectLoadTime
     },
+    lastWindowClick: (state) => {
+      return state.ui.lastWindowClick
+    }
   },
   mutations: {
     /* =========== PROJECT CONFIGURATION MUTATIONS =========== */
@@ -295,6 +298,9 @@ export default UI({
     },
     REFERENCE_FRAME_DATA(state, payload: { board: HTMLElement, workspace: HTMLElement }) {
       state.ui.frameData = payload
+    },
+    REGISTER_WINDOW_CLICK(state) {
+      state.ui.lastWindowClick = Date.now()
     },
     /* =========== APPLICATION DATA MUTATIONS =========== */
     SET_APPLICATION_DATA(state, data) {
@@ -537,6 +543,9 @@ export default UI({
     saveCurrentWorkspaceCamera() {
       this.commit('SET_CURRENT_WORKSPACE_CAMERA')
     },
+    registerWindowClick() {
+      this.commit('REGISTER_WINDOW_CLICK')
+    }
   },
   modules: {
   },

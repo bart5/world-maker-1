@@ -17,10 +17,16 @@ export default class AppLoader extends Vue {
     return this.$store.getters.applicationData
   }
 
+  registerWindowClick() {
+    this.$store.dispatch('registerWindowClick')
+  }
+
   async mounted() {
     ipc.initListeners(this)
     transactionHandler.init(this)
     await this.$store.dispatch('asyncLoadApplicationData')
+
+    window.addEventListener('click', this.registerWindowClick)
 
     if (this.applicationData.lastProjectPath) {
       this.$store.dispatch('asyncOpenProjectFromPath', this.applicationData.lastProjectPath)

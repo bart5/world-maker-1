@@ -110,8 +110,8 @@ export default typesAndInstances({
     isPropARef: (state, getters) => (tId: string, pN: string) => {
       return (getters.getType({ typeId: tId }) as TypeWrapper).definition[pN].valueType === 'ref'
     },
-    getFilteresInstances: (state, getters) => (
-      p: { iId: string, tN: string,
+    getFilteredInstances: (state, getters) => (
+      p: { iId: string, tN: string, tId: string,
         prop: { pN: string, pV: string | number | boolean },
         isReferencedById: string, isReferencingId: string,
       }
@@ -120,13 +120,13 @@ export default typesAndInstances({
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
 
-      const { iId, tN, prop, isReferencedById, isReferencingId } = p
+      const { tId, tN, iId, prop, isReferencedById, isReferencingId } = p
 
       if (iId) {
         instancesIds = instancesIds.filter((instanceId) => iId === instanceId)
       }
-      if (tN) {
-        const iL = getters.getInstancesListOfType({ tN }) as InstanceList
+      if (tN || tId) {
+        const iL = getters.getInstancesListOfType({ tId, tN }) as InstanceList
         instancesIds = instancesIds.filter((instanceId) => Object.entries(iL).some(([_iId]) => instanceId === _iId))
       }
       if (prop) {
