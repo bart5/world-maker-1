@@ -5,9 +5,11 @@
 -->
   <div class="prop-wrapper">
     <div class="name">
+      <span class="">{{}}</span>
       <!-- prefix cannot be added manually and wont be accepted -->
-      <span class="ref-prefix"></span>
-      <input type="text" v-model="_pDef.name">
+      <input type="text" :value="pDef.name.replace('ref_', '')" :ref="name-input"
+        @input="getEValue(e, changePropName)" @keydown="validateNameInput"
+      >
     </div>
     <div class="values">
       <div class="values-box">
@@ -65,6 +67,16 @@ export default class PropertyTypeEditor extends Vue {
   get pV(): Values { return this.$store.getters.getPV({ tId: this, iId: this.iId, pN: this.pDef.name }) }
 
   changePropName(newName: string) {
+    if (!this.nameIsValid) {
+      console.error('Invalid new name')
+      return
+    }
+    if (newName.startsWith('ref_') && !this.isRef) {
+      console.error('Invalid new name')
+      newName = newName.replace('ref_', '')
+    } else if (this.pDef.name.startsWith('ref_') && !newName.startsWith('ref_')) {
+      newName = 'ref_' + newName
+    }
     if (this.pDef.name === newName) return
     act('changePropName', this.getContext({ newName }))
   }
@@ -92,6 +104,23 @@ export default class PropertyTypeEditor extends Vue {
   removeValue(value: number | boolean | string) {
     if (!this.pV.includes(value)) return
     act('removePropValue', this.getContext({ value }))
+  }
+
+  getEValue(e: UIEvent, cb: (v: any) => any, type: 'number' | 'bool') {
+    const cast = (v: string) => (type ? (type === 'number' ? Number(v) : Boolean(v)) : v)
+    cb(cast((e.target as HTMLInputElement).value))
+  }
+
+  nameIsValid = true
+
+  get nameInput() {
+    return this.$refs['name-input'] as HTMLInputElement
+  }
+
+  validateNameInput() {
+    const nameInput = this.nameInput.value
+    const insanityCheck = new RegExp(/[^a-Z]|ref/g)
+    this.nameIsValid = !nameInput.match(insanityCheck)
   }
 
   // Universal sufficient parameters for every public action and getter
