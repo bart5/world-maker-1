@@ -64,7 +64,7 @@ export default class TypesManager extends Vue {
   }
 
   get selectedInstance() {
-    return this.$store.getters.getInstance({ iId: this.selectedIId })
+    return Boolean(this.$store.getters.getInstance({ iId: this.selectedIId }))
   }
 
   selectType(tId: string) {

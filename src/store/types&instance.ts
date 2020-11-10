@@ -26,7 +26,7 @@ export default typesAndInstances({
     },
     getTypeByInstance: (state) => (p: { iId: string }) => {
       const { iId } = p
-      return utils.oToA(state.project.types).filter((tw) => iId in state.project.instances[tw.id])
+      return utils.oToA(state.project.types).find((tw) => iId in state.project.instances[tw.id])
     },
     getType: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
       const { tId, tN, iId } = p
@@ -57,23 +57,27 @@ export default typesAndInstances({
     },
     getInstanceByTypeId: (state) => (p: { tId: string, iId: string }) => {
       const { tId, iId } = p
+      console.log('getting instance of type: ', tId, ' and of id: ', iId)
       return state.project.instances[tId][iId]
     },
     getInstanceByTypeName: (state, getters) => (p: { tN: string, iId: string }) => {
       const { tN, iId } = p
-      return getters.getInstanceByTypeId(getters.getType({ tN }).id, iId)
+      return getters.getInstanceByTypeId({ tId: getters.getType({ tN }).id, iId })
     },
     getInstance: (state, getters) => (p: { tId: string, tN: string, iId: string }) => {
       const { tId, tN, iId } = p
 
       if (tId) return getters.getInstanceByTypeId({ tId, iId })
       if (tN) return getters.getInstanceByTypeName({ tN, iId })
-
-      const instance: Instance[] = []
-      utils.oToA(state.project.instances).some((instanceList) => {
-        return iId in instanceList && instance.push(instanceList[iId])
-      })
-      return instance[0]
+      if (iId) {
+        const instance: Instance[] = []
+        Object.entries(state.project.instances).some(([, iL]) => {
+          return iId in iL && instance.push(iL[iId])
+        })
+        console.log('found instance: ', instance[0])
+        return instance[0]
+      }
+      return null
     },
     getPropTarget: (state, getters) => (p: { tId: string, iId: string, pN: string }) => {
       const { pN } = p

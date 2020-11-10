@@ -87,7 +87,7 @@ export default class PropView extends Vue {
   @Prop() iId!: string
 
   @Prop() pDef!: PropDefinition
-  get pV(): Values { return this.$store.getters.getPV({ tId: this, iId: this.iId, pN: this.pDef.name }) }
+  get pV(): Values { return this.$store.getters.getPV(this.simpCtx) }
 
   instanceQuery = ''
   queryIsValid = true
@@ -271,6 +271,14 @@ export default class PropView extends Vue {
     height: 100%;
     padding: 1px;
     border: 1px solid darkgray;
+  }
+
+  .name {
+    width: 160px;
+  }
+  .values {
+    flex-grow: 1;
+    min-width: 240px;
   }
 }
 
