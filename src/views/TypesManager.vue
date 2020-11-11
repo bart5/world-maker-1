@@ -2,17 +2,30 @@
   <ModalWrapper>
     <h4>Types Manager</h4>
     <hr>
+    <button @click="createNewType">
+      <h3>Create new Type</h3>
+    </button>
+    <hr>
     <h3>Types:</h3>
-      <button v-for="type in types" :key="type.id" @click="selectType(type.id)">{{ type.name }}</button>
+      <div class="type" v-for="type in types" :key="type.id">
+        <button @click="selectType(type.id)">Select type: {{ type.name }}</button>
+        <button @click="removeType(type.id)">Remove</button>
+      </div>
     <hr>
     <h3>Selected type: {{ selectedType && selectedType.name }}</h3>
       <TypeView v-if="selectedType" :tId="selectedTId"/>
     <hr>
     <h3>Instances of selected type:</h3>
-      <button v-for="instance in selectedTypeInstances" :key="instance.id[0]" @click="selectInstance(instance.id[0])">{{ instance.id[0] }}</button>
+      <div class="instance" v-for="instance in selectedTypeInstances" :key="instance.id[0]">
+        <button @click="selectInstance(instance.id[0])">{{ instance.id[0] }}</button>
+        <button @click="removeInstance(instance.id[0])">Remove</button>
+      </div>
     <hr>
     <h3>All Instances:</h3>
-      <button v-for="instance in allInstances" :key="instance.id[0]" @click="selectInstance(instance.id[0])">{{ instance.id[0] }}</button>
+      <div class="instance" v-for="instance in allInstances" :key="instance.id[0]">
+        <button @click="selectInstance(instance.id[0])">{{ instance.id[0] }}</button>
+        <button @click="removeInstance(instance.id[0])">Remove</button>
+      </div>
     <hr>
     <h3>Selected instance:</h3>
       <TypeView v-if="selectedInstance" :tId="selectedITId" :iId="selectedIId"/>
@@ -88,6 +101,10 @@ export default class TypesManager extends Vue {
     act('removeType', { tId })
   }
 
+  removeInstance(iId: string) {
+    act('removeInstance', { iId })
+  }
+
   get recentChanges() {
     return this.$store.getters.recentChanges
   }
@@ -96,12 +113,14 @@ export default class TypesManager extends Vue {
 
 <style lang="scss" scoped>
 
-.type {
+.type, .instance {
   width: 100%;
   height: 24px;
   text-align: center;
   border: 1px solid;
   margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
 }
 
 </style>

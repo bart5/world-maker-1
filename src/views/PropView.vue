@@ -4,49 +4,48 @@
 -->
 <template>
   <div class="prop-wrapper">
+
     <div class="name" @click="startEdit('name', $event)">
       <span v-if="!doesEdit('name')">{{ pDef.name }}</span>
-      <input v-else type="text" :value="pDef.name.replace('ref_', '')" :ref="name-input"
-        @input="getEValue(e, changePropName); stopEdit()" @keydown="validateNameInput"
+      <input v-else type="text" :value="localPDef.name.replace('ref_', '')" ref="nameInput"
+        @change="getEValue($event, renameProp); stopEdit()" @keydown="validateNameInput"
       >
     </div>
+
     <div v-if="iId" class="values" @click="startEdit('values', $event)">
       <div class="values-box">
+
         <div class="top-field">
-          <!-- Show first value if user is not interacting -->
           <div v-if="!doesEdit('values')" class="first-value">
             <span class="value">{{ pV[0] }}</span>
             <span v-if="pV.length > 1" class="is-more">...</span>
           </div>
-          <!-- On interaction show input instead -->
+
           <div v-else-if="isRef">
             <input type="text" v-model="instanceQuery" @keydown="searchInstances">
           </div>
+
           <template v-else>
             <div v-if="isBool" class="value-input">
-              <select :value="pDef.valueType" @input="getEValue(e, changeValue, 'bool')">
+              <select :value="localPDef.valueType" @change="getEValue($event, changeValue, 'bool')">
                 <option :value="true">true</option>
                 <option :value="false">false</option>
               </select>
             </div>
+
             <div v-else class="value-input">
-              <input v-bind="valueInputAttributes" @input="getEValue(e, changeValue, 'number')">
+              <input v-bind="valueInputAttributes" @change="getEValue($event, changeValue, 'number')">
             </div>
           </template>
         </div>
-        <!-- List is shown when user interacts with value field -->
+
         <div v-if="doesEdit('values')" class="values-list">
-          <!-- Button in top-right beyond the list to unroll or collapse it -->
-          <!-- <div class="show-all-button"></div> -->
-          <!-- Show current value(s) when you are in search mode -->
-          <!-- Mark value on red if it's not array and it will be replaced -->
           <div class="value-selected" v-for="value in pV" :key="value">
             <div class="value">{{ value }}</div>
             <div class="remove-value-button">
               <button @click="removeValue(value)">X</button>
             </div>
           </div>
-          <!-- Below only for refs -->
           <template v-if="isRef">
             <div class="value-available" v-for="instance in filteredInstances" :key="instance.is.value[0]">
               {{ instance.id.value[0] }}
@@ -55,19 +54,23 @@
         </div>
       </div>
     </div>
+
     <div class="value-type">
-      <select class="type-selector" :value="pDef.valueType" @input="getEValue(e, changeType)">
+      <select class="type-selector" :value="localPDef.valueType" @change="getEValue($event, changeType)">
         <option v-for="vType in valueTypes" :key="vType">{{ vType }}</option>
       </select>
     </div>
+
     <div class="target-type">
-      <select class="target-selector" :value="pDef.refTargetTypeId" @input="getEValue(e, changeType)">
+      <select class="target-selector" :value="localPDef.refTargetTypeId" @change="getEValue($event, changePropTargetType)">
         <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
       </select>
     </div>
+
     <div class="arity-choice">
-      <input type="checkbox" :value="pDef.isArray" @click="changePropArity">
+      <input type="checkbox" :value="localPDef.isArray" @change="changePropArity(localPDef.isArray)">
     </div>
+
     <div class="delete-prop">
       <button @click="removeProp">X</button>
     </div>
@@ -79,7 +82,7 @@ import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator';
 import { act } from '@/store/transactions'
 
-type EditType = 'name' | 'values' | 'type' | 'target' | ''
+type FieldType = 'name' | 'values' | 'type' | 'target' | ''
 
 @Options({})
 export default class PropView extends Vue {
@@ -91,57 +94,64 @@ export default class PropView extends Vue {
 
   instanceQuery = ''
   queryIsValid = true
-  editInProgress: EditType = ''
+  editInProgress: FieldType = ''
   nameIsValid = true
   filteredInstances: Instance[] = []
+  unwatch: any = null
+  localPDef = { ...this.pDef }
 
-  get targetName() {
-    return this.$store.getters.getTypeName(this.simpCtx)
+  updatelocalPDef() {
+    this.localPDef = { ...this.pDef }
   }
 
-  changePropName(newName: string) {
+  renameProp(newName: string) {
     if (!this.nameIsValid) {
       console.error('Invalid new name')
       return
     }
-    if (newName.startsWith('ref_') && !this.isRef) {
-      console.error('Invalid new name')
-      newName = newName.replace('ref_', '')
-    } else if (this.pDef.name.startsWith('ref_') && !newName.startsWith('ref_')) {
+    if (this.pDef.name.startsWith('ref_') && this.isRef && !newName.startsWith('ref_')) {
       newName = 'ref_' + newName
     }
     if (this.pDef.name === newName) return
-    act('changePropName', this.getCtx({ newName }))
+    act('renameProp', this.getCtx({ newName }))
+    this.updatelocalPDef()
   }
   changeType(newType: ValueType) {
     if (this.pDef.valueType === newType) return
     act('changePropType', this.getCtx({ newType }))
+    this.updatelocalPDef()
   }
   changePropTargetType(newTargetId: string) {
     if (this.pDef.refTargetTypeId === newTargetId) return
     act('changePropTargetType', this.getCtx({ newTargetId }))
+    this.updatelocalPDef()
   }
   changePropArity(isArray: boolean) {
     if (this.pDef.isArray === isArray) return
     if (isArray) act('changePropToArray', this.simpCtx)
     else act('changePropToSingle', this.simpCtx)
+    this.updatelocalPDef()
   }
   changeValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
     act('changePropValue', this.getCtx({ value }))
+    this.updatelocalPDef()
   }
   addValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
     act('addPropValue', this.getCtx({ value }))
+    this.updatelocalPDef()
   }
   removeValue(value: number | boolean | string) {
     if (!this.pV.includes(value)) return
     act('removePropValue', this.getCtx({ value }))
+    this.updatelocalPDef()
   }
   removeProp() {
     const accept = window.confirm('Do you really want to remove this property?\n Side effects accross project are possible.')
     if (!accept) return
     act('removeProp', this.simpCtx)
+    this.updatelocalPDef()
   }
 
   getEValue(e: UIEvent, cb: (v: any) => any, type: 'number' | 'bool') {
@@ -149,24 +159,22 @@ export default class PropView extends Vue {
     cb(cast((e.target as HTMLInputElement).value))
   }
 
-  get nameInput() {
-    return this.$refs['name-input'] as HTMLInputElement
+  get nameInputEl() {
+    return this.$refs.nameInput as HTMLInputElement
   }
 
   validateNameInput() {
-    const nameInput = this.nameInput.value
-    const insanityCheck = new RegExp(/[^a-zA-Z]|ref/g)
-    this.nameIsValid = !nameInput.match(insanityCheck)
+    const nameInput = this.nameInputEl.value
+    const insanityCheck = new RegExp(/[^a-zA-Z0-9]|ref/g)
+    this.nameIsValid = !nameInput.match(insanityCheck) || nameInput === ''
   }
 
-  unwatch: any = null
-
-  startEdit(editType: EditType, e: MouseEvent) {
+  startEdit(fieldType: FieldType, e: MouseEvent) {
     e.stopPropagation()
-    if (editType === this.editInProgress) return
+    if (fieldType === this.editInProgress) return
     if (this.unwatch) this.unwatch()
 
-    this.editInProgress = editType
+    this.editInProgress = fieldType
 
     const widgetKey = Math.random()
     this.$store.dispatch('setWidgetKey', { widgetKey }) // in order to active element from other components
@@ -182,8 +190,8 @@ export default class PropView extends Vue {
     this.editInProgress = ''
   }
 
-  doesEdit(editType: EditType) {
-    return this.editInProgress === editType
+  doesEdit(fieldType: FieldType) {
+    return this.editInProgress === fieldType
   }
 
   // Universal sufficient parameters for every public action and getter
@@ -210,9 +218,7 @@ export default class PropView extends Vue {
 
   get valueTypes() { return ['int32', 'flt', 'string', 'bool', 'ref'] }
 
-  get types() {
-    return this.$store.getters.types as TypeWrapper[]
-  }
+  get types() { return this.$store.getters.types as TypeWrapper[] }
 
   get isRef() { return this.pDef.valueType === 'ref' }
 
@@ -246,15 +252,12 @@ export default class PropView extends Vue {
 
     const query = this.instanceQuery
     const tId = this.pDef.refTargetTypeId
-    // const tN = query.match(/[a-zA-Z]+/)?.shift()
     const iId = query.match(/[0-9]+/)?.shift()
 
     this.filteredInstances = this.$store.getters.filteredInstances({ tId, iId })
   }
 
-  get activeWidgetKey() {
-    return this.$store.getters.activeWidgetKey
-  }
+  get activeWidgetKey() { return this.$store.getters.activeWidgetKey }
 }
 </script>
 

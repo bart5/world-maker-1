@@ -13,7 +13,8 @@ export const transactionHandler = {
     eT: EntityType,
     tId: string, // type id
     iId = '', // instance id
-    pN = '' // prop name
+    pN = '', // prop name
+    newName = '' // it's needed for renaming props
   ) {
     let entity
     let entityCopy
@@ -30,7 +31,7 @@ export const transactionHandler = {
       entity = this.store.state.project.instances[tId][iId][pN] as PropValues
       entityCopy = !entity ? null : utils.copyPropValues(entity)
     }
-    this.registerChange(entityCopy, eT, tId, iId, pN)
+    this.registerChange(entityCopy, eT, tId, iId, pN, newName)
 
     // This is slightly contradictory with the name of this method
     if (mN !== null) {
@@ -45,7 +46,8 @@ export const transactionHandler = {
     entityType: EntityType,
     tId: string,
     iId = '',
-    pN = ''
+    pN = '',
+    newName = ''
   ) {
     if (!this.store.state.currentTransaction) return
 
@@ -54,7 +56,8 @@ export const transactionHandler = {
       entityType,
       tId,
       iId,
-      pN
+      pN,
+      newName
     })
   },
   /**
@@ -99,6 +102,9 @@ export const transactionHandler = {
           delete state.project.instances[change.tId][change.iId][change.pN]
         } else {
           state.project.instances[change.tId][change.iId][change.pN] = entity
+          if (change.newName) {
+            delete state.project.instances[change.tId][change.iId][change.newName]
+          }
         }
         break;
       default:

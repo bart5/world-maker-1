@@ -53,11 +53,10 @@ export default typesAndInstances({
     },
     getPV: (state, getters) => (p: { tId: string, iId: string, pN: string }) => {
       const { tId, iId, pN } = p
-      return (getters.getInstance({ tId, iId }) as Instance)[pN]
+      return [...((getters.getInstance({ tId, iId }) as Instance)[pN] || [])]
     },
     getInstanceByTypeId: (state) => (p: { tId: string, iId: string }) => {
       const { tId, iId } = p
-      console.log('getting instance of type: ', tId, ' and of id: ', iId)
       return state.project.instances[tId][iId]
     },
     getInstanceByTypeName: (state, getters) => (p: { tN: string, iId: string }) => {
@@ -74,7 +73,6 @@ export default typesAndInstances({
         Object.entries(state.project.instances).some(([, iL]) => {
           return iId in iL && instance.push(iL[iId])
         })
-        console.log('found instance: ', instance[0])
         return instance[0]
       }
       return null
@@ -134,8 +132,6 @@ export default typesAndInstances({
       let instancesIds: string[] = Object.entries(state.project.instances).reduce((acc, [, iL]) => {
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
-      console.log('raw instances data: ', state.project.instances)
-      console.log('all instances ids: ', instancesIds)
 
       const { tId, tN, iId, prop, isReferencedById, isReferencingId } = p
 
@@ -144,7 +140,6 @@ export default typesAndInstances({
       }
       if (tN || tId) {
         const iL = getters.getInstancesListOfType({ tId, tN }) as InstanceList
-        console.log('instances list: ', iL)
         instancesIds = instancesIds.filter((instanceId) => Object.entries(iL).some(([_iId]) => instanceId === _iId))
       }
       if (prop) {
@@ -275,6 +270,7 @@ export default typesAndInstances({
       const { tId, pN, newName } = p
       registerInstancesMutation(state)
 
+      state.project.types[tId].definition[pN].name = newName
       state.project.types[tId].definition[newName] = state.project.types[tId].definition[pN]
       delete state.project.types[tId].definition[pN]
     },
@@ -337,6 +333,19 @@ export default typesAndInstances({
       registerInstancesMutation(state)
 
       delete state.project.instances[tId][iId]
+    },
+    REMOVE_INSTANCE_PROP(state, p: { tId: string, iId: string, pN: string }) { // OK
+      const { tId, iId, pN } = p
+      registerInstancesMutation(state)
+
+      delete state.project.instances[tId][iId][pN]
+    },
+    RENAME_INSTANCE_PROP(state, p: { tId: string, iId: string, pN: string, newName: string }) { // OK
+      const { tId, iId, pN, newName } = p
+      registerInstancesMutation(state)
+
+      state.project.instances[tId][iId][newName] = state.project.instances[tId][iId][pN]
+      delete state.project.instances[tId][iId][pN]
     },
     UPDATE_REF_META_FROM_A_TO_B(state, p: { iA: Instance, iB: Instance, propsToCheck: string[] }) {
       const { iA, iB, propsToCheck } = p
@@ -427,8 +436,12 @@ export default typesAndInstances({
 
       mutate('REMOVE_PROP', {}, 'PropDefinition', tId, '', pN)
     },
-    changePropName(state, p: { tId: string, pN: string, newName: string }) { // OK
+    renameProp(state, p: { tId: string, pN: string, newName: string }) { // OK
       const { tId, pN, newName } = p
+
+      Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
+        this.dispatch('renameInstanceProp', { tId, iId, pN, newName })
+      })
 
       mutate('RENAME_PROP', { newName }, 'PropDefinition', tId, '', pN)
     },
@@ -617,13 +630,18 @@ export default typesAndInstances({
       mutate('REMOVE_INSTANCE_PROP', {}, 'PropValues', tId, iId, pN)
     },
 
+    renameInstanceProp(state, p: { tId: string, iId: string, pN: string, newName: string }) { // OK
+      const { tId, iId, pN, newName } = p
+      mutate('RENAME_INSTANCE_PROP', { newName }, 'PropValues', tId, iId, pN)
+    },
+
     changePropTypeToRef(state, p: { tId: string, pN: string }) { // OK
       const { tId } = p
       let { pN } = p
 
       // In c++ we rely on convention that all referencing props start with _ref
       if (pN.startsWith('ref_')) {
-        this.dispatch('changePropName', { tId, pN, newName: ('ref_' + pN) })
+        this.dispatch('renameProp', { tId, pN, newName: ('ref_' + pN) })
         pN = 'ref_' + pN
       }
 
@@ -642,7 +660,7 @@ export default typesAndInstances({
 
       // In c++ we rely on convention that all referencing props start with _ref
       if (pN.startsWith('ref_')) {
-        this.dispatch('changePropName', { tId, pN, newName: pN.replace('ref_', '') })
+        this.dispatch('renameProp', { tId, pN, newName: pN.replace('ref_', '') })
         pN = pN.replace('ref_', '')
       }
 

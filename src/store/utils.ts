@@ -46,7 +46,7 @@ export function getNewProjectUiData() {
 export function getUniqueTypeName(state: ApplicationState) {
   let affix = 1
   const getNewName = () => 'NewType' + affix
-  const isUnique = (n: string) => !Object.keys(state.project.types).some((tn) => tn === n)
+  const isUnique = (n: string) => !Object.entries(state.project.types).some(([, tw]) => tw.name === n)
   while (!isUnique(getNewName()) && affix < 1000) {
     affix++
   }
@@ -56,7 +56,7 @@ export function getUniqueTypeName(state: ApplicationState) {
 export function getUniquePropName(state: ApplicationState, tId: string) {
   let affix = 1
   const getNewName = () => 'NewProp' + affix
-  const isUnique = (n: string) => !Object.keys(state.project.types[tId]).some((tn) => tn === n)
+  const isUnique = (n: string) => !Object.keys(state.project.types[tId].definition).some((pN) => pN === n)
   while (!isUnique(getNewName()) && affix < 1000) {
     affix++
   }
@@ -72,13 +72,9 @@ export function getUniqueId(state: ApplicationState) {
   const getId = () => Math.random().toString().substring(10)
   const isUnique = (id: string) => {
     const types = state.project.types
-    return !Object.keys(types).some(([typeId]) => {
-      if (typeId === id) return true
-
-      const instances = state.project.instances[typeId]
-      return Object.keys(instances).some(([instanceId]) => {
-        return instanceId === id
-      })
+    return !Object.entries(types).some(([tId]) => {
+      if (tId === id) return true // Already used for type
+      return id in state.project.instances[tId] // Already used for some instance
     })
   }
   let uid = getId()
@@ -215,17 +211,25 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
   }
 }
 
+// Mocking does not support references
 export function getMockedInstance(typeId: number, types?: TypesDefinitions): Instance {
   const id = Math.random().toString().substring(10)
   const assignValues = (prop: PropDefinition): PropValues => {
+    if (prop.name.includes('meta')) {
+      if (prop.name === 'meta_typeId') return [typeId]
+      return []
+    } else if (prop.name === 'id') return [id]
+
     const getValues = (valueType: ValueType, isArray?: boolean) => {
       const getValue = (vT: ValueType) => {
         if (vT === 'int32') {
-          if (prop.name === 'id') {
-            return id
-          } else if (prop.name === 'meta_typeId') {
-            return typeId
-          }
+          // if (prop.name === 'id') {
+          //   return id
+          // } else if (prop.name === 'meta_typeId') {
+          //   return typeId
+          // } else if (prop.name.includes('meta')) {
+          //   return ''
+          // }
           return Math.round(Math.random() * 100)
         } else if (vT === 'flt') {
           return (Math.random() * 100).toFixed(5)
@@ -253,7 +257,7 @@ export function getMockedInstance(typeId: number, types?: TypesDefinitions): Ins
         }
       }
 
-      const length = isArray ? (Math.round(Math.random() * 4)) : 1;
+      const length = isArray ? (Math.round((Math.random() * 8) || 1)) : 1;
 
       return Array(length).fill(0).map(() => getValue(valueType)) as ValueType[]
     }

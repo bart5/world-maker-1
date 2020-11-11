@@ -45,7 +45,7 @@ type ActionType =
   //
   //  1) remove all references from property to other instances
   //  2) Remove property from type and instances
-  | 'changePropName'
+  | 'renameProp'
   // 1 step:
   //  1) rename prop in type, rename prop in all instances. (subjects = typeWrapper + [all instances of type])
   | 'changePropType' // cast with trimmed precision
@@ -93,6 +93,7 @@ interface Change {
   tId: string;
   iId: string;
   pN: string;
+  newName?: string;
 }
 
 interface Project {
