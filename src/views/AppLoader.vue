@@ -17,7 +17,8 @@ export default class AppLoader extends Vue {
     return this.$store.getters.applicationData
   }
 
-  closeWidgets() {
+  closeWidgets(e: any | MouseEvent | KeyboardEvent) {
+    if (e.key && e.key !== 'Escape') return
     this.$store.dispatch('setWidgetKey', {})
   }
 
@@ -27,6 +28,7 @@ export default class AppLoader extends Vue {
     await this.$store.dispatch('asyncLoadApplicationData')
 
     window.addEventListener('click', this.closeWidgets)
+    window.addEventListener('keydown', this.closeWidgets)
 
     if (this.applicationData.lastProjectPath) {
       this.$store.dispatch('asyncOpenProjectFromPath', this.applicationData.lastProjectPath)

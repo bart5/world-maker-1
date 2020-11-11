@@ -3,21 +3,21 @@
   2) Rudimentary display of Instances - they should be edited in their dedicated viewers
 -->
 <template>
-  <div class="prop-wrapper">
+  <div class="prop-wrapper" @keydown.esc="stopEdit()">
 
-    <div class="name" @click="startEdit('name', $event)">
-      <span v-if="!doesEdit('name')">{{ pDef.name }}</span>
+    <div class="name-field" @click="startEdit('name', $event)">
+      <span v-if="!doesEdit('name')" class="name-text">{{ pDef.name }}</span>
       <input v-else type="text" :value="localPDef.name.replace('ref_', '')" ref="nameInput"
         @change="getEValue($event, renameProp); stopEdit()" @keydown="validateNameInput"
       >
     </div>
 
-    <div v-if="iId" class="values" @click="startEdit('values', $event)">
+    <div v-if="iId" class="values-field" @click="startEdit('values', $event)">
       <div class="values-box">
 
         <div class="top-field">
           <div v-if="!doesEdit('values')" class="first-value">
-            <span class="value">{{ pV[0] }}</span>
+            <span class="value-text">{{ `${pV[0]}` }}</span>
             <span v-if="pV.length > 1" class="is-more">...</span>
           </div>
 
@@ -27,10 +27,11 @@
 
           <template v-else>
             <div v-if="isBool" class="value-input">
-              <select :value="localPDef.valueType" @change="getEValue($event, changeValue, 'bool')">
+              <input :value="pV[0] ? 'true' : 'false'" disabled>
+              <!-- <select :value="pV[0] ? true : false" @change="getEValue($event, changeValue, 'bool')">
                 <option :value="true">true</option>
                 <option :value="false">false</option>
-              </select>
+              </select> -->
             </div>
 
             <div v-else class="value-input">
@@ -41,7 +42,7 @@
 
         <div v-if="doesEdit('values')" class="values-list">
           <div class="value-selected" v-for="value in pV" :key="value">
-            <div class="value">{{ value }}</div>
+            <div class="value">{{ `${value}` }}</div>
             <div class="remove-value-button">
               <button @click="removeValue(value)">X</button>
             </div>
@@ -50,6 +51,10 @@
             <div class="value-available" v-for="instance in filteredInstances" :key="instance.is.value[0]">
               {{ instance.id.value[0] }}
             </div>
+          </template>
+          <template v-if="isBool">
+            <div class="value-available" @click="changeValue(true)">{{ true }}</div>
+            <div class="value-available" @click="changeValue(false)">{{ false }}</div>
           </template>
         </div>
       </div>
@@ -134,6 +139,7 @@ export default class PropView extends Vue {
   }
   changeValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
+    console.log('changing value to : ', value)
     act('changePropValue', this.getCtx({ value }))
     this.updatelocalPDef()
   }
@@ -204,7 +210,7 @@ export default class PropView extends Vue {
       newName,
       newType,
       newTargetId,
-      value: value ? [value] : undefined,
+      value: (value !== undefined) ? [value] : undefined,
     }
   }
 
@@ -280,19 +286,27 @@ export default class PropView extends Vue {
     height: 100%;
     padding: 1px;
     border: 1px solid darkgray;
+  }
+
+  .name-text, .value-text {
+    width: 100%;
+    text-align: left;
+    height: 100%;
+    display: flex;
+    align-items: center;
 
     &:hover {
       cursor: pointer;
     }
   }
 
-  .name {
+  .name-field {
     width: 160px;
     input {
       width: 100%;
     }
   }
-  .values {
+  .values-field {
     flex-grow: 1;
     min-width: 240px;
 
@@ -326,6 +340,34 @@ export default class PropView extends Vue {
           justify-content: flex-start;
           align-items: center;
           height: 24px;
+        }
+
+        .value-selected {
+          font-weight: bold;
+          color: darkgreen;
+          display: flex;
+          width: 100%;
+          justify-content: space-between;
+
+          .value {
+            margin-left: 6px;
+            flex-grow: 1;
+            text-align: left;
+            height: 100%;
+            display: flex;
+            align-items: center;
+          }
+
+          .remove-value-button {
+            background-color: rgba(255,0,0,0.22);
+          }
+        }
+
+        .value-available {
+          &:hover {
+            box-shadow: inset 0 0 4px 1px lightsteelblue;
+            cursor: pointer;
+          }
         }
       }
     }
