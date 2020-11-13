@@ -10,19 +10,30 @@
       />
     </template>
     <template v-else>
-      <TypeView
-        v-for="instance in filteredInstances"
-        :tId="instance.meta_typeId[0]"
-        :iId="instance.id[0]"
-        :key="instance.id[0]"
-        :alwaysMeta="showMeta"
-      />
-      <TypeView
-        v-for="typeWrapper in filteredTypes"
-        :tId="typeWrapper.id"
-        :key="typeWrapper.id"
-        :alwaysMeta="showMeta"
-      />
+      <template v-if="(onlyTypes && types.length) || (!onlyVlues && types.length)">
+        <TypeView
+          v-for="typeWrapper in types"
+          :tId="typeWrapper.id"
+          :key="typeWrapper.id"
+          :alwaysMeta="showMeta"
+          :neverMeta="neverMeta"
+          :onlyTypes="true"
+        />
+      </template>
+      <template v-else-if="(onlyValues && instances.length) || (!onlyTypes && instaces.length)">
+        <TypeView
+          v-for="instance in instances"
+          :tId="instance.meta_typeId[0]"
+          :iId="instance.id[0]"
+          :key="instance.id[0]"
+          :alwaysMeta="showMeta"
+          :neverMeta="neverMeta"
+          :onlyValues="true"
+        />
+      </template>
+      <template>
+        - No data to show -
+      </template>
     </template>
   </div>
 </template>
@@ -44,31 +55,15 @@ export default class TypeViewUniversal extends Vue {
   @Prop() types!: TypeWrapper[]
   @Prop() intances!: Instances[]
   @Prop() onlyValues!: boolean
+  @Prop() onlyTypes!: boolean
   @Prop() neverMeta!: boolean
   @Prop() alwaysMeta!: boolean
 
   getInstanceTypeId() {
     this.$store.getters.getTypeId({ iId: this.iId })
   }
-
-  filteredInstance: Instance[] = []
-  filteredTypes: TypeWrapper[] = []
 }
 </script>
 
 <style lang="scss" scoped>
-
-.wrapper {
-  max-height: 100%;
-  overflow-y: scroll;
-  width: 880px;
-  background: lightgray;
-  padding: 12px;
-}
-
-.tab-selector {
-  display: flex;
-  width: 100%;
-}
-
 </style>

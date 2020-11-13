@@ -56,23 +56,23 @@
       </div>
     </div>
 
-    <div class="value-type">
+    <div v-if="!onlyValues" class="value-type">
       <select class="type-selector" :value="localPDef.valueType" @change="getEValue($event, changeType)">
         <option v-for="vType in valueTypes" :key="vType">{{ vType }}</option>
       </select>
     </div>
 
-    <div class="target-type">
+    <div v-if="!onlyValues" class="target-type">
       <select class="target-selector" :value="localPDef.refTargetTypeId" @change="getEValue($event, changePropTargetType)">
         <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
       </select>
     </div>
 
-    <div class="arity-choice">
+    <div v-if="!onlyValues" class="arity-choice">
       <input type="checkbox" :checked="localPDef.isArray" @change="changePropArity(localPDef.isArray)">
     </div>
 
-    <div class="delete-prop">
+    <div v-if="!onlyValues" class="delete-prop">
       <button @click="removeProp">X</button>
     </div>
   </div>
@@ -89,6 +89,7 @@ type FieldType = 'name' | 'values' | 'type' | 'target' | ''
 export default class PropView extends Vue {
   @Prop() tId!: string
   @Prop() iId!: string
+  @Prop() onlyValues!: boolean
 
   @Prop() pDef!: PropDefinition
   get pV(): Values { return this.$store.getters.getPV(this.simpCtx) }
@@ -172,6 +173,7 @@ export default class PropView extends Vue {
   }
 
   startEdit(fieldType: FieldType, e: MouseEvent) {
+    if (this.onlyValues && !(fieldType === 'values')) return
     e.stopPropagation()
     if (fieldType === this.editInProgress) return
     if (this.unwatch) this.unwatch()
