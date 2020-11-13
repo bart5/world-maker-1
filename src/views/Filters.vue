@@ -13,7 +13,7 @@ import { Prop } from 'vue-property-decorator'
   },
 })
 export default class TypesManager extends Vue {
-  @Prop()
+  @Prop() mode!: 'instances' | 'types'
 
   iFilters = {
     iId: '', // instance id

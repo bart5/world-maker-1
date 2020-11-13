@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <div class="header" @click="toggle">
+    <div class="header" :style="style" @click="toggle">
       <div class="title"></div>
       <div class="arrow"></div>
     </div>
@@ -18,8 +18,15 @@ import { Prop } from 'vue-property-decorator'
 export default class Collapsible extends Vue {
   @Prop({ default: false }) collapsed!: boolean
   @Prop() title!: string
+  @Prop({ default: false }) small!: boolean
 
   show = this.collapsed
+
+  get style() {
+    return {
+      height: this.small ? '14px' : '28px'
+    }
+  }
 
   toggle() {
     this.show = !this.show
