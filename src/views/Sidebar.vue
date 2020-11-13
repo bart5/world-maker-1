@@ -1,5 +1,5 @@
 <template>
-  <div class="wrapper">
+  <div class="sidebar-wrapper">
     <div class="tab-selector">
       <div class="tab-switch" @click="show('instances')">Instances</div>
       <div class="tab-switch" @click="show('types')">Types</div>
@@ -14,6 +14,7 @@
             @update-instances="updateFilteredInstances"
             @update-types="updateFilteredTypes"
           />
+          {{ filteredInstances }}
           <TypeViewUniversal
             :onlyValues="showInstances"
             :onlyTypes="showTypes"
@@ -49,6 +50,7 @@ import { Options, Vue } from 'vue-class-component'
 import TypeViewUniversal from '@/views/TypeViewUniversal.vue'
 import Changes from '@/views/Changes.vue'
 import Collapsible from '@/views/Collapsible.vue'
+import Filters from '@/views/Filters.vue'
 
 type TabType = 'instances' | 'types' | 'changes'
 
@@ -56,10 +58,13 @@ type TabType = 'instances' | 'types' | 'changes'
   components: {
     TypeViewUniversal,
     Changes,
-    Collapsible
+    Collapsible,
+    Filters,
   },
 })
 export default class Sidebar extends Vue {
+  showMeta = false
+
   showInstances = true
   showTypes = false
   showChanges = false
@@ -74,6 +79,14 @@ export default class Sidebar extends Vue {
   filteredTypes: TypeWrapper[] = []
   filteredSelectedInstances: Instance[] = []
   filteredSelectedTypes: TypeWrapper[] = []
+
+  get randomType() {
+    return (this.$store.getters.types as TypeWrapper[])[1]
+  }
+
+  // get randomInstance() {
+  //   return this.$store.
+  // }
 
   get selectedInstances(): Instances[] {
     // return this.$store.getters.selectedInstances()
@@ -105,7 +118,7 @@ export default class Sidebar extends Vue {
 
 <style lang="scss" scoped>
 
-.wrapper {
+.sidebar-wrapper {
   height: 100%;
   overflow-y: scroll;
   min-width: 700px;
@@ -137,9 +150,9 @@ export default class Sidebar extends Vue {
   flex-grow: 1;
   display: flex;
   flex-flow: column;
+  overflow: hidden;
 
   .content-section {
-    flex-grow: 1;
     overflow-y: scroll;
     border: 1px solid;
   }

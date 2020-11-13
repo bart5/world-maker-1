@@ -1,13 +1,11 @@
 <template>
-  <div class="collapsible-wrapper">
+  <div class="collapsible-wrapper" :class="{ 'collapsed': !show }">
     <div class="header" :style="style" @click="toggle">
-      <div class="title"></div>
-      <div class="arrow"></div>
+      <div class="title">{{ title }}</div>
+      <div class="arrow" :class="{ 'down': show }">{{ ">" }}</div>
     </div>
-    <div class="content">
-      <template v-show="show">
-        <slot></slot>
-      </template>
+    <div class="content" v-if="show">
+      <slot></slot>
     </div>
   </div>
 </template>
@@ -22,7 +20,7 @@ export default class Collapsible extends Vue {
   @Prop() title!: string
   @Prop({ default: false }) small!: boolean
 
-  show = this.collapsed
+  show = !this.collapsed
 
   get style() {
     return {
@@ -39,14 +37,22 @@ export default class Collapsible extends Vue {
 <style lang="scss" scoped>
 
 .collapsible-wrapper {
+  flex-grow: 1;
   height: auto;
   width: 100%;
+  min-height: 50%; // Total height of sidebar / number of panels
+
+  &.collapsed {
+    flex-grow: 0;
+    min-height: unset;
+  }
 
   .header {
     height: 28px;
     display: flex;
     flex-flow: row nowrap;
     justify-content: space-between;
+    margin: 6px 14px;
 
     .title {
       font-size: 18px;
@@ -57,8 +63,18 @@ export default class Collapsible extends Vue {
       user-select: none;
       font-size: 16px;
       display: block;
-      content: '>';
-      transform: rotateZ(90deg);
+      line-height: 16px;
+      height: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      transform: rotateZ(180deg);
+      transition: transform 0.2s;
+
+      &.down {
+        transform: rotateZ(90deg);
+      }
     }
 
     &:hover {

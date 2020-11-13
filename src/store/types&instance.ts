@@ -137,6 +137,7 @@ export default typesAndInstances({
         isReferencedById: string, isReferencingId: string,
       }
     ): Instance[] => {
+      console.log('filtering with payload: ', p)
       let instancesIds: string[] = Object.entries(state.project.instances).reduce((acc, [, iL]) => {
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])

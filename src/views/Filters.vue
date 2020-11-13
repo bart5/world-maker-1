@@ -1,8 +1,8 @@
 <template>
   <div class="wrapper">
     <template v-for="m in ['types', 'instances']" :key="m">
-      <div>Filter {{ m }}</div>
       <template v-if="m === mode">
+        <div>Filter {{ m }}</div>
         <div class="box">
           <div class="label">Instance Id</div>
           <input type="text" :value="filters[m].iId" @change="filter">
@@ -10,7 +10,7 @@
         <div class="box">
           <div class="label">Type Id</div>
           <input type="text" :value="filters[m].tId" @change="filter">
-          <select class="target-selector" :value="filters[m].tId" @change="filter">
+          <select class="target-selector" v-model="filters[m].tId" @change="filter">
             <option v-for="type in allTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
           </select>
         </div>
@@ -23,11 +23,11 @@
           <input type="text" :value="filters[m].pN" @change="filter">
         </div>
         <div class="box">
-          <div class="label">Is referencing {{ m.replce('es', 'e') }} of Id</div>
+          <div class="label">Is referencing {{ m.replace('es', 'e') }} of Id</div>
           <input type="text" :value="filters[m].isReferencing" @change="filter">
         </div>
         <div class="box">
-          <div class="label">Is referenced by {{ m.replce('es', 'e') }} of Id</div>
+          <div class="label">Is referenced by {{ m.replace('es', 'e') }} of Id</div>
           <input type="text" :value="filters[m].isReferencedBy" @change="filter">
         </div>
       </template>
@@ -70,7 +70,7 @@ export default class Filteres extends Vue {
   get allTypes() { return this.$store.getters.types as TypeWrapper[] }
 
   getFilteredInstances() {
-    return this.$store.getters.getFilteredInstances(this.filters.instances, this.intances || null)
+    return this.$store.getters.getFilteredInstances({ ...this.filters.instances }, this.intances || null)
   }
 
   getFilteredTypes() {
@@ -78,8 +78,12 @@ export default class Filteres extends Vue {
   }
 
   filter() {
-    this.$emit('update-instances', { instances: this.getFilteredInstances() })
-    this.$emit('update-types', { types: this.getFilteredTypes() })
+    console.log('updating')
+    if (this.mode === 'instances') {
+      this.$emit('update-instances', { instances: this.getFilteredInstances() })
+    } else {
+      this.$emit('update-types', { types: this.getFilteredTypes() })
+    }
   }
 }
 </script>
