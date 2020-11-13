@@ -9,12 +9,14 @@
     <div class="tab">
       <template v-if="showInstances || showTypes">
         <div class="filters">
-          <div class="instance-filter">
-
-          </div>
-          <div class="type-filter">
-
-          </div>
+          <InstanceFilter
+            class="instance-filter"
+            @update-instances="updateFilteredInstance"
+          />
+          <TypeFilter
+            class="type-filter"
+            @update-types="updateFilteredTypes"
+          />
         </div>
         <div class="meta-setting">
           <span>Show meta:</span>
@@ -37,9 +39,7 @@
           />
         </div>
       </template>
-      <div class="changes">
-
-      </div>
+      <Changes v-else class="changes" />
     </div>
     <button @click="createNewType">
       <h3>Create new Type</h3>
@@ -76,14 +76,14 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import ModalWrapper from '@/views/ModalWrapper.vue'
 import TypeView from '@/views/TypeView.vue'
+import Changes from '@/views/Changes.vue'
 import { act } from '@/store/transactions'
 
 @Options({
   components: {
-    ModalWrapper,
-    TypeView
+    TypeView,
+    Changes
   },
 })
 export default class TypesManager extends Vue {

@@ -128,7 +128,7 @@ export default typesAndInstances({
         prop: { pN: string, pV: string | number | boolean },
         isReferencedById: string, isReferencingId: string,
       }
-    ) => {
+    ): Instance[] => {
       let instancesIds: string[] = Object.entries(state.project.instances).reduce((acc, [, iL]) => {
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
