@@ -21,6 +21,7 @@ export default class Changes extends Vue {
 .wrapper {
   display: flex;
   width: 100%;
+  flex-flow: column;
 }
 
 </style>

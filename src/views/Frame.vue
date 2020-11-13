@@ -133,7 +133,7 @@
         </div>
       </div>
 
-      <TypesManager/>
+      <Sidebar v-if="projectDataIsLoaded"/>
 
       <div class="status-bar">Status bar</div>
     </div>
@@ -145,13 +145,13 @@ import { Options, Vue } from 'vue-class-component'
 import { Watch } from 'vue-property-decorator';
 import TileComponent from '@/views/Tile.vue'
 import Curve from '@/views/Curve.vue'
-import TypesManager from '@/views/TypesManager.vue'
+import Sidebar from '@/views/Sidebar.vue'
 
 @Options({
   components: {
     TileComponent,
     Curve,
-    TypesManager
+    Sidebar
   },
 })
 export default class Frame extends Vue {
@@ -701,7 +701,7 @@ export default class Frame extends Vue {
           this.$store.dispatch('asyncSaveProject', true)
           break;
         case 't':
-          this.$store.dispatch('openModal', 'typesManager')
+          this.$store.dispatch('openModal', 'Sidebar')
           break;
         default:
           break;

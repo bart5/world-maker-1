@@ -1,14 +1,14 @@
 <template>
-  <div class="wrapper" v-if="projectDataIsLoaded">
+  <div class="wrapper">
     <div class="tab-selector">
-      <div class="tab-switch" @click="toInstances">Instances</div>
-      <div class="tab-switch" @click="toTypes">Types</div>
-      <div class="tab-switch" @click="toChanges">Changes</div>
+      <div class="tab-switch" @click="show('instances')">Instances</div>
+      <div class="tab-switch" @click="show('types')">Types</div>
+      <div class="tab-switch" @click="show('changes')">Changes</div>
     </div>
     <hr>
     <div class="tab">
       <template v-if="showInstances || showTypes">
-        <Collapsible title="All">
+        <Collapsible title="All" class="content-section">
           <Filters
             :mode="showInstances ? 'instances' : 'types'"
             @update-instances="updateFilteredInstances"
@@ -22,9 +22,11 @@
             :alwaysMeta="showMeta"
           />
         </Collapsible>
-        <Collapsible title="Selected">
+        <Collapsible title="Selected" class="content-section">
           <Filters
             :mode="showInstances ? 'instances' : 'types'"
+            :instances="selectedInstances"
+            :types="selectedTypes"
             @update-instances="updateFilteredSelectedInstances"
             @update-types="updateFilteredSelectedTypes"
           />
@@ -48,6 +50,8 @@ import TypeViewUniversal from '@/views/TypeViewUniversal.vue'
 import Changes from '@/views/Changes.vue'
 import Collapsible from '@/views/Collapsible.vue'
 
+type TabType = 'instances' | 'types' | 'changes'
+
 @Options({
   components: {
     TypeViewUniversal,
@@ -56,17 +60,29 @@ import Collapsible from '@/views/Collapsible.vue'
   },
 })
 export default class Sidebar extends Vue {
+  showInstances = true
+  showTypes = false
+  showChanges = false
+
+  show(tab: TabType) {
+    this.showInstances = tab === 'instances' || false
+    this.showTypes = tab === 'types' || false
+    this.showChanges = tab === 'changes' || false
+  }
+
   filteredInstances: Instance[] = []
   filteredTypes: TypeWrapper[] = []
   filteredSelectedInstances: Instance[] = []
   filteredSelectedTypes: TypeWrapper[] = []
 
   get selectedInstances(): Instances[] {
-    return this.$store.getters.selectedInstances()
+    // return this.$store.getters.selectedInstances()
+    return []
   }
 
   get selectedTypes(): TypeWrapper[] {
-    return this.$store.getters.selectedTypes()
+    // return this.$store.getters.selectedTypes()
+    return []
   }
 
   updateFilteredInstances({ instances }: { instances: Instance[] }) {
@@ -90,16 +106,43 @@ export default class Sidebar extends Vue {
 <style lang="scss" scoped>
 
 .wrapper {
-  max-height: 100%;
+  height: 100%;
   overflow-y: scroll;
-  width: 880px;
+  min-width: 700px;
+  max-width: 700px;
   background: lightgray;
   padding: 12px;
+  display: flex;
+  flex-flow: column;
+  justify-content: flex-start;
 }
 
 .tab-selector {
   display: flex;
   width: 100%;
+  justify-content: space-evenly;
+
+  .tab-switch {
+    border: 1px solid;
+    border-bottom: none;
+    flex-grow: 1;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}
+
+.tab {
+  flex-grow: 1;
+  display: flex;
+  flex-flow: column;
+
+  .content-section {
+    flex-grow: 1;
+    overflow-y: scroll;
+    border: 1px solid;
+  }
 }
 
 </style>

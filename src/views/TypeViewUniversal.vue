@@ -10,7 +10,7 @@
       />
     </template>
     <template v-else>
-      <template v-if="(onlyTypes && types.length) || (!onlyVlues && types.length)">
+      <template v-if="types && ((onlyTypes && types.length) || (!onlyValues && types.length))">
         <TypeView
           v-for="typeWrapper in types"
           :tId="typeWrapper.id"
@@ -20,7 +20,7 @@
           :onlyTypes="true"
         />
       </template>
-      <template v-else-if="(onlyValues && instances.length) || (!onlyTypes && instaces.length)">
+      <template v-else-if="instances && ((onlyValues && instances.length) || (!onlyTypes && instances.length))">
         <TypeView
           v-for="instance in instances"
           :tId="instance.meta_typeId[0]"
@@ -52,8 +52,8 @@ export default class TypeViewUniversal extends Vue {
   @Prop() tId!: string
   @Prop() iId!: string | undefined
   @Prop() multiple!: boolean
-  @Prop() types!: TypeWrapper[]
-  @Prop() intances!: Instances[]
+  @Prop({ default: [] }) types!: TypeWrapper[]
+  @Prop({ default: [] }) intances!: Instances[]
   @Prop() onlyValues!: boolean
   @Prop() onlyTypes!: boolean
   @Prop() neverMeta!: boolean

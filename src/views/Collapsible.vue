@@ -1,11 +1,13 @@
 <template>
-  <div class="wrapper">
+  <div class="collapsible-wrapper">
     <div class="header" :style="style" @click="toggle">
       <div class="title"></div>
       <div class="arrow"></div>
     </div>
     <div class="content">
-      <slot v-show="show">
+      <template v-show="show">
+        <slot></slot>
+      </template>
     </div>
   </div>
 </template>
@@ -36,8 +38,8 @@ export default class Collapsible extends Vue {
 
 <style lang="scss" scoped>
 
-.wrapper {
-  max-height: 100%;
+.collapsible-wrapper {
+  height: auto;
   width: 100%;
 
   .header {

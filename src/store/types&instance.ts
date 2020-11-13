@@ -154,7 +154,13 @@ export default typesAndInstances({
         const { pN, pV } = prop
         const matchByProp = (_iId: string) => {
           const instance = getters.getInstance({ iId: _iId }) as Instance
-          return Object.entries(instance).some(([pName, pValues]) => pName === pN && pValues.some((v) => v === pV))
+          if (pV !== undefined) {
+            return Object.entries(instance).some(([pName, pValues]) => pName === pN && pValues.some((v) => v === pV))
+          } else {
+            // This is low performance approach. Fix it by looking by type definitions first
+            // and then by filtering instances based on matching types.
+            return Object.entries(instance).some(([pName]) => pName === pN)
+          }
         }
         instancesIds.filter(matchByProp)
       }
