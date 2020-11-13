@@ -27,6 +27,9 @@ export default class TypesManager extends Vue {
       pN: '', // one of it's properties name
       isReferencing: '', // one of instances it references
       isReferencedBy: '', // one of instances that reference it
+      isBound: '', // only instances that have actor bound
+      isNotBound: '', // only instances that have no actor bound
+      isBoundTo: '', // instances bound to spepcific actor Id
     },
     types: {
       iId: '', // one of its instanced ids
@@ -37,8 +40,6 @@ export default class TypesManager extends Vue {
       isReferencedBy: '', // type it's referenced by
     }
   }
-
-
 }
 </script>
 

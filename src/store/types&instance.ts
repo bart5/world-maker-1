@@ -123,6 +123,14 @@ export default typesAndInstances({
     isPropARef: (state, getters) => (tId: string, pN: string) => {
       return (getters.getType({ typeId: tId }) as TypeWrapper).definition[pN].valueType === 'ref'
     },
+    isPropArray: (state, getters) => (p: { tId: string, pN: string }) => {
+      const { tId, pN } = p
+      return (getters.getType({ typeId: tId }) as TypeWrapper).definition[pN].isArray
+    },
+    getPropValues: (state, getters) => (p: { tId: string, iId: string, pN: string }) => {
+      const { iId, pN } = p
+      return (getters.instance({ iId }) as Instance)[pN]
+    },
     getFilteredInstances: (state, getters) => (
       p: { iId: string, tN: string, tId: string,
         prop: { pN: string, pV: string | number | boolean },
@@ -498,12 +506,31 @@ export default typesAndInstances({
       mutate('CHANGE_PROP_REF_TARGET_TYPE', { newTargetId }, 'PropDefinition', tId, '', pN)
     },
     changePropValue(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
-      const { tId, iId, pN, value } = p
+      const isArray = state.getters.isPropArray(p)
+      if (isArray) {
+        console.error('Tried to change value in array property instead of adding new.')
+        this.dispatch('addPropValue', p)
+      }
 
-      mutate('CHANGE_PROP_VALUE', { value }, 'PropValues', tId, iId, pN)
+      const currentValues = state.getters.getPropValues(p)
+
+      if (currentValues.length > 1) {
+        Error('Non array property helds more that a single value.')
+        return
+      }
+
+      this.dispatch('removePropValue', { ...p, value: currentValues[0] })
+      this.dispatch('addPropValue', { ...p })
     },
     addPropValue(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
       const { tId, iId, pN, value } = p
+      const isArray = state.getters.isPropArray(tId, pN)
+      if (!isArray) {
+        console.error('Tried to add value to non-array property instead of changing existing.')
+        this.dispatch('changePropValue', p)
+        return
+      }
+
       const isRef = state.getters.isPropARef(tId, pN)
 
       if (isRef) {
