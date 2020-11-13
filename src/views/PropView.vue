@@ -18,7 +18,7 @@
         <div class="top-field">
           <div v-if="!doesEdit('values')" class="first-value">
             <span class="value-text">{{ `${pV[0]}` }}</span>
-            <span v-if="pV.length > 1" class="is-more">...</span>
+            <span v-if="pV.length > 1" class="is-more">{{ `(${(pV.length-1)} more)` }}</span>
           </div>
 
           <div v-else-if="isRef">
@@ -28,10 +28,6 @@
           <template v-else>
             <div v-if="isBool" class="value-input">
               <input :value="pV[0] ? 'true' : 'false'" disabled>
-              <!-- <select :value="pV[0] ? true : false" @change="getEValue($event, changeValue, 'bool')">
-                <option :value="true">true</option>
-                <option :value="false">false</option>
-              </select> -->
             </div>
 
             <div v-else class="value-input">
@@ -40,7 +36,7 @@
           </template>
         </div>
 
-        <div v-if="doesEdit('values')" class="values-list">
+        <div v-if="doesEdit('values') && (pV.length || isRef)" class="values-list">
           <div class="value-selected" v-for="value in pV" :key="value">
             <div class="value">{{ `${value}` }}</div>
             <div class="remove-value-button">
@@ -73,7 +69,7 @@
     </div>
 
     <div class="arity-choice">
-      <input type="checkbox" :value="localPDef.isArray" @change="changePropArity(localPDef.isArray)">
+      <input type="checkbox" :checked="localPDef.isArray" @change="changePropArity(localPDef.isArray)">
     </div>
 
     <div class="delete-prop">
@@ -294,14 +290,24 @@ export default class PropView extends Vue {
     height: 100%;
     display: flex;
     align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-grow: 1;
 
     &:hover {
       cursor: pointer;
     }
   }
 
+  .name-field, .values-field {
+    padding: 4px;
+  }
+
   .name-field {
     width: 160px;
+    flex-shrink: 0;
+
     input {
       width: 100%;
     }
@@ -310,21 +316,34 @@ export default class PropView extends Vue {
     flex-grow: 1;
     min-width: 240px;
 
+    .is-more {
+      font-size: 12px;
+      flex-grow: 0;
+      white-space: nowrap;
+      width: auto;
+    }
+
     .values-box {
       position: relative;
       display: flex;
       justify-content: flex-start;
       width: 100%;
 
-      .top-field, .top-field * {
+      .top-field {
+        width: 100%;
         display: flex;
         justify-content: flex-start;
-        width: 100%;
+        align-items: center;
+
+        .first-value, .value-input, input {
+          display: flex;
+          width: 100%;
+        }
       }
 
       .values-list {
         position: absolute;
-        left: 0;
+        left: 36px;
         top: 100%;
         width: 100%;
         border: 1px solid darkslategray;
@@ -356,6 +375,9 @@ export default class PropView extends Vue {
             height: 100%;
             display: flex;
             align-items: center;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
           }
 
           .remove-value-button {

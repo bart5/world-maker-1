@@ -107,7 +107,7 @@ export const ipc: Ipc = {
         })
       },
       showTypesEditor() {
-        vm.$store.dispatch('openModal', 'typesManager')
+        // vm.$store.dispatch('openModal', 'typesManager')
       },
       revertDataChanges() {
         vm.$store.dispatch('asyncRealoadTypesAndSDFromLastSave')

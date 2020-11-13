@@ -1,6 +1,6 @@
 <template>
-  <ModalWrapper>
-    <h4>Types Manager</h4>
+  <div class="wrapper" v-if="projectDataIsLoaded">
+    <div class="tabs"><div class="tab">Instances</div><div class="tab">Types</div></div>
     <hr>
     <button @click="createNewType">
       <h3>Create new Type</h3>
@@ -8,7 +8,7 @@
     <hr>
     <h3>Types:</h3>
       <div class="type" v-for="type in types" :key="type.id">
-        <button @click="selectType(type.id)">Select type: {{ type.name }}</button>
+        <button @click="selectType(type.id)">{{ type.name }}</button>
         <button @click="removeType(type.id)">Remove</button>
       </div>
     <hr>
@@ -30,15 +30,15 @@
     <h3>Selected instance:</h3>
       <TypeView v-if="selectedInstance" :tId="selectedITId" :iId="selectedIId"/>
     <hr>
-    <h3>Raw types:</h3>
+    <!-- <h3>Raw types:</h3>
       {{ types }}
     <hr>
     <h3>Raw selected type:</h3>
       {{ selectedType }}
-    <hr>
+    <hr> -->
     <h3>List of changes:</h3>
       <div v-for="(change, i) in recentChanges" :key="i"> Change of type: {{ change.actionType }}</div>
-  </ModalWrapper>
+  </div>
 </template>
 
 <script lang="ts">
@@ -80,6 +80,10 @@ export default class TypesManager extends Vue {
     return Boolean(this.$store.getters.getInstance({ iId: this.selectedIId }))
   }
 
+  get projectDataIsLoaded() {
+    return this.$store.getters.projectDataIsLoaded
+  }
+
   selectType(tId: string) {
     this.selectedTId = tId
   }
@@ -112,6 +116,23 @@ export default class TypesManager extends Vue {
 </script>
 
 <style lang="scss" scoped>
+
+.wrapper {
+  max-height: 100%;
+  overflow-y: scroll;
+  width: 880px;
+  background: lightgray;
+  padding: 12px;
+
+  &::-webkit-scrollbar {
+    display: block;
+    width: 10px;
+    background: gray;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.4);
+  }
+}
 
 .type, .instance {
   width: 100%;

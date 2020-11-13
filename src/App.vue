@@ -1,7 +1,6 @@
 <template>
   <AppLoader/>
   <ProjectLoader/>
-  <TypesManager v-if="showTypesManagerModal"/>
   <ConfigModal v-if="showConfigurationModal"/>
   <ProjectSelector v-if="showProjectSelectorModal"/>
   <Frame/>
@@ -15,7 +14,6 @@ import ConfigModal from '@/views/ConfigModal.vue';
 import ProjectSelector from '@/views/ProjectSelector.vue';
 import AppLoader from '@/views/AppLoader.vue';
 import ProjectLoader from '@/views/ProjectLoader.vue';
-import TypesManager from '@/views/TypesManager.vue';
 
 @Options({
   components: {
@@ -24,7 +22,6 @@ import TypesManager from '@/views/TypesManager.vue';
     ProjectSelector,
     AppLoader,
     ProjectLoader,
-    TypesManager
   },
 })
 export default class App extends Vue {
@@ -34,10 +31,6 @@ export default class App extends Vue {
 
   get showProjectSelectorModal() {
     return this.$store.getters.activeModal === 'projectSelector'
-  }
-
-  get showTypesManagerModal() {
-    return this.$store.getters.activeModal === 'typesManager'
   }
 }
 </script>

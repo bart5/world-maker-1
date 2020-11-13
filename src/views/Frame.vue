@@ -88,6 +88,7 @@
         @click="createNewWorkspace"
       >+</button>
     </div>
+
     <div class="board-wrapper">
       <div
         class="workspace-board"
@@ -132,6 +133,8 @@
         </div>
       </div>
 
+      <TypesManager/>
+
       <div class="status-bar">Status bar</div>
     </div>
   </div>
@@ -142,11 +145,13 @@ import { Options, Vue } from 'vue-class-component'
 import { Watch } from 'vue-property-decorator';
 import TileComponent from '@/views/Tile.vue'
 import Curve from '@/views/Curve.vue'
+import TypesManager from '@/views/TypesManager.vue'
 
 @Options({
   components: {
     TileComponent,
-    Curve
+    Curve,
+    TypesManager
   },
 })
 export default class Frame extends Vue {
@@ -258,7 +263,7 @@ export default class Frame extends Vue {
   centerOnTiles() {
     if (this.workspaceConfig.lockView) return
 
-    if (!this.allTilesOfActiveWorkspace.length) {
+    if (!this.allTilesOfActiveWorkspace?.length) {
       this.centerOnWorkspaceCenter()
       return
     }
@@ -744,6 +749,7 @@ export default class Frame extends Vue {
       board: this.boardElement,
       workspace: this.workspaceElement
     })
+    this.centerOnWorkspaceCenter()
   }
 }
 </script>
@@ -783,28 +789,32 @@ export default class Frame extends Vue {
   height: 100%;
   position: relative;
   border: 2px solid;
-}
-
-.status-bar {
-  display: none;
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 16px;
-  background: red;
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-.workspace-board {
-  height: 100%;
   display: flex;
-  position: relative;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  flex-flow: row nowrap;
+  overflow: hidden;
 
-  &.dragging-board:hover {
-    cursor: all-scroll;
+  .workspace-board {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    position: relative;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+
+    &.dragging-board:hover {
+      cursor: all-scroll;
+    }
+  }
+
+  .status-bar {
+    display: none;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 16px;
+    background: red;
+    opacity: 0.7;
+    pointer-events: none;
   }
 }
 
