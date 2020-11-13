@@ -13,7 +13,7 @@
     </div>
     <div class="type-config">
       <div>
-        <button @click="removeType">Delete</button>
+        <button @click="remove">Delete</button>
       </div>
       <div class="meta-toggle" v-if="!neverMeta && !alwaysMeta">
         <span>Show meta:</span>
@@ -57,12 +57,20 @@ export default class TypeView extends Vue {
 
   localTypeName = ''
 
+  get isType() {
+    return !this.iId
+  }
+
   updateTypeName() {
     this.localTypeName = this.type.name
   }
 
   get type(): TypeWrapper {
     return this.$store.getters.getType(this.simpCtx)
+  }
+
+  get instance(): TypeWrapper {
+    return this.$store.getters.getInstance(this.simpCtx)
   }
 
   get simpCtx() {
@@ -72,10 +80,16 @@ export default class TypeView extends Vue {
     }
   }
 
-  removeType() {
-    const confirm = window.confirm(`You are about to remove type ${this.type.name}. Are you certain?`)
-    if (!confirm) return
-    actions.removeType(this.simpCtx)
+  remove() {
+    if (this.isType) {
+      const confirm = window.confirm(`You are about to remove type ${this.type.name}. Are you certain?`)
+      if (!confirm) return
+      actions.removeType(this.simpCtx)
+    } else {
+      const confirm = window.confirm(`You are about to remove instance ${this.instance.id[0]}. Are you certain?`)
+      if (!confirm) return
+      actions.removeInstance(this.simpCtx)
+    }
   }
 
   getEValue(e: UIEvent, cb: (v: any) => any, type: 'number' | 'bool') {
