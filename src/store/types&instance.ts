@@ -199,6 +199,9 @@ export default typesAndInstances({
     },
     recentChanges: (state) => {
       return state.project.recentChanges
+    },
+    getIsTypeNameUnique: (state) => (name: string) => {
+      return !Object.entries(state.project.types).some(([, tw]) => tw.name === name)
     }
   },
   mutations: {

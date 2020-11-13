@@ -81,7 +81,7 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator';
-import { act } from '@/store/transactions'
+import { actions } from '@/store/transactions'
 
 type FieldType = 'name' | 'values' | 'type' | 'target' | ''
 
@@ -114,45 +114,45 @@ export default class PropView extends Vue {
       newName = 'ref_' + newName
     }
     if (this.pDef.name === newName) return
-    act('renameProp', this.getCtx({ newName }))
+    actions.renameType(this.getCtx({ newName }))
     this.updatelocalPDef()
   }
   changeType(newType: ValueType) {
     if (this.pDef.valueType === newType) return
-    act('changePropType', this.getCtx({ newType }))
+    actions.changePropType(this.getCtx({ newType }))
     this.updatelocalPDef()
   }
   changePropTargetType(newTargetId: string) {
     if (this.pDef.refTargetTypeId === newTargetId) return
-    act('changePropTargetType', this.getCtx({ newTargetId }))
+    actions.changePropTargetType(this.getCtx({ newTargetId }))
     this.updatelocalPDef()
   }
   changePropArity(isArray: boolean) {
     if (this.pDef.isArray === isArray) return
-    if (isArray) act('changePropToArray', this.simpCtx)
-    else act('changePropToSingle', this.simpCtx)
+    if (isArray) actions.changePropToArray(this.simpCtx)
+    else actions.changePropToSingle(this.simpCtx)
     this.updatelocalPDef()
   }
   changeValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
     console.log('changing value to : ', value)
-    act('changePropValue', this.getCtx({ value }))
+    actions.changePropValue(this.getCtx({ value }))
     this.updatelocalPDef()
   }
   addValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
-    act('addPropValue', this.getCtx({ value }))
+    actions.addPropValue(this.getCtx({ value }))
     this.updatelocalPDef()
   }
   removeValue(value: number | boolean | string) {
     if (!this.pV.includes(value)) return
-    act('removePropValue', this.getCtx({ value }))
+    actions.removePropValue(this.getCtx({ value }))
     this.updatelocalPDef()
   }
   removeProp() {
     const accept = window.confirm('Do you really want to remove this property?\n Side effects accross project are possible.')
     if (!accept) return
-    act('removeProp', this.simpCtx)
+    actions.removeProp(this.simpCtx)
     this.updatelocalPDef()
   }
 
@@ -166,9 +166,9 @@ export default class PropView extends Vue {
   }
 
   validateNameInput() {
-    const nameInput = this.nameInputEl.value
-    const insanityCheck = new RegExp(/[^a-zA-Z0-9]|ref/g)
-    this.nameIsValid = !nameInput.match(insanityCheck) || nameInput === ''
+    const name = this.nameInputEl.value
+    const disallowed = new RegExp(/[^a-zA-Z]/g)
+    this.nameIsValid = !name.match(disallowed) && !name.startsWith('ref')
   }
 
   startEdit(fieldType: FieldType, e: MouseEvent) {

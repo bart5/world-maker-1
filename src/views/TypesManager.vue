@@ -1,7 +1,46 @@
 <template>
   <div class="wrapper" v-if="projectDataIsLoaded">
-    <div class="tabs"><div class="tab">Instances</div><div class="tab">Types</div></div>
+    <div class="tab-selector">
+      <div class="tab-switch" @click="toInstances">Instances</div>
+      <div class="tab-switch" @click="toTypes">Types</div>
+      <div class="tab-switch" @click="toChanges">Changes</div>
+    </div>
     <hr>
+    <div class="tab">
+      <template v-if="showInstances || showTypes">
+        <div class="filters">
+          <div class="instance-filter">
+
+          </div>
+          <div class="type-filter">
+
+          </div>
+        </div>
+        <div class="meta-setting">
+          <span>Show meta:</span>
+          <input :checked="showMeta" type="checkbox">
+        </div>
+        <div class="filtered-view">
+          <TypeView
+            class="type-view"
+            v-if="selectedType"
+            :tId="selectedTId"
+            :alwaysMeta="showMeta"
+          />
+        </div>
+        <div class="selected-view">
+          <TypeView
+            class="type-view"
+            v-if="selectedType"
+            :tId="selectedTId"
+            :alwaysMeta="showMeta"
+          />
+        </div>
+      </template>
+      <div class="changes">
+
+      </div>
+    </div>
     <button @click="createNewType">
       <h3>Create new Type</h3>
     </button>
@@ -30,12 +69,6 @@
     <h3>Selected instance:</h3>
       <TypeView v-if="selectedInstance" :tId="selectedITId" :iId="selectedIId"/>
     <hr>
-    <!-- <h3>Raw types:</h3>
-      {{ types }}
-    <hr>
-    <h3>Raw selected type:</h3>
-      {{ selectedType }}
-    <hr> -->
     <h3>List of changes:</h3>
       <div v-for="(change, i) in recentChanges" :key="i"> Change of type: {{ change.actionType }}</div>
   </div>
@@ -142,6 +175,11 @@ export default class TypesManager extends Vue {
   margin-bottom: 10px;
   display: flex;
   justify-content: space-between;
+}
+
+.tab-selector {
+  display: flex;
+  width: 100%;
 }
 
 </style>

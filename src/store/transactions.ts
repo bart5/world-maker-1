@@ -62,8 +62,8 @@ export const transactionHandler = {
   },
   /**
    * We assume that changes can only be reverted
-   * one by one. You cannot jump to arbitrary point
-   * in the past.
+   * one by one. You cannot jump to arbitrary change
+   * in the past and revert only that change.
    */
   revertChange(change: Change) {
     const state = this.store.state
@@ -113,8 +113,26 @@ export const transactionHandler = {
   }
 }
 
-export function act(actionType: ActionType, context: PublicActionContext) {
-  transactionHandler.act(actionType, context)
+function act(actionType: ActionType, ctx: PublicActionContext) {
+  transactionHandler.act(actionType, ctx)
+}
+
+export const actions: { [k in ActionType]: (ctx: PublicActionContext) => void } = {
+  createType: (ctx) => act('createType', ctx),
+  removeType: (ctx) => act('removeType', ctx),
+  renameType: (ctx) => act('renameType', ctx),
+  createProp: (ctx) => act('createProp', ctx),
+  removeProp: (ctx) => act('removeProp', ctx),
+  renameProp: (ctx) => act('renameProp', ctx),
+  changePropType: (ctx) => act('changePropType', ctx),
+  changePropToArray: (ctx) => act('changePropToArray', ctx),
+  changePropToSingle: (ctx) => act('changePropToSingle', ctx),
+  changePropTargetType: (ctx) => act('changePropTargetType', ctx),
+  changePropValue: (ctx) => act('changePropValue', ctx),
+  addPropValue: (ctx) => act('addPropValue', ctx),
+  removePropValue: (ctx) => act('removePropValue', ctx),
+  createInstance: (ctx) => act('createInstance', ctx),
+  removeInstance: (ctx) => act('removeInstance', ctx),
 }
 
 export function revertChange(change: Change) {
