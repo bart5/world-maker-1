@@ -90,8 +90,8 @@ export default class PropView extends Vue {
   @Prop() tId!: string
   @Prop() iId!: string
   @Prop() onlyValues!: boolean
-
   @Prop() pDef!: PropDefinition
+
   get pV(): Values { return this.$store.getters.getPV(this.simpCtx) }
 
   instanceQuery = ''
@@ -118,38 +118,45 @@ export default class PropView extends Vue {
     actions.renameType(this.getCtx({ newName }))
     this.updatelocalPDef()
   }
+
   changeType(newType: ValueType) {
     if (this.pDef.valueType === newType) return
     actions.changePropType(this.getCtx({ newType }))
     this.updatelocalPDef()
   }
+
   changePropTargetType(newTargetId: string) {
     if (this.pDef.refTargetTypeId === newTargetId) return
     actions.changePropTargetType(this.getCtx({ newTargetId }))
     this.updatelocalPDef()
   }
+
   changePropArity(isArray: boolean) {
     if (this.pDef.isArray === isArray) return
     if (isArray) actions.changePropToArray(this.simpCtx)
     else actions.changePropToSingle(this.simpCtx)
     this.updatelocalPDef()
   }
+
   changeValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
     console.log('changing value to : ', value)
     actions.changePropValue(this.getCtx({ value }))
     this.updatelocalPDef()
   }
+
   addValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
     actions.addPropValue(this.getCtx({ value }))
     this.updatelocalPDef()
   }
+
   removeValue(value: number | boolean | string) {
     if (!this.pV.includes(value)) return
     actions.removePropValue(this.getCtx({ value }))
     this.updatelocalPDef()
   }
+
   removeProp() {
     const accept = window.confirm('Do you really want to remove this property?\n Side effects accross project are possible.')
     if (!accept) return

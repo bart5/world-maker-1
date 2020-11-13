@@ -152,14 +152,14 @@ export default typesAndInstances({
       }
       // Get all referenced by given instance
       if (isReferencedById) {
-        // This instance that is referencing other we look for
+        // The instance that is referencing other we look for
         const instance = getters.getInstance({ iId: isReferencedById }) as Instance
         // We conveniently have all that data in meta field
         instancesIds.filter((_iId) => instance.meta_isReferencing.some((instanceId) => _iId === instanceId))
       }
       // Get all instances that reference specific instance
       if (isReferencingId) {
-        // This instance that is referenced by other we look for
+        // The instance that is referenced by other we look for
         const instance = getters.getInstance({ iId: isReferencingId }) as Instance
         // And again all conveniently is already in meta
         instancesIds.filter((_iId) => instance.meta_isReferencedBy.some((instanceId) => _iId === instanceId))

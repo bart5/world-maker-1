@@ -45,16 +45,14 @@ import { actions } from '@/store/transactions'
   },
 })
 export default class TypeView extends Vue {
-  @Prop({}) tId!: string
-  @Prop({}) iId!: string | undefined
-  @Prop({ default: false }) onlyValues!: boolean
-  @Prop({ neverMeta: false }) neverMeta!: boolean
-  @Prop({ alwaysMeta: false }) alwaysMeta!: boolean
+  @Prop() tId!: string
+  @Prop() iId!: string | undefined
+  @Prop() onlyValues!: boolean
+  @Prop() neverMeta!: boolean
+  @Prop() alwaysMeta!: boolean
 
   showMeta = false
-
   nameIsValid = true
-
   localTypeName = ''
 
   get isType() {

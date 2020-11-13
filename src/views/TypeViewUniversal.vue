@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <template v-if="!multiple">
+    <template v-if="!isMultiple">
       <TypeView
         :tId="tId || getInstanceTypeId()"
         :iId="iId"
@@ -49,8 +49,8 @@ import TypeView from '@/views/TypeView.vue'
   },
 })
 export default class TypeViewUniversal extends Vue {
-  @Prop({}) tId!: string
-  @Prop({}) iId!: string | undefined
+  @Prop() tId!: string
+  @Prop() iId!: string | undefined
   @Prop() multiple!: boolean
   @Prop() types!: TypeWrapper[]
   @Prop() intances!: Instances[]
@@ -61,6 +61,10 @@ export default class TypeViewUniversal extends Vue {
 
   getInstanceTypeId() {
     this.$store.getters.getTypeId({ iId: this.iId })
+  }
+
+  get isMultiple() {
+    return this.multiple || (!this.iId && !this.iId)
   }
 }
 </script>

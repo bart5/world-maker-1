@@ -14,23 +14,13 @@
             @update-instances="updateFilteredInstances"
             @update-types="updateFilteredTypes"
           />
-          <template v-if="showInstances">
-            <TypeView
-              v-for="instance in filteredInstances"
-              :tId="instance.meta_typeId[0]"
-              :iId="instance.id[0]"
-              :key="instance.id[0]"
-              :alwaysMeta="showMeta"
-            />
-          </template>
-          <template v-if="showTypes">
-            <TypeView
-              v-for="typeWrapper in filteredTypes"
-              :tId="typeWrapper.id"
-              :key="typeWrapper.id"
-              :alwaysMeta="showMeta"
-            />
-          </template>
+          <TypeViewUniversal
+            :onlyValues="showInstances"
+            :onlyTypes="showTypes"
+            :types="filteredTypes"
+            :instances="filteredInstances"
+            :alwaysMeta="showMeta"
+          />
         </Collapsible>
         <Collapsible title="Selected">
           <Filters
@@ -38,23 +28,13 @@
             @update-instances="updateFilteredSelectedInstances"
             @update-types="updateFilteredSelectedTypes"
           />
-          <template v-if="showInstances">
-            <TypeView
-              v-for="instance in filteredSelectedInstances"
-              :tId="instance.meta_typeId[0]"
-              :iId="instance.id[0]"
-              :key="instance.id[0]"
-              :alwaysMeta="showMeta"
-            />
-          </template>
-          <template v-if="showTypes">
-            <TypeView
-              v-for="typeWrapper in filteredSelectedTypes"
-              :tId="typeWrapper.id"
-              :key="typeWrapper.id"
-              :alwaysMeta="showMeta"
-            />
-          </template>
+          <TypeViewUniversal
+            :onlyValues="showInstances"
+            :onlyTypes="showTypes"
+            :types="filteredSelectedTypes"
+            :instances="filteredSelectedInstances"
+            :alwaysMeta="showMeta"
+          />
         </Collapsible>
       </template>
       <Changes v-else class="changes" />
@@ -64,21 +44,46 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import TypeView from '@/views/TypeView.vue'
+import TypeViewUniversal from '@/views/TypeViewUniversal.vue'
 import Changes from '@/views/Changes.vue'
 import Collapsible from '@/views/Collapsible.vue'
 
 @Options({
   components: {
-    TypeView,
+    TypeViewUniversal,
     Changes,
     Collapsible
   },
 })
 export default class Sidebar extends Vue {
-
-  filteredInstance: Instance[] = []
+  filteredInstances: Instance[] = []
   filteredTypes: TypeWrapper[] = []
+  filteredSelectedInstances: Instance[] = []
+  filteredSelectedTypes: TypeWrapper[] = []
+
+  get selectedInstances(): Instances[] {
+    return this.$store.getters.selectedInstances()
+  }
+
+  get selectedTypes(): TypeWrapper[] {
+    return this.$store.getters.selectedTypes()
+  }
+
+  updateFilteredInstances({ instances }: { instances: Instance[] }) {
+    this.filteredInstances = instances
+  }
+
+  updateFilteredSelectedInstances({ instances }: { instances: Instance[] }) {
+    this.filteredSelectedInstances = instances
+  }
+
+  updateFilteredTypes({ types }: { types: TypeWrapper[] }) {
+    this.filteredTypes = types
+  }
+
+  updateFilteredSelectedTypes({ types }: { types: TypeWrapper[] }) {
+    this.filteredSelectedTypes = types
+  }
 }
 </script>
 
