@@ -389,7 +389,6 @@ export default class PropView extends Vue {
         right: 0;
         top: 100%;
         width: 85%;
-        // border: 2px solid darkslategray;
         border-top: none;
         background: lightgray;
         display: flex;
@@ -434,9 +433,7 @@ export default class PropView extends Vue {
           padding-left: 6px;
 
           &:hover {
-            // background-color: rgba(255,255,255,0.15);
             cursor: pointer;
-            // text-decoration: underline;
             color: white;
             background: gray;
           }

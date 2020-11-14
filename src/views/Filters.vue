@@ -1,28 +1,54 @@
 <template>
   <div class="filters-wrapper">
-    <template v-for="m in ['types', 'instances']" :key="m">
-      <template v-if="m === mode">
-        <div>Filter {{ m }}</div>
-        <div class="field-wrapper">
-          <input type="text" placeholder="Instance Id" v-model="filters[m].iId" @change="filter">
-          <select class="target-selector" v-model="filters[m].tId" @change="filter">
-            <option class="placeholder" value="" disabled selected>Select type</option>
-            <option v-for="type in allTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
-          </select>
-          <input type="text" placeholder="Type Id" v-model="filters[m].tId" @change="filter">
-          <input type="text" placeholder="Type name" v-model="filters[m].tN" @change="filter">
-          <input type="text" placeholder="Property name" v-model="filters[m].pN" @change="filter">
-          <input type="text" :placeholder="`Is referencing ${m.replace('es', 'e')} of Id`" v-model="filters[m].isReferencing" @change="filter">
-          <input type="text" :placeholder="`Is referenced by ${ m.replace('es', 'e') } of Id`" v-model="filters[m].isReferencedBy" @change="filter">
+    <div>Filter {{ mode }}</div>
+    <div class="field-wrapper">
+      <input type="text" placeholder="Instance Id" v-model="filters[mode].iId" @change="filter">
+
+      <div class="list">
+        <input placeholder="Select type" :value="getTypeName(filters[mode].tId)" @click="startEdit('normal', $event)">
+        <div v-if="doesSelect('normal')" class="values-list">
+          <div class="value-available" v-for="type in allTypes" :key="type.id" @click="filters[mode].tId = type.id; filter()">
+            {{ type.name }}
+          </div>
         </div>
-      </template>
-    </template>
+      </div>
+
+      <input type="text" placeholder="Property name" v-model="filters[mode].pN" @change="filter">
+      <input type="text" placeholder="Is referencing instance of Id" v-model="filters[mode].isReferencingInstance" @change="filter">
+      <input type="text" placeholder="Is referenced by instance of Id" v-model="filters[mode].isReferencedByInstance" @change="filter">
+
+      <div class="list">
+        <input placeholder="Select referenced type" :value="getTypeName(filters[mode].tId)" @click="startEdit('referenced', $event)">
+        <div v-if="doesSelect('referenced')" class="values-list">
+          <div
+            class="value-available" v-for="type in allTypes" :key="type.id"
+            @click="filters[mode].isReferencingType = type.id; filter()"
+          >
+            {{ type.name }}
+          </div>
+        </div>
+      </div>
+
+      <div class="list">
+        <input placeholder="Select referencing type" :value="getTypeName(filters[mode].tId)" @click="startEdit('referencing', $event)">
+        <div v-if="doesSelect('referencing')" class="values-list">
+          <div
+            class="value-available" v-for="type in allTypes" :key="type.id"
+            @click="filters[mode].isReferencingType = type.id; filter()"
+          >
+            {{ type.name }}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
+
+type TypePurpose = 'normal' | 'referenced' | 'referencing'
 
 @Options({})
 export default class Filteres extends Vue {
@@ -36,8 +62,10 @@ export default class Filteres extends Vue {
       tId: '', // it's type id
       tN: '', // it's type name
       pN: '', // one of it's properties name
-      isReferencing: '', // one of instances it references
-      isReferencedBy: '', // one of instances that reference it
+      isReferencingInstance: '', // one of instances it references
+      isReferencedByInstance: '', // one of instances that reference it
+      isReferencingType: '', // one of instances it references
+      isReferencedByType: '', // one of instances that reference it
       isBound: '', // only instances that have actor bound
       isNotBound: '', // only instances that have no actor bound
       isBoundTo: '', // instances bound to spepcific actor Id
@@ -47,9 +75,17 @@ export default class Filteres extends Vue {
       tId: '', // it's type id
       tN: '', // it's type name
       pN: '', // property name it includes
-      isReferencing: '', // type it references
-      isReferencedBy: '', // type it's referenced by
+      isReferencingInstance: '', // type it references
+      isReferencedByInstance: '', // type it's referenced by
     }
+  }
+
+  typeSelectionInProgress: TypePurpose | '' = ''
+  unwatch: any = null
+
+  getTypeName(tId: string) {
+    if (!tId) return
+    this.$store.getters.getTypeName({ tId })
   }
 
   areFiltersEmpty() {
@@ -67,6 +103,7 @@ export default class Filteres extends Vue {
   }
 
   filter() {
+    this.stopEdit()
     if (this.mode === 'instances') {
       if (this.areFiltersEmpty()) {
         this.$emit('update-instances', { instances: this.intances })
@@ -81,6 +118,33 @@ export default class Filteres extends Vue {
       this.$emit('update-types', { types: this.getFilteredTypes() })
     }
   }
+
+  startEdit(typePurpose: TypePurpose, e: MouseEvent) {
+    e.stopPropagation()
+    if (typePurpose === this.typeSelectionInProgress) return
+    if (this.unwatch) this.unwatch()
+
+    this.typeSelectionInProgress = typePurpose
+
+    const widgetKey = Math.random()
+    this.$store.dispatch('setWidgetKey', { widgetKey }) // in order to active element from other components
+    this.unwatch = this.$watch('activeWidgetKey', (newKey: number) => {
+      if (newKey === widgetKey) return
+      this.stopEdit()
+      this.unwatch()
+    })
+  }
+
+  stopEdit() {
+    if (this.unwatch) this.unwatch()
+    this.typeSelectionInProgress = ''
+  }
+
+  doesSelect(typePurpose: TypePurpose) {
+    return this.typeSelectionInProgress === typePurpose
+  }
+
+  get activeWidgetKey() { return this.$store.getters.activeWidgetKey }
 }
 </script>
 
@@ -89,13 +153,20 @@ export default class Filteres extends Vue {
 .field-wrapper {
   display: flex;
   flex-flow: column wrap;
-  width: 100%;
   max-height: 90px;
   padding: 8px;
+  justify-content: center;
+  align-items: center;
+  // width: 480px;
+
+  & > * {
+    flex-shrink: 0;
+    flex-grow: 0;
+    width: 32%;
+  }
 }
 
 input, select {
-  max-width: 33%;
   display: flex;
   flex-flow: column;
   margin: 2px 0;
@@ -111,6 +182,70 @@ select {
   height: 16px;
   border: none;
   background: white;
+}
+
+.list {
+  position: relative;
+
+  input {
+    width: 100%;
+  }
+}
+
+.values-list {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  width: 85%;
+  border-top: none;
+  background: lightgray;
+  display: flex;
+  flex-flow: column nowrap;
+  max-height: calc(6 * 24px);
+  overflow-y: scroll;
+  z-index: 2;
+  box-shadow:
+    3px 3px 4px 2px rgba(80,80,80, 0.4),
+    -3px 3px 4px 2px rgba(80,80,80, 0.4);
+
+  & > div {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 24px;
+  }
+
+  .value-selected {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+
+    .value {
+      margin-left: 6px;
+      flex-grow: 1;
+      text-align: left;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .remove-value-button {
+      background-color: rgba(255,0,0,0.22);
+    }
+  }
+
+  .value-available {
+    padding-left: 6px;
+
+    &:hover {
+      cursor: pointer;
+      color: white;
+      background: gray;
+    }
+  }
 }
 
 </style>

@@ -134,7 +134,7 @@ export default typesAndInstances({
     getFilteredInstances: (state, getters) => (
       p: { iId: string, tN: string, tId: string,
         prop: { pN: string, pV: string | number | boolean },
-        isReferencedById: string, isReferencingId: string,
+        isReferencedByInstance: string, isReferencingInstance: string,
       }
     ): Instance[] => {
       console.log('filtering with payload: ', p)
@@ -142,7 +142,7 @@ export default typesAndInstances({
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
 
-      const { tId, tN, iId, prop, isReferencedById, isReferencingId } = p
+      const { tId, tN, iId, prop, isReferencedByInstance, isReferencingInstance } = p
 
       if (iId) {
         instancesIds = instancesIds.filter((instanceId) => iId === instanceId)
@@ -166,16 +166,16 @@ export default typesAndInstances({
         instancesIds.filter(matchByProp)
       }
       // Get all referenced by given instance
-      if (isReferencedById) {
+      if (isReferencedByInstance) {
         // The instance that is referencing other we look for
-        const instance = getters.getInstance({ iId: isReferencedById }) as Instance
+        const instance = getters.getInstance({ iId: isReferencedByInstance }) as Instance
         // We conveniently have all that data in meta field
         instancesIds.filter((_iId) => instance.meta_isReferencing.some((instanceId) => _iId === instanceId))
       }
       // Get all instances that reference specific instance
-      if (isReferencingId) {
+      if (isReferencingInstance) {
         // The instance that is referenced by other we look for
-        const instance = getters.getInstance({ iId: isReferencingId }) as Instance
+        const instance = getters.getInstance({ iId: isReferencingInstance }) as Instance
         // And again all conveniently is already in meta
         instancesIds.filter((_iId) => instance.meta_isReferencedBy.some((instanceId) => _iId === instanceId))
       }
