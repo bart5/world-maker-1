@@ -5,8 +5,8 @@
 <template>
   <div class="prop-wrapper" @keydown.esc="stopEdit()">
 
-    <div class="name-field" @click="startEdit('name', $event)">
-      <span v-if="!doesEdit('name')" class="name-text">{{ pDef.name }}</span>
+    <div class="name-field" @click="startEdit('name', $event)" >
+      <span v-if="!doesEdit('name')" class="name-text" :class="{ 'disabled': onlyValues }">{{ pDef.name }}</span>
       <input v-else type="text" :value="localPDef.name.replace('ref_', '')" ref="nameInput"
         @change="getEValue($event, renameProp); stopEdit()" @keydown="validateNameInput"
       >
@@ -57,12 +57,21 @@
     </div>
 
     <div v-if="!onlyValues" class="value-type">
+    <!-- <div class="value-type hover"> -->
       <select class="type-selector" :value="localPDef.valueType" @change="getEValue($event, changeType)">
         <option v-for="vType in valueTypes" :key="vType">{{ vType }}</option>
       </select>
     </div>
 
+    <div v-if="onlyValues" class="value-type short hover">
+      <span>{{ localPDef.valueType + (localPDef.isArray ? '[]' : '') }}</span>
+      <!-- <select class="type-selector" :value="localPDef.valueType" @change="getEValue($event, changeType)">
+        <option v-for="vType in valueTypes" :key="vType">{{ vType }}</option>
+      </select> -->
+    </div>
+
     <div v-if="!onlyValues" class="target-type">
+    <!-- <div class="target-type"> -->
       <select class="target-selector" :value="localPDef.refTargetTypeId" @change="getEValue($event, changePropTargetType)">
         <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
       </select>
@@ -304,7 +313,7 @@ export default class PropView extends Vue {
     text-overflow: ellipsis;
     flex-grow: 1;
 
-    &:hover {
+    &:not(.disabled):hover {
       cursor: pointer;
     }
   }
@@ -352,9 +361,9 @@ export default class PropView extends Vue {
 
       .values-list {
         position: absolute;
-        left: 36px;
+        right: 0;
         top: 100%;
-        width: 100%;
+        width: 85%;
         border: 1px solid darkslategray;
         background: lightgray;
         display: flex;
@@ -402,6 +411,11 @@ export default class PropView extends Vue {
         }
       }
     }
+  }
+
+  .value-type.short {
+    width: 45px;
+    font-size: 12px;
   }
 }
 

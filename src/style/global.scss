@@ -1,5 +1,14 @@
 :root {
   --color-active: lightblue;
+  user-select: none;
+
+  .hover:hover {
+    cursor: pointer !important;
+  }
+
+  input[type="checkbox"]:hover {
+    cursor: pointer;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -85,3 +94,5 @@ button.basic {
     background-color: rgba(160,160,160,0.2);
   }
 }
+
+

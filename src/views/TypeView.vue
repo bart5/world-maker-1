@@ -13,8 +13,9 @@
     </div>
     <div class="type-config">
       <div class="meta-toggle" v-if="!neverMeta && !alwaysMeta">
-        <span>Show meta:</span>
-        <input :checked="showMeta" type="checkbox">
+        <label class="hover">Meta:
+          <input v-model="showMeta" type="checkbox">
+        </label>
       </div>
       <div>
         <button class="basic" @click="remove">Delete</button>
