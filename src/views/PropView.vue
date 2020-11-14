@@ -6,7 +6,7 @@
   <div class="prop-wrapper" @keydown.esc="stopEdit()">
 
     <div class="name-field" @click="startEdit('name', $event)" >
-      <span v-if="!doesEdit('name')" class="name-text" :class="{ 'disabled': onlyValues }">{{ pDef.name }}</span>
+      <span v-if="!doesEdit('name')" class="name-text" :class="{ 'disabled': onlyValues | isMeta }">{{ pDef.name }}</span>
       <input v-else type="text" :value="localPDef.name.replace('ref_', '')" ref="nameInput"
         @change="getEValue($event, renameProp); stopEdit()" @keydown="validateNameInput"
       >
@@ -18,7 +18,10 @@
         <div class="top-field">
           <div v-if="!doesEdit('values')" class="first-value">
             <span class="value-text">{{ `${pV[0]}` }}</span>
-            <span v-if="pV.length > 1" class="is-more">{{ `(${(pV.length-1)} more)` }}</span>
+            <div class="affix">
+              <span v-if="pV.length > 1" class="is-more">{{ `(${(pV.length-1)} more)` }}</span>
+              <span v-if="isRef && onlyValues" class="ref-affix">{{ `${refTargetName}` }}</span>
+            </div>
           </div>
 
           <div v-else-if="isRef">
@@ -31,7 +34,7 @@
             </div>
 
             <div v-else class="value-input">
-              <input v-bind="valueInputAttributes" @change="getEValue($event, changeValue, 'number')">
+              <input v-bind="valueInputAttributes" :disabled="readonly" @change="getEValue($event, changeValue, 'number')">
             </div>
           </template>
         </div>
@@ -39,7 +42,7 @@
         <div v-if="doesEdit('values') && (pV.length || isRef)" class="values-list">
           <div class="value-selected" v-for="value in pV" :key="value">
             <div class="value">{{ `${value}` }}</div>
-            <div class="remove-value-button">
+            <div v-if="!readonly" class="remove-value-button">
               <button @click="removeValue(value)">X</button>
             </div>
           </div>
@@ -58,7 +61,7 @@
 
     <div v-if="!onlyValues" class="value-type">
     <!-- <div class="value-type hover"> -->
-      <select class="type-selector" :value="localPDef.valueType" @change="getEValue($event, changeType)">
+      <select class="type-selector" :disabled="readonly" :value="localPDef.valueType" @change="getEValue($event, changeType)">
         <option v-for="vType in valueTypes" :key="vType">{{ vType }}</option>
       </select>
     </div>
@@ -72,17 +75,17 @@
 
     <div v-if="!onlyValues" class="target-type">
     <!-- <div class="target-type"> -->
-      <select class="target-selector" :value="localPDef.refTargetTypeId" @change="getEValue($event, changePropTargetType)">
+      <select class="target-selector" :disabled="readonly" :value="localPDef.refTargetTypeId" @change="getEValue($event, changePropTargetType)">
         <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
       </select>
     </div>
 
     <div v-if="!onlyValues" class="arity-choice">
-      <input type="checkbox" :checked="localPDef.isArray" @change="changePropArity(localPDef.isArray)">
+      <input type="checkbox" :disabled="readonly" :checked="localPDef.isArray" @change="changePropArity(localPDef.isArray)">
     </div>
 
     <div v-if="!onlyValues" class="delete-prop">
-      <button @click="removeProp">X</button>
+      <button @click="removeProp" :disabled="readonly">X</button>
     </div>
   </div>
 </template>
@@ -185,10 +188,11 @@ export default class PropView extends Vue {
   validateNameInput() {
     const name = this.nameInputEl.value
     const disallowed = new RegExp(/[^a-zA-Z]/g)
-    this.nameIsValid = !name.match(disallowed) && !name.startsWith('ref')
+    this.nameIsValid = !name.match(disallowed) && !name.startsWith('ref') && !name.startsWith('meta')
   }
 
   startEdit(fieldType: FieldType, e: MouseEvent) {
+    if (this.isMeta && (fieldType === 'name')) return
     if (this.onlyValues && !(fieldType === 'values')) return
     e.stopPropagation()
     if (fieldType === this.editInProgress) return
@@ -242,7 +246,15 @@ export default class PropView extends Vue {
 
   get isRef() { return this.pDef.valueType === 'ref' }
 
+  get refTargetName() { return this.$store.getters.getType({ tId: this.pDef.refTargetTypeId })?.name }
+
   get isBool() { return this.pDef.valueType === 'bool' }
+
+  get isMeta() { return this.pDef.name.startsWith('meta') }
+
+  get readonly() {
+    return this.isMeta
+  }
 
   get valueInputAttributes() {
     const vType = this.pDef.valueType
@@ -286,20 +298,30 @@ export default class PropView extends Vue {
   width: 100%;
   display: flex;
   flex-flow: row nowrap;
-  height: 32px;
-  padding: 2px;
+  height: 26px;
   align-items: center;
-  border: 1px solid slategray;
+  border: 1px solid rgba(100,100,100);
   overflow-y: visible;
   justify-content: flex-start;
+
+  &:not(:last-child) {
+    border-bottom: none;
+  }
+
+  &:last-child:first-child { // in case the row is lonely
+    border: 1px solid rgba(100,100,100);
+  }
 
   & > div {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     height: 100%;
-    padding: 1px;
-    border: 1px solid darkgray;
+    font-size: 14px;
+
+    &:not(:first-child) {
+      border-left: 1px solid rgba(100,100,100);
+    }
   }
 
   .name-text, .value-text {
@@ -334,13 +356,6 @@ export default class PropView extends Vue {
     flex-grow: 1;
     min-width: 240px;
 
-    .is-more {
-      font-size: 12px;
-      flex-grow: 0;
-      white-space: nowrap;
-      width: auto;
-    }
-
     .values-box {
       position: relative;
       display: flex;
@@ -355,7 +370,17 @@ export default class PropView extends Vue {
 
         .first-value, .value-input, input {
           display: flex;
+          align-items: center;
           width: 100%;
+        }
+
+        .affix {
+          display: flex;
+          flex-flow: column;
+          justify-content: center;
+          font-size: 11px;
+          white-space: nowrap;
+          max-height: 100%;
         }
       }
 
@@ -414,8 +439,9 @@ export default class PropView extends Vue {
   }
 
   .value-type.short {
-    width: 45px;
+    width: 48px;
     font-size: 12px;
+    padding-left: 2px;
   }
 }
 
