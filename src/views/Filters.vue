@@ -6,30 +6,30 @@
         <div class="field-wrapper">
           <div class="box">
             <div class="label">Instance Id</div>
-            <input type="text" :value="filters[m].iId" @change="filter">
+            <input type="text" v-model="filters[m].iId" @change="filter">
           </div>
           <div class="box">
             <div class="label">Type Id</div>
-            <input type="text" :value="filters[m].tId" @change="filter">
+            <input type="text" v-model="filters[m].tId" @change="filter">
             <select class="target-selector" v-model="filters[m].tId" @change="filter">
               <option v-for="type in allTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
             </select>
           </div>
           <div class="box">
             <div class="label">Type name</div>
-            <input type="text" :value="filters[m].tN" @change="filter">
+            <input type="text" v-model="filters[m].tN" @change="filter">
           </div>
           <div class="box">
             <div class="label">Propety name</div>
-            <input type="text" :value="filters[m].pN" @change="filter">
+            <input type="text" v-model="filters[m].pN" @change="filter">
           </div>
           <div class="box">
             <div class="label">Is referencing {{ m.replace('es', 'e') }} of Id</div>
-            <input type="text" :value="filters[m].isReferencing" @change="filter">
+            <input type="text" v-model="filters[m].isReferencing" @change="filter">
           </div>
           <div class="box">
             <div class="label">Is referenced by {{ m.replace('es', 'e') }} of Id</div>
-            <input type="text" :value="filters[m].isReferencedBy" @change="filter">
+            <input type="text" v-model="filters[m].isReferencedBy" @change="filter">
           </div>
         </div>
       </template>
@@ -69,6 +69,10 @@ export default class Filteres extends Vue {
     }
   }
 
+  areFiltersEmpty() {
+    return Object.entries(this.filters[this.mode]).every(([, value]) => !value.length)
+  }
+
   get allTypes() { return this.$store.getters.types as TypeWrapper[] }
 
   getFilteredInstances() {
@@ -80,10 +84,17 @@ export default class Filteres extends Vue {
   }
 
   filter() {
-    console.log('updating')
     if (this.mode === 'instances') {
+      if (this.areFiltersEmpty()) {
+        this.$emit('update-instances', { instances: this.intances })
+        return
+      }
       this.$emit('update-instances', { instances: this.getFilteredInstances() })
     } else {
+      if (this.areFiltersEmpty()) {
+        this.$emit('update-types', { types: this.types })
+        return
+      }
       this.$emit('update-types', { types: this.getFilteredTypes() })
     }
   }
