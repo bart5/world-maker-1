@@ -2,12 +2,13 @@
   <div class="type-wrapper">
     <div class="type-header">
       <div class="name-wrapper">
-        <template v-if="!showNameInput">
-          <div class="type-name">{{ type.definition.name }}</div>
-          <button @click="showNameInput=!showNameInput"></button>
+        <template v-if="!doesEdit('typeName')">
+          <span class="name">{{ type.name }}</span>
+          <span v-if="iId" class="id">({{ instance.id[0] }})</span>
+          <button v-else class="basic small" @click="startEdit('typeName', $event)">Edit</button>
         </template>
         <input v-else class="type-name-input" type="text" :value="localTypeName" ref="nameInput"
-          @change="getEValue($event, renameType)" @keydown="validateNameInput"
+          @click="startEdit('typeName', $event)" @change="getEValue($event, renameType)" @keydown="validateNameInput"
         >
       </div>
     </div>
@@ -40,6 +41,8 @@ import { Prop } from 'vue-property-decorator';
 import PropView from '@/views/PropView.vue'
 import { actions } from '@/store/transactions'
 
+type FieldType = '' | 'typeName'
+
 @Options({
   components: {
     PropView
@@ -56,6 +59,10 @@ export default class TypeView extends Vue {
   nameIsValid = true
   localTypeName = ''
   showNameInput = false
+
+  fieldType: FieldType = ''
+  editInProgress: FieldType = ''
+  unwatch: any = null
 
   get isType() {
     return !this.iId
@@ -120,6 +127,33 @@ export default class TypeView extends Vue {
   mounted() {
     this.updateTypeName()
   }
+
+  startEdit(fieldType: FieldType, e: MouseEvent) {
+    e.stopPropagation()
+    if (fieldType === this.editInProgress) return
+    if (this.unwatch) this.unwatch()
+
+    this.editInProgress = fieldType
+
+    const widgetKey = Math.random()
+    this.$store.dispatch('setWidgetKey', { widgetKey }) // in order to active element from other components
+    this.unwatch = this.$watch('activeWidgetKey', (newKey: number) => {
+      if (newKey === widgetKey) return
+      this.stopEdit()
+      this.unwatch()
+    })
+  }
+
+  stopEdit() {
+    if (this.unwatch) this.unwatch()
+    this.editInProgress = ''
+  }
+
+  doesEdit(fieldType: FieldType) {
+    return this.editInProgress === fieldType
+  }
+
+  get activeWidgetKey() { return this.$store.getters.activeWidgetKey }
 }
 </script>
 
@@ -130,6 +164,20 @@ export default class TypeView extends Vue {
   width: 100%;
   padding: 12px;
   border: 1px solid;
+}
+.name-wrapper {
+  display: flex;
+  align-items: center;
+
+  .id {
+    margin-left: 4px;
+    font-size: 14px;
+    user-select: text;
+  }
+
+  button {
+    margin-left: 4px;
+  }
 }
 .type-config {
   display: flex;

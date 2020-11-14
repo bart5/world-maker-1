@@ -5,7 +5,7 @@
 <template>
   <div class="prop-wrapper" @keydown.esc="stopEdit()">
 
-    <div class="name-field" @click="startEdit('name', $event)" >
+    <div class="name-field" @click="startEdit('name', $event)">
       <span v-if="!doesEdit('name')" class="name-text" :class="{ 'disabled': onlyValues | isMeta }">{{ pDef.name }}</span>
       <input v-else type="text" :value="localPDef.name.replace('ref_', '')" ref="nameInput"
         @change="getEValue($event, renameProp); stopEdit()" @keydown="validateNameInput"
@@ -451,7 +451,7 @@ export default class PropView extends Vue {
 
   input {
     border: none;
-    background: inherit;
+    background: rgba(230,230,230);
     border-bottom: dashed 2px darkgray;
   }
 }

@@ -46,16 +46,18 @@
 
       <div class="list">
         <input
-          placeholder="Actor bounding"
+          placeholder="Actor binding"
           :value="(filters[mode].isBound && 'Only bound') || (filters[mode].isNotBound && 'Only not bound')"
-          @click="startEdit('bounding', $event)"
+          @click="startEdit('binding', $event)"
         >
-        <div v-if="doesSelect('bounding')" class="values-list">
+        <div v-if="doesSelect('binding')" class="values-list">
           <div class="value-available" @click="filters[mode].isBound = ''; filters[mode].isNotBound = ''; filter()">-N/A-</div>
           <div class="value-available" @click="filters[mode].isBound = true; filters[mode].isNotBound = false; filter()">Bound</div>
           <div class="value-available" @click="filters[mode].isBound = false; filters[mode].isNotBound = true; filter()">Not bound</div>
         </div>
       </div>
+
+      <input type="text" placeholder="Bound to Id" v-model="filters[mode].isBoundTo" @change="filter">
     </div>
   </div>
 </template>
@@ -64,7 +66,7 @@
 import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 
-type FieldType = 'normalType' | 'referencedType' | 'referencingType' | 'bounding'
+type FieldType = 'normalType' | 'referencedType' | 'referencingType' | 'binding'
 
 @Options({})
 export default class Filteres extends Vue {
@@ -92,7 +94,9 @@ export default class Filteres extends Vue {
       iId: '', // one of its instanced ids
       tId: '', // it's type id
       tN: '', // it's type name
-      pN: '', // property name it includes
+      prop: {
+        pN: '', // proparty name it includes
+      },
       isReferencingInstance: '', // type it references
       isReferencedByInstance: '', // type it's referenced by
     }
@@ -120,7 +124,6 @@ export default class Filteres extends Vue {
   get allTypes() { return this.$store.getters.types as TypeWrapper[] }
 
   getFilteredInstances() {
-    console.log('passing filters: ', this.filters.instances)
     return this.$store.getters.getFilteredInstances({ ...this.filters.instances }, this.intances || null)
   }
 

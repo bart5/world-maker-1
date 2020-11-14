@@ -161,7 +161,6 @@ export default typesAndInstances({
           } else {
             // This is low performance approach. Fix it by looking by type definitions first
             // and then by filtering instances based on matching types.
-            console.log('check')
             return Object.entries(instance).some(([pName]) => pName === pN)
           }
         }
