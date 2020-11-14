@@ -11,20 +11,20 @@
           @click="startEdit('typeName', $event)" @change="getEValue($event, renameType)" @keydown="validateNameInput"
         >
       </div>
-    </div>
-    <div class="type-config">
-      <div class="meta-toggle" v-if="!neverMeta && !alwaysMeta">
-        <label class="hover">Meta:
-          <input v-model="showMeta" type="checkbox">
-        </label>
-      </div>
-      <div>
-        <button class="basic" @click="remove">Delete</button>
+      <div class="type-config">
+        <div class="meta-toggle" v-if="!neverMeta && !alwaysMeta">
+          <label class="hover">Show meta:
+            <input v-model="showMeta" type="checkbox">
+          </label>
+        </div>
+        <div>
+          <button class="basic small" @click="remove">Remove {{ isType ? 'type' : 'instance' }}</button>
+        </div>
       </div>
     </div>
     <template v-for="(pDef, pN) in type.definition">
       <PropView
-        v-if="!pN.includes('meta') || showMeta || alwaysMeta"
+        v-if="pN !== 'id' && (!pN.includes('meta') || showMeta || alwaysMeta)"
         :tId="tId"
         :iId="iId"
         :pDef="pDef"
@@ -164,27 +164,37 @@ export default class TypeView extends Vue {
   width: 100%;
   padding: 12px;
   border: 1px solid;
-}
-.name-wrapper {
-  display: flex;
-  align-items: center;
 
-  .id {
-    margin-left: 4px;
-    font-size: 14px;
-    user-select: text;
-  }
+  .type-header {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    height: 34px;
 
-  button {
-    margin-left: 4px;
+    .name-wrapper {
+      display: flex;
+      align-items: center;
+      flex-grow:1 ;
+
+      .id {
+        margin-left: 4px;
+        font-size: 14px;
+        user-select: text;
+      }
+
+      button {
+        margin-left: 4px;
+      }
+    }
+    .type-config {
+      flex-grow: 0;
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: space-between;
+      width: 240px;
+    }
   }
-}
-.type-config {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: space-between;
-  padding: 6px 0;
-  width: 100%;
 }
 .meta-toggle label {
   font-size: 14px;
