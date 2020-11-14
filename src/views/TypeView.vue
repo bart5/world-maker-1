@@ -138,10 +138,11 @@ export default class TypeView extends Vue {
   padding: 6px 0;
   width: 100%;
 }
-.meta-toggle {
+.meta-toggle label {
+  font-size: 14px;
   height: 16px;
   display: flex;
   flex-flow: row nowrap;
-  align-items: flex-end;
+  align-items: center;
 }
 </style>

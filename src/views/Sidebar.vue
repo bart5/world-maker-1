@@ -7,44 +7,45 @@
     </div>
     <hr>
     <div class="tab">
-      <!-- <template v-show="showInstances || showTypes"> -->
-        <Collapsible
-          v-show="showInstances || showTypes"
-          title="All" class="content-section"
-        >
-          <Filters
-            :mode="showInstances ? 'instances' : 'types'"
-            @update-instances="updateFilteredInstances"
-            @update-types="updateFilteredTypes"
-          />
-          <TypeViewUniversal
-            :onlyValues="showInstances"
-            :onlyTypes="showTypes"
-            :types="filteredTypes"
-            :instances="filteredInstances"
-            :alwaysMeta="showMeta"
-          />
-        </Collapsible>
-        <Collapsible
-          v-show="showInstances || showTypes"
-          title="Selected" class="content-section"
-        >
-          <Filters
-            :mode="showInstances ? 'instances' : 'types'"
-            :instances="selectedInstances"
-            :types="selectedTypes"
-            @update-instances="updateFilteredSelectedInstances"
-            @update-types="updateFilteredSelectedTypes"
-          />
-          <TypeViewUniversal
-            :onlyValues="showInstances"
-            :onlyTypes="showTypes"
-            :types="filteredSelectedTypes"
-            :instances="filteredSelectedInstances"
-            :alwaysMeta="showMeta"
-          />
-        </Collapsible>
-      <!-- </template> -->
+      <!-- Top half of the sidebar -->
+      <Collapsible
+        v-show="showInstances || showTypes"
+        title="All" class="content-section"
+      >
+        <Filters
+          :mode="showInstances ? 'instances' : 'types'"
+          @update-instances="updateFilteredInstances"
+          @update-types="updateFilteredTypes"
+        />
+        <TypeViewUniversal
+          :onlyValues="showInstances"
+          :onlyTypes="showTypes"
+          :types="filteredTypes"
+          :instances="filteredInstances"
+          :alwaysMeta="showMeta"
+        />
+      </Collapsible>
+      <!-- Bottom half of the sidebar -->
+      <Collapsible
+        v-show="showInstances || showTypes"
+        title="Selected" class="content-section"
+      >
+        <Filters
+          :mode="showInstances ? 'instances' : 'types'"
+          :instances="selectedInstances"
+          :types="selectedTypes"
+          @update-instances="updateFilteredSelectedInstances"
+          @update-types="updateFilteredSelectedTypes"
+        />
+        <TypeViewUniversal
+          :onlyValues="showInstances"
+          :onlyTypes="showTypes"
+          :types="filteredSelectedTypes"
+          :instances="filteredSelectedInstances"
+          :alwaysMeta="showMeta"
+        />
+      </Collapsible>
+      <!-- Changes (take entire sidebar alone) -->
       <Changes v-if="showChanges" class="changes" />
     </div>
   </div>
@@ -88,10 +89,6 @@ export default class Sidebar extends Vue {
   get randomType() {
     return (this.$store.getters.types as TypeWrapper[])[1]
   }
-
-  // get randomInstance() {
-  //   return this.$store.
-  // }
 
   get selectedInstances(): Instances[] {
     // return this.$store.getters.selectedInstances()

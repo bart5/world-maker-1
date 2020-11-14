@@ -47,11 +47,13 @@
             </div>
           </div>
           <template v-if="isRef">
+            <hr>
             <div class="value-available" v-for="instance in filteredInstances" :key="instance.is.value[0]">
               {{ instance.id.value[0] }}
             </div>
           </template>
           <template v-if="isBool">
+            <hr>
             <div class="value-available" @click="changeValue(true)">{{ true }}</div>
             <div class="value-available" @click="changeValue(false)">{{ false }}</div>
           </template>
@@ -60,7 +62,6 @@
     </div>
 
     <div v-if="!onlyValues" class="value-type">
-    <!-- <div class="value-type hover"> -->
       <select class="type-selector" :disabled="readonly" :value="localPDef.valueType" @change="getEValue($event, changeType)">
         <option v-for="vType in valueTypes" :key="vType">{{ vType }}</option>
       </select>
@@ -68,13 +69,9 @@
 
     <div v-if="onlyValues" class="value-type short hover">
       <span>{{ localPDef.valueType + (localPDef.isArray ? '[]' : '') }}</span>
-      <!-- <select class="type-selector" :value="localPDef.valueType" @change="getEValue($event, changeType)">
-        <option v-for="vType in valueTypes" :key="vType">{{ vType }}</option>
-      </select> -->
     </div>
 
     <div v-if="!onlyValues" class="target-type">
-    <!-- <div class="target-type"> -->
       <select class="target-selector" :disabled="readonly" :value="localPDef.refTargetTypeId" @change="getEValue($event, changePropTargetType)">
         <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
       </select>
@@ -192,6 +189,7 @@ export default class PropView extends Vue {
   }
 
   startEdit(fieldType: FieldType, e: MouseEvent) {
+    if (this.isId) return
     if (this.isMeta && (fieldType === 'name')) return
     if (this.onlyValues && !(fieldType === 'values')) return
     e.stopPropagation()
@@ -252,8 +250,10 @@ export default class PropView extends Vue {
 
   get isMeta() { return this.pDef.name.startsWith('meta') }
 
+  get isId() { return this.pDef.name === 'id' }
+
   get readonly() {
-    return this.isMeta
+    return this.isMeta || this.isId
   }
 
   get valueInputAttributes() {
@@ -355,9 +355,9 @@ export default class PropView extends Vue {
   .values-field {
     flex-grow: 1;
     min-width: 240px;
+    position: relative;
 
     .values-box {
-      position: relative;
       display: flex;
       justify-content: flex-start;
       width: 100%;
@@ -389,13 +389,17 @@ export default class PropView extends Vue {
         right: 0;
         top: 100%;
         width: 85%;
-        border: 1px solid darkslategray;
+        // border: 2px solid darkslategray;
+        border-top: none;
         background: lightgray;
         display: flex;
         flex-flow: column nowrap;
         max-height: calc(6 * 24px);
         overflow-y: scroll;
         z-index: 2;
+        box-shadow:
+          3px 3px 4px 2px rgba(80,80,80, 0.4),
+          -3px 3px 4px 2px rgba(80,80,80, 0.4);
 
         & > div {
           display: flex;
@@ -405,8 +409,6 @@ export default class PropView extends Vue {
         }
 
         .value-selected {
-          font-weight: bold;
-          color: darkgreen;
           display: flex;
           width: 100%;
           justify-content: space-between;
@@ -429,9 +431,14 @@ export default class PropView extends Vue {
         }
 
         .value-available {
+          padding-left: 6px;
+
           &:hover {
-            box-shadow: inset 0 0 4px 1px lightsteelblue;
+            // background-color: rgba(255,255,255,0.15);
             cursor: pointer;
+            // text-decoration: underline;
+            color: white;
+            background: gray;
           }
         }
       }
@@ -442,6 +449,12 @@ export default class PropView extends Vue {
     width: 48px;
     font-size: 12px;
     padding-left: 2px;
+  }
+
+  input {
+    border: none;
+    background: inherit;
+    border-bottom: dashed 2px darkgray;
   }
 }
 
