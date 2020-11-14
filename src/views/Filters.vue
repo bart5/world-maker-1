@@ -5,8 +5,8 @@
       <input type="text" placeholder="Instance Id" v-model="filters[mode].iId" @change="filter">
 
       <div class="list">
-        <input placeholder="Select type" :value="getTypeName(filters[mode].tId)" @click="startEdit('normal', $event)">
-        <div v-if="doesSelect('normal')" class="values-list">
+        <input placeholder="Type" :value="getTypeName(filters[mode].tId)" @click="startEdit('normalType', $event)">
+        <div v-if="doesSelect('normalType')" class="values-list">
           <div class="value-available" @click="filters[mode].tId = ''; filter()">-None-</div>
           <div class="value-available" v-for="type in allTypes" :key="type.id" @click="filters[mode].tId = type.id; filter()">
             {{ type.name }}
@@ -14,13 +14,13 @@
         </div>
       </div>
 
-      <input type="text" placeholder="Property name" v-model="filters[mode].pN" @change="filter">
-      <input type="text" placeholder="Is referencing instance of Id" v-model="filters[mode].isReferencingInstance" @change="filter">
-      <input type="text" placeholder="Is referenced by instance of Id" v-model="filters[mode].isReferencedByInstance" @change="filter">
+      <input type="text" placeholder="Property name" v-model="filters[mode].prop.pN" @change="filter">
+      <input type="text" placeholder="Referencing instance of Id" v-model="filters[mode].isReferencingInstance" @change="filter">
+      <input type="text" placeholder="Referenced by instance of Id" v-model="filters[mode].isReferencedByInstance" @change="filter">
 
       <div class="list">
-        <input placeholder="Select referenced type" :value="getTypeName(filters[mode].isReferencingType)" @click="startEdit('referenced', $event)">
-        <div v-if="doesSelect('referenced')" class="values-list">
+        <input placeholder="Referencing given type" :value="getTypeName(filters[mode].isReferencingType)" @click="startEdit('referencedType', $event)">
+        <div v-if="doesSelect('referencedType')" class="values-list">
           <div class="value-available" @click="filters[mode].isReferencingType = ''; filter()">-None-</div>
           <div
             class="value-available" v-for="type in allTypes" :key="type.id"
@@ -32,8 +32,8 @@
       </div>
 
       <div class="list">
-        <input placeholder="Select referencing type" :value="getTypeName(filters[mode].isReferencedByType)" @click="startEdit('referencing', $event)">
-        <div v-if="doesSelect('referencing')" class="values-list">
+        <input placeholder="Referenced by given type" :value="getTypeName(filters[mode].isReferencedByType)" @click="startEdit('referencingType', $event)">
+        <div v-if="doesSelect('referencingType')" class="values-list">
           <div class="value-available" @click="filters[mode].isReferencedByType = ''; filter()">-None-</div>
           <div
             class="value-available" v-for="type in allTypes" :key="type.id"
@@ -41,6 +41,19 @@
           >
             {{ type.name }}
           </div>
+        </div>
+      </div>
+
+      <div class="list">
+        <input
+          placeholder="Actor bounding"
+          :value="(filters[mode].isBound && 'Only bound') || (filters[mode].isNotBound && 'Only not bound')"
+          @click="startEdit('bounding', $event)"
+        >
+        <div v-if="doesSelect('bounding')" class="values-list">
+          <div class="value-available" @click="filters[mode].isBound = ''; filters[mode].isNotBound = ''; filter()">-N/A-</div>
+          <div class="value-available" @click="filters[mode].isBound = true; filters[mode].isNotBound = false; filter()">Bound</div>
+          <div class="value-available" @click="filters[mode].isBound = false; filters[mode].isNotBound = true; filter()">Not bound</div>
         </div>
       </div>
     </div>
@@ -51,7 +64,7 @@
 import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 
-type TypePurpose = 'normal' | 'referenced' | 'referencing'
+type FieldType = 'normalType' | 'referencedType' | 'referencingType' | 'bounding'
 
 @Options({})
 export default class Filteres extends Vue {
@@ -64,7 +77,9 @@ export default class Filteres extends Vue {
       iId: '', // instance id
       tId: '', // it's type id
       tN: '', // it's type name
-      pN: '', // one of it's properties name
+      prop: {
+        pN: '', // one of it's properties name
+      },
       isReferencingInstance: '', // one of instances it references
       isReferencedByInstance: '', // one of instances that reference it
       isReferencingType: '', // one of instances it references
@@ -83,7 +98,7 @@ export default class Filteres extends Vue {
     }
   }
 
-  typeSelectionInProgress: TypePurpose | '' = ''
+  typeSelectionInProgress: FieldType | '' = ''
   unwatch: any = null
 
   getTypeName(tId: string) {
@@ -91,13 +106,21 @@ export default class Filteres extends Vue {
     return this.$store.getters.getTypeName({ tId })
   }
 
+  // Empty in meaning that all values are: ''
+  isObjectEmpty(o: {[k: string]: any }): boolean {
+    return Object.entries(o).every(([, value]) => {
+      return typeof value === 'object' ? this.isObjectEmpty(value) : !value.length
+    })
+  }
+
   areFiltersEmpty() {
-    return Object.entries(this.filters[this.mode]).every(([, value]) => !value.length)
+    return this.isObjectEmpty(this.filters[this.mode])
   }
 
   get allTypes() { return this.$store.getters.types as TypeWrapper[] }
 
   getFilteredInstances() {
+    console.log('passing filters: ', this.filters.instances)
     return this.$store.getters.getFilteredInstances({ ...this.filters.instances }, this.intances || null)
   }
 
@@ -122,12 +145,12 @@ export default class Filteres extends Vue {
     }
   }
 
-  startEdit(typePurpose: TypePurpose, e: MouseEvent) {
+  startEdit(fieldType: FieldType, e: MouseEvent) {
     e.stopPropagation()
-    if (typePurpose === this.typeSelectionInProgress) return
+    if (fieldType === this.typeSelectionInProgress) return
     if (this.unwatch) this.unwatch()
 
-    this.typeSelectionInProgress = typePurpose
+    this.typeSelectionInProgress = fieldType
 
     const widgetKey = Math.random()
     this.$store.dispatch('setWidgetKey', { widgetKey }) // in order to active element from other components
@@ -143,8 +166,8 @@ export default class Filteres extends Vue {
     this.typeSelectionInProgress = ''
   }
 
-  doesSelect(typePurpose: TypePurpose) {
-    return this.typeSelectionInProgress === typePurpose
+  doesSelect(fieldType: FieldType) {
+    return this.typeSelectionInProgress === fieldType
   }
 
   get activeWidgetKey() { return this.$store.getters.activeWidgetKey }

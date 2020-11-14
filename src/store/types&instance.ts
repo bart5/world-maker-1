@@ -152,7 +152,7 @@ export default typesAndInstances({
         const iL = getters.getInstancesListOfType({ tId, tN }) as InstanceList
         instancesIds = instancesIds.filter((instanceId) => Object.entries(iL).some(([_iId]) => instanceId === _iId))
       }
-      if (prop) {
+      if (prop.pN || prop.pV) {
         const { pN, pV } = prop
         const matchByProp = (_iId: string) => {
           const instance = getters.getInstance({ iId: _iId }) as Instance
@@ -161,24 +161,25 @@ export default typesAndInstances({
           } else {
             // This is low performance approach. Fix it by looking by type definitions first
             // and then by filtering instances based on matching types.
+            console.log('check')
             return Object.entries(instance).some(([pName]) => pName === pN)
           }
         }
-        instancesIds.filter(matchByProp)
+        instancesIds = instancesIds.filter(matchByProp)
       }
       // Get all referenced by given instance
       if (isReferencedByInstance) {
         // The instance that is referencing other we look for
         const instance = getters.getInstance({ iId: isReferencedByInstance }) as Instance
         // We conveniently have all that data in meta field
-        instancesIds.filter((_iId) => instance.meta_isReferencing.some((instanceId) => _iId === instanceId))
+        instancesIds = instancesIds.filter((_iId) => instance.meta_isReferencing.some((instanceId) => _iId === instanceId))
       }
       // Get all instances that reference specific instance
       if (isReferencingInstance) {
         // The instance that is referenced by other we look for
         const instance = getters.getInstance({ iId: isReferencingInstance }) as Instance
         // And again all conveniently is already in meta
-        instancesIds.filter((_iId) => instance.meta_isReferencedBy.some((instanceId) => _iId === instanceId))
+        instancesIds = instancesIds.filter((_iId) => instance.meta_isReferencedBy.some((instanceId) => _iId === instanceId))
       }
       if (isReferencedByType) {
         const type = getters.getType({ tId: isReferencedByType }) as TypeWrapper
@@ -188,11 +189,11 @@ export default typesAndInstances({
           }
           return acc
         }, [] as string[])
-        instancesIds.filter((_iId) => targetTypes.some((_tId) => _iId in state.project.instances[_tId]))
+        instancesIds = instancesIds.filter((_iId) => targetTypes.some((_tId) => _iId in state.project.instances[_tId]))
       }
       if (isReferencingType) {
         const referencingTypes: string[] = getters.getAllTypeIdsReferencingType({ tId: isReferencingType })
-        instancesIds.filter((_iId) => referencingTypes.some((_tId) => _iId in state.project.instances[_tId]))
+        instancesIds = instancesIds.filter((_iId) => referencingTypes.some((_tId) => _iId in state.project.instances[_tId]))
       }
       // Get actual instances
       return Object.entries(state.project.instances).reduce((acc, [, iL]) => {
