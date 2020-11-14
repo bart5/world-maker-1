@@ -385,6 +385,7 @@ export default class PropView extends Vue {
       }
 
       .values-list {
+        font-size: 14px;
         position: absolute;
         right: 0;
         top: 100%;

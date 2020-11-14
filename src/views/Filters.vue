@@ -7,6 +7,7 @@
       <div class="list">
         <input placeholder="Select type" :value="getTypeName(filters[mode].tId)" @click="startEdit('normal', $event)">
         <div v-if="doesSelect('normal')" class="values-list">
+          <div class="value-available" @click="filters[mode].tId = ''; filter()">-None-</div>
           <div class="value-available" v-for="type in allTypes" :key="type.id" @click="filters[mode].tId = type.id; filter()">
             {{ type.name }}
           </div>
@@ -18,8 +19,9 @@
       <input type="text" placeholder="Is referenced by instance of Id" v-model="filters[mode].isReferencedByInstance" @change="filter">
 
       <div class="list">
-        <input placeholder="Select referenced type" :value="getTypeName(filters[mode].tId)" @click="startEdit('referenced', $event)">
+        <input placeholder="Select referenced type" :value="getTypeName(filters[mode].isReferencingType)" @click="startEdit('referenced', $event)">
         <div v-if="doesSelect('referenced')" class="values-list">
+          <div class="value-available" @click="filters[mode].isReferencingType = ''; filter()">-None-</div>
           <div
             class="value-available" v-for="type in allTypes" :key="type.id"
             @click="filters[mode].isReferencingType = type.id; filter()"
@@ -30,11 +32,12 @@
       </div>
 
       <div class="list">
-        <input placeholder="Select referencing type" :value="getTypeName(filters[mode].tId)" @click="startEdit('referencing', $event)">
+        <input placeholder="Select referencing type" :value="getTypeName(filters[mode].isReferencedByType)" @click="startEdit('referencing', $event)">
         <div v-if="doesSelect('referencing')" class="values-list">
+          <div class="value-available" @click="filters[mode].isReferencedByType = ''; filter()">-None-</div>
           <div
             class="value-available" v-for="type in allTypes" :key="type.id"
-            @click="filters[mode].isReferencingType = type.id; filter()"
+            @click="filters[mode].isReferencedByType = type.id; filter()"
           >
             {{ type.name }}
           </div>
@@ -84,8 +87,8 @@ export default class Filteres extends Vue {
   unwatch: any = null
 
   getTypeName(tId: string) {
-    if (!tId) return
-    this.$store.getters.getTypeName({ tId })
+    if (!tId) return null
+    return this.$store.getters.getTypeName({ tId })
   }
 
   areFiltersEmpty() {
@@ -157,7 +160,6 @@ export default class Filteres extends Vue {
   padding: 8px;
   justify-content: center;
   align-items: center;
-  // width: 480px;
 
   & > * {
     flex-shrink: 0;
@@ -193,6 +195,7 @@ select {
 }
 
 .values-list {
+  font-size: 14px;
   position: absolute;
   right: 0;
   top: 100%;

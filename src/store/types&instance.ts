@@ -107,12 +107,13 @@ export default typesAndInstances({
 
       return instances
     },
-    getAllTypeIdsReferencingType: (state) => (typeId: string) => {
+    getAllTypeIdsReferencingType: (state) => (p: { tId: string }) => {
+      const { tId } = p
       const types = state.project.types
-      return Object.entries(types).reduce((acc, [tId]) => {
-        return Object.entries(types[tId].definition).some(([, prop]) => {
-          return prop.refTargetTypeId === typeId
-        }) ? [...acc, tId] : acc
+      return Object.entries(types).reduce((acc, [_tId]) => {
+        return Object.entries(types[_tId].definition).some(([, prop]) => {
+          return prop.refTargetTypeId === tId
+        }) ? [...acc, _tId] : acc
       }, [] as string[])
     },
     getAllInstancesFromTypeIds: (state, getters) => (typeIds: string[]) => {
@@ -135,14 +136,14 @@ export default typesAndInstances({
       p: { iId: string, tN: string, tId: string,
         prop: { pN: string, pV: string | number | boolean },
         isReferencedByInstance: string, isReferencingInstance: string,
+        isReferencedByType: string, isReferencingType: string,
       }
     ): Instance[] => {
-      console.log('filtering with payload: ', p)
       let instancesIds: string[] = Object.entries(state.project.instances).reduce((acc, [, iL]) => {
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
 
-      const { tId, tN, iId, prop, isReferencedByInstance, isReferencingInstance } = p
+      const { tId, tN, iId, prop, isReferencedByInstance, isReferencingInstance, isReferencedByType, isReferencingType } = p
 
       if (iId) {
         instancesIds = instancesIds.filter((instanceId) => iId === instanceId)
@@ -178,6 +179,20 @@ export default typesAndInstances({
         const instance = getters.getInstance({ iId: isReferencingInstance }) as Instance
         // And again all conveniently is already in meta
         instancesIds.filter((_iId) => instance.meta_isReferencedBy.some((instanceId) => _iId === instanceId))
+      }
+      if (isReferencedByType) {
+        const type = getters.getType({ tId: isReferencedByType }) as TypeWrapper
+        const targetTypes = Object.entries(type.definition).reduce((acc, [, pDef]) => {
+          if (pDef.refTargetTypeId) {
+            acc.pushUnique(pDef.refTargetTypeId)
+          }
+          return acc
+        }, [] as string[])
+        instancesIds.filter((_iId) => targetTypes.some((_tId) => _iId in state.project.instances[_tId]))
+      }
+      if (isReferencingType) {
+        const referencingTypes: string[] = getters.getAllTypeIdsReferencingType({ tId: isReferencingType })
+        instancesIds.filter((_iId) => referencingTypes.some((_tId) => _iId in state.project.instances[_tId]))
       }
       // Get actual instances
       return Object.entries(state.project.instances).reduce((acc, [, iL]) => {
