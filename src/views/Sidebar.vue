@@ -7,14 +7,16 @@
     </div>
     <hr>
     <div class="tab">
-      <template v-if="showInstances || showTypes">
-        <Collapsible title="All" class="content-section">
+      <!-- <template v-show="showInstances || showTypes"> -->
+        <Collapsible
+          v-show="showInstances || showTypes"
+          title="All" class="content-section"
+        >
           <Filters
             :mode="showInstances ? 'instances' : 'types'"
             @update-instances="updateFilteredInstances"
             @update-types="updateFilteredTypes"
           />
-          {{ filteredInstances }}
           <TypeViewUniversal
             :onlyValues="showInstances"
             :onlyTypes="showTypes"
@@ -23,7 +25,10 @@
             :alwaysMeta="showMeta"
           />
         </Collapsible>
-        <Collapsible title="Selected" class="content-section">
+        <Collapsible
+          v-show="showInstances || showTypes"
+          title="Selected" class="content-section"
+        >
           <Filters
             :mode="showInstances ? 'instances' : 'types'"
             :instances="selectedInstances"
@@ -39,8 +44,8 @@
             :alwaysMeta="showMeta"
           />
         </Collapsible>
-      </template>
-      <Changes v-else class="changes" />
+      <!-- </template> -->
+      <Changes v-if="showChanges" class="changes" />
     </div>
   </div>
 </template>

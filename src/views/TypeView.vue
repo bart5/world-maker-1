@@ -12,12 +12,12 @@
       </div>
     </div>
     <div class="type-config">
-      <div>
-        <button @click="remove">Delete</button>
-      </div>
       <div class="meta-toggle" v-if="!neverMeta && !alwaysMeta">
         <span>Show meta:</span>
         <input :checked="showMeta" type="checkbox">
+      </div>
+      <div>
+        <button class="basic" @click="remove">Delete</button>
       </div>
     </div>
     <template v-for="(pDef, pN) in type.definition">
@@ -54,6 +54,7 @@ export default class TypeView extends Vue {
   showMeta = false
   nameIsValid = true
   localTypeName = ''
+  showNameInput = false
 
   get isType() {
     return !this.iId
@@ -126,10 +127,14 @@ export default class TypeView extends Vue {
   display: flex;
   flex-flow: column;
   width: 100%;
+  padding: 12px;
+  border: 1px solid;
 }
 .type-config {
   display: flex;
   flex-flow: row nowrap;
+  justify-content: space-between;
+  padding: 6px 0;
   width: 100%;
 }
 .meta-toggle {

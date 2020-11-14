@@ -4,29 +4,31 @@
       <TypeView
         :tId="tId || getInstanceTypeId()"
         :iId="iId"
-        :alwaysMeta="showMeta"
+        :alwaysMeta="alwaysMeta"
         :neverMeta="neverMeta"
         :onlyValues="onlyValues"
       />
     </template>
     <template v-else>
-      <template v-if="types && ((onlyTypes && types.length) || (!onlyValues && types.length))">
+      <!-- <template v-if="types && ((onlyTypes && types.length) || (!onlyValues && types.length))"> -->
+      <template v-if="(onlyTypes && types.length) || (!onlyValues && types.length)">
         <TypeView
           v-for="typeWrapper in types"
           :tId="typeWrapper.id"
           :key="typeWrapper.id"
-          :alwaysMeta="showMeta"
+          :alwaysMeta="alwaysMeta"
           :neverMeta="neverMeta"
           :onlyTypes="true"
         />
       </template>
-      <template v-else-if="instances && ((onlyValues && instances.length) || (!onlyTypes && instances.length))">
+      <!-- <template v-else-if="instances && ((onlyValues && instances.length) || (!onlyTypes && instances.length))"> -->
+      <template v-else-if="(onlyValues && instances.length) || (!onlyTypes && instances.length)">
         <TypeView
           v-for="instance in instances"
           :tId="instance.meta_typeId[0]"
           :iId="instance.id[0]"
           :key="instance.id[0]"
-          :alwaysMeta="showMeta"
+          :alwaysMeta="alwaysMeta"
           :neverMeta="neverMeta"
           :onlyValues="true"
         />
@@ -53,7 +55,7 @@ export default class TypeViewUniversal extends Vue {
   @Prop() iId!: string | undefined
   @Prop() multiple!: boolean
   @Prop({ default: [] }) types!: TypeWrapper[]
-  @Prop({ default: [] }) intances!: Instances[]
+  @Prop({ default: [] }) instances!: Instances[]
   @Prop() onlyValues!: boolean
   @Prop() onlyTypes!: boolean
   @Prop() neverMeta!: boolean

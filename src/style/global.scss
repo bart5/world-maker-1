@@ -72,3 +72,16 @@ button.file-dialog-button {
   height: 22px;
   border: 1px solid;
 }
+
+button.basic {
+  border: 1px rgba(40,40,40);
+  box-shadow: 0 0 1px 1px rgba(60,60,60);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(175,175,175);
+
+  &:hover {
+    background-color: rgba(160,160,160,0.2);
+  }
+}

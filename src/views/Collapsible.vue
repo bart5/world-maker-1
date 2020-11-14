@@ -4,7 +4,7 @@
       <div class="title">{{ title }}</div>
       <div class="arrow" :class="{ 'down': show }">{{ ">" }}</div>
     </div>
-    <div class="content" v-if="show">
+    <div class="content" v-show="show">
       <slot></slot>
     </div>
   </div>
@@ -41,9 +41,11 @@ export default class Collapsible extends Vue {
   height: auto;
   width: 100%;
   min-height: 50%; // Total height of sidebar / number of panels
+  box-sizing: content-box;
 
   &.collapsed {
     flex-grow: 0;
+    flex-shrink: 0;
     min-height: unset;
   }
 
@@ -52,10 +54,11 @@ export default class Collapsible extends Vue {
     display: flex;
     flex-flow: row nowrap;
     justify-content: space-between;
-    margin: 6px 14px;
+    align-items: center;
+    border: 1px solid;
+    padding: 0 14px;
 
     .title {
-      font-size: 18px;
       font-weight: bold;
     }
 
@@ -84,6 +87,7 @@ export default class Collapsible extends Vue {
 
   .content {
     display: flex;
+    flex-flow: column;
   }
 }
 
