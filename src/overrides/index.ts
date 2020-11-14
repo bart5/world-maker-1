@@ -1,7 +1,7 @@
 function initOverrides() {
   (function extendArray() {
     function pushUnique(this: any[], newValue: any) {
-      if (typeof newValue === 'string' || typeof newValue === 'number') {
+      if (typeof newValue === 'string' || typeof newValue === 'number' || typeof newValue === 'object') {
         if ((this as unknown as any[]).some((v) => v === newValue)) return
         this.push(newValue)
         // eslint-disable-next-line consistent-return
@@ -19,9 +19,11 @@ function initOverrides() {
       }
     });
     function remove(this: any[], value: any) {
-      if (typeof value === 'string' || typeof value === 'number') {
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'object') {
         const matchIndex = this.indexOf(value)
-        this.splice(matchIndex, 1)
+        if (matchIndex >= 0) {
+          this.splice(matchIndex, 1)
+        }
         // eslint-disable-next-line consistent-return
         return this
       }

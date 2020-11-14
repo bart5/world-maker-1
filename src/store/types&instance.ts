@@ -137,13 +137,15 @@ export default typesAndInstances({
         prop: { pN: string, pV: string | number | boolean },
         isReferencedByInstance: string, isReferencingInstance: string,
         isReferencedByType: string, isReferencingType: string,
+        isBound: boolean, isNotBound: boolean, isBoundTo: string
       }
     ): Instance[] => {
       let instancesIds: string[] = Object.entries(state.project.instances).reduce((acc, [, iL]) => {
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
 
-      const { tId, tN, iId, prop, isReferencedByInstance, isReferencingInstance, isReferencedByType, isReferencingType } = p
+      const { tId, tN, iId, prop, isReferencedByInstance, isReferencingInstance,
+        isReferencedByType, isReferencingType, isBound, isNotBound, isBoundTo } = p
 
       if (iId) {
         instancesIds = instancesIds.filter((instanceId) => iId === instanceId)
@@ -194,6 +196,24 @@ export default typesAndInstances({
         const referencingTypes: string[] = getters.getAllTypeIdsReferencingType({ tId: isReferencingType })
         instancesIds = instancesIds.filter((_iId) => referencingTypes.some((_tId) => _iId in state.project.instances[_tId]))
       }
+      if (isBound) {
+        instancesIds = instancesIds.filter((_iId) => {
+          const instance: Instance = getters.getInstance({ iId: _iId })
+          return instance.meta_isBoundTo.length > 0
+        })
+      }
+      if (isNotBound) {
+        instancesIds = instancesIds.filter((_iId) => {
+          const instance: Instance = getters.getInstance({ iId: _iId })
+          return instance.meta_isBoundTo.length === 0
+        })
+      }
+      if (isBoundTo) {
+        instancesIds = instancesIds.filter((_iId) => {
+          const instance: Instance = getters.getInstance({ iId: _iId })
+          return instance.meta_isBoundTo.includes(isBoundTo)
+        })
+      }
       // Get actual instances
       return Object.entries(state.project.instances).reduce((acc, [, iL]) => {
         return [
@@ -207,6 +227,65 @@ export default typesAndInstances({
           }, [] as Instance[])
         ]
       }, [] as Instance[])
+    },
+    getFilteredTypes: (state, getters) => (
+      p: { iId: string, tId: string,
+        prop: { pN: string },
+        isReferencedByInstance: string, isReferencingInstance: string,
+        isReferencedByType: string, isReferencingType: string,
+        isBound: boolean, isNotBound: boolean, isBoundTo: string
+      }
+    ): TypeWrapper[] => {
+      const { tId, iId, prop, isReferencedByInstance, isReferencingInstance, isReferencedByType,
+        isReferencingType, isBound, isNotBound, isBoundTo } = p
+
+      let types: TypeWrapper[] = getters.types
+
+      if (iId) {
+        types = types.filter((wrapper) => iId in state.project.instances[wrapper.id])
+      }
+      if (tId) {
+        types = types.filter((wrapper) => wrapper.id === tId)
+      }
+      if (prop.pN) {
+        const { pN } = prop
+        types = types.filter((wrapper) => pN in wrapper.definition)
+      }
+      // Get all referenced by given instance
+      if (isReferencedByInstance) {
+        const type = getters.getType({ iId: isReferencedByInstance }) as TypeWrapper
+        const targetTypes = Object.entries(type.definition).reduce((acc, [, pDef]) => {
+          if (pDef.refTargetTypeId) {
+            acc.pushUnique(pDef.refTargetTypeId)
+          }
+          return acc
+        }, [] as string[])
+        types = types.filter((wrapper) => targetTypes.some((_tId) => wrapper.id === _tId))
+      }
+      // Get types with instances referencing this instance
+      if (isReferencingInstance) {
+        const instances: Instance[] = getters.getFilteredInstances({ isReferencingInstance })
+        types = types.filter((wrapper) => instances.some((i) => i.id[0] in state.project.instances[wrapper.id]))
+      }
+      if (isReferencedByType) {
+        const type = getters.getType({ tId: isReferencedByType }) as TypeWrapper
+        const targetTypes = Object.entries(type.definition).reduce((acc, [, pDef]) => {
+          if (pDef.refTargetTypeId) {
+            acc.pushUnique(pDef.refTargetTypeId)
+          }
+          return acc
+        }, [] as string[])
+        types = types.filter((wrapper) => targetTypes.some((_tId) => wrapper.id === _tId))
+      }
+      if (isReferencingType) {
+        const referencingTypes: string[] = getters.getAllTypeIdsReferencingType({ tId: isReferencingType })
+        types = types.filter((wrapper) => referencingTypes.some((_tId) => wrapper.id === _tId))
+      }
+      if (isBound || isNotBound || isBoundTo) {
+        const instances: Instance[] = getters.getFilteredInstances({ isBound, isNotBound, isBoundTo })
+        types = types.filter((wrapper) => instances.some((i) => i.id[0] in state.project.instances[wrapper.id]))
+      }
+      return types
     },
     /**
      * Get all props of type A that reference type B

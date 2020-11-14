@@ -99,6 +99,8 @@ export default class Filteres extends Vue {
       },
       isReferencingInstance: '', // type it references
       isReferencedByInstance: '', // type it's referenced by
+      isReferencingType: '', // one of instances it references
+      isReferencedByType: '', // one of instances that reference it
     }
   }
 
@@ -128,7 +130,7 @@ export default class Filteres extends Vue {
   }
 
   getFilteredTypes() {
-    return this.$store.getters.getFilteredTypes(this.filters.types, this.types || null)
+    return this.$store.getters.getFilteredTypes({ ...this.filters.types }, this.types || null)
   }
 
   filter() {
