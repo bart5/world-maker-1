@@ -9,6 +9,23 @@
   input[type="checkbox"]:hover {
     cursor: pointer;
   }
+
+  input, select {
+    outline: none;
+
+    &::placeholder {
+      font-size: 12px;
+    }
+  }
+
+  // select {
+  //   option {
+  //     &.placeholder {
+  //       font-size: 12px;
+  //       color: lightgray;
+  //     }
+  //   }
+  // }
 }
 
 ::-webkit-scrollbar {

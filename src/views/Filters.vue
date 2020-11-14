@@ -3,33 +3,37 @@
     <template v-for="m in ['types', 'instances']" :key="m">
       <template v-if="m === mode">
         <div>Filter {{ m }}</div>
-        <div class="field-wrapper">
+        <div class="field-wrapper" :class="{ 'showLabels': showLabels }">
           <div class="box">
             <div class="label">Instance Id</div>
-            <input type="text" v-model="filters[m].iId" @change="filter">
+            <input type="text" placeholder="Instance Id" v-model="filters[m].iId" @change="filter">
           </div>
           <div class="box">
             <div class="label">Type Id</div>
-            <input type="text" v-model="filters[m].tId" @change="filter">
             <select class="target-selector" v-model="filters[m].tId" @change="filter">
+              <option class="placeholder" value="" disabled selected>Select type</option>
               <option v-for="type in allTypes" :key="type.id" :value="type.id">{{ type.name }}</option>
             </select>
           </div>
           <div class="box">
+            <div class="label">Type Id</div>
+            <input type="text" placeholder="Type Id" v-model="filters[m].tId" @change="filter">
+          </div>
+          <div class="box">
             <div class="label">Type name</div>
-            <input type="text" v-model="filters[m].tN" @change="filter">
+            <input type="text" placeholder="Type name" v-model="filters[m].tN" @change="filter">
           </div>
           <div class="box">
             <div class="label">Propety name</div>
-            <input type="text" v-model="filters[m].pN" @change="filter">
+            <input type="text" placeholder="Property name" v-model="filters[m].pN" @change="filter">
           </div>
           <div class="box">
             <div class="label">Is referencing {{ m.replace('es', 'e') }} of Id</div>
-            <input type="text" v-model="filters[m].isReferencing" @change="filter">
+            <input type="text" :placeholder="`Is referencing ${m.replace('es', 'e')} of Id`" v-model="filters[m].isReferencing" @change="filter">
           </div>
           <div class="box">
             <div class="label">Is referenced by {{ m.replace('es', 'e') }} of Id</div>
-            <input type="text" v-model="filters[m].isReferencedBy" @change="filter">
+            <input type="text" :placeholder="`Is referenced by ${ m.replace('es', 'e') } of Id`" v-model="filters[m].isReferencedBy" @change="filter">
           </div>
         </div>
       </template>
@@ -46,6 +50,7 @@ export default class Filteres extends Vue {
   @Prop({ default: 'instances' }) mode!: 'types' | 'instances'
   @Prop() types!: TypeWrapper[]
   @Prop() intances!: Instances[]
+  @Prop({ default: false }) showLabels!: boolean
 
   filters = {
     instances: {
@@ -107,24 +112,40 @@ export default class Filteres extends Vue {
   display: flex;
   flex-flow: column wrap;
   width: 100%;
-  height: 120px;
+  max-height: 90px;
+  padding: 8px;
+
+  &:not(.showLabels) {
+    .label {
+      display: none;
+    }
+  }
 }
 
 .box {
-  width: 40%;
+  max-width: 33%;
   display: flex;
   flex-flow: column;
-  border: 1px solid;
   background: lightgray;
+  padding: 2px 0;
 
   .label {
     order: 1;
-    font-size: 11px;
+    font-size: 9px;
+    text-align: left;
+    margin-left: 5px;
   }
 
   input {
     height: 16px;
     order: 0;
+    border: none;
+  }
+
+  select {
+    height: 16px;
+    border: none;
+    background: white;
   }
 }
 
