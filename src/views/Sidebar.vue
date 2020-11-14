@@ -1,9 +1,16 @@
 <template>
   <div class="sidebar-wrapper">
     <div class="tab-selector">
-      <div class="tab-switch" @click="show('instances')">Instances</div>
-      <div class="tab-switch" @click="show('types')">Types</div>
-      <div class="tab-switch" @click="show('changes')">Changes</div>
+      <!-- <div class="tab-switch" :class="{ 'active': showInstances }" @click="show('instances')">Instances</div> -->
+      <div class="tab-switch"  @click="show('instances')">
+        <button class="toggle fill" :class="{ 'active': showInstances }">Instances</button>
+      </div>
+      <div class="tab-switch" @click="show('types')">
+        <button class="toggle fill" :class="{ 'active': showTypes }">Types</button>
+      </div>
+      <div class="tab-switch" @click="show('changes')">
+        <button class="toggle fill" :class="{ 'active': showChanges }">Changes</button>
+      </div>
     </div>
     <hr>
     <div class="tab">

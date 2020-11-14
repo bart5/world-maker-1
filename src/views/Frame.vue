@@ -824,7 +824,8 @@ export default class Frame extends Vue {
 
 .workspace-selector {
   background-color: darkgray;
-  height: 24px;
+  max-height: 24px;
+  min-height: 24px;
   width: 100%;
   display: flex;
   flex-flow: row nowrap;

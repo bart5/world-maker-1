@@ -1,5 +1,5 @@
 :root {
-  --color-active: lightblue;
+  --color-active: gray;
   user-select: none;
 
   .hover:hover {
@@ -28,6 +28,10 @@
   background-color: rgba(0,0,0,0.4);
 }
 
+button {
+  transition: color 0.3s, background-color 0.3s;
+}
+
 button, .button {
   display: flex;
   justify-content: center;
@@ -35,8 +39,6 @@ button, .button {
   background: transparent;
   border: none;
   user-select: none;
-  transition: background 0.2s;
-  margin: 1px 1px;
 
   &:focus {
     outline: none;
@@ -44,14 +46,14 @@ button, .button {
 
   &:active {
     outline: none;
-    background-color: rgba(255,255,255,0.4)
+    background-color: rgba(255,255,255,0.4);
   }
 
   &:hover {
     cursor: pointer;
 
     &:not(:active) {
-      background-color: rgba(255,255,255,0.2) !important;
+      background-color: rgba(150,150,150);
     }
   }
 
@@ -60,7 +62,32 @@ button, .button {
   }
 
   &.active {
-    background: var(--color-active);
+    background-color: rgba(80,80,80);
+    color: white;
+  }
+
+  &.basic {
+    border: 1px rgba(40,40,40);
+    box-shadow: 0 0 1px 1px rgba(60,60,60);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(175,175,175);
+
+    &:hover {
+      background-color: rgba(160,160,160,0.2);
+    }
+  }
+
+  &.file-dialog-button {
+    width: 22px;
+    height: 22px;
+    border: 1px solid;
+  }
+
+  &.fill {
+    height: 100%;
+    width: 100%;
   }
 }
 
@@ -83,24 +110,3 @@ hr {
     font-size: 14px;
   }
 }
-
-button.file-dialog-button {
-  width: 22px;
-  height: 22px;
-  border: 1px solid;
-}
-
-button.basic {
-  border: 1px rgba(40,40,40);
-  box-shadow: 0 0 1px 1px rgba(60,60,60);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(175,175,175);
-
-  &:hover {
-    background-color: rgba(160,160,160,0.2);
-  }
-}
-
-

@@ -10,7 +10,6 @@
       />
     </template>
     <template v-else>
-      <!-- <template v-if="types && ((onlyTypes && types.length) || (!onlyValues && types.length))"> -->
       <template v-if="(onlyTypes && types.length) || (!onlyValues && types.length)">
         <TypeView
           v-for="typeWrapper in types"
@@ -21,7 +20,6 @@
           :onlyTypes="true"
         />
       </template>
-      <!-- <template v-else-if="instances && ((onlyValues && instances.length) || (!onlyTypes && instances.length))"> -->
       <template v-else-if="(onlyValues && instances.length) || (!onlyTypes && instances.length)">
         <TypeView
           v-for="instance in instances"
