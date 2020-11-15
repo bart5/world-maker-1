@@ -41,9 +41,10 @@ function initOverrides() {
     });
 
     function last(this: any[]) {
-      return this
+      if (!this.length) return undefined
+      return this[this.length - 1]
     }
-    Object.defineProperty(Array.prototype, 'remove', {
+    Object.defineProperty(Array.prototype, 'last', {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       set() {},
       get() {

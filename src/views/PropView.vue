@@ -3,7 +3,7 @@
   2) Rudimentary display of Instances - they should be edited in their dedicated viewers
 -->
 <template>
-  <div class="prop-wrapper" @keydown.esc="stopEdit()">
+  <div class="prop-wrapper" :style="{...order}" @keydown.esc="stopEdit()">
 
     <div class="name-field" @click="startEdit('name', $event)">
       <span v-if="!doesEdit('name')" class="name-text" :class="{ 'disabled': onlyValues | isMeta }">{{ pDef.name }}</span>
@@ -87,11 +87,11 @@
       </select>
     </div>
 
-    <div v-if="!onlyValues" class="move-prop-up">
+    <div v-if="!onlyValues" class="move-prop up">
       <button class="basic" @click="movePropUp" :disabled="readonly">&#8593;</button>
     </div>
 
-    <div v-if="!onlyValues" class="move-prop-down">
+    <div v-if="!onlyValues" class="move-prop down">
       <button class="basic" @click="movePropDown" :disabled="readonly">&#8595;</button>
     </div>
 
@@ -313,6 +313,12 @@ export default class PropView extends Vue {
   }
 
   get activeWidgetKey() { return this.$store.getters.activeWidgetKey }
+
+  get order() {
+    return {
+      order: this.pDef.order
+    }
+  }
 }
 </script>
 
@@ -326,10 +332,7 @@ export default class PropView extends Vue {
   border: 1px solid rgba(100,100,100);
   overflow-y: visible;
   justify-content: flex-start;
-
-  &:not(:last-child) {
-    border-bottom: none;
-  }
+  border-bottom: none;
 
   &:last-child:first-child { // in case the row is lonely
     border: 1px solid rgba(100,100,100);
@@ -507,6 +510,10 @@ export default class PropView extends Vue {
         align-items: center;
       }
     }
+  }
+
+  .move-prop {
+    padding: 0 6px;
   }
 
   .delete-prop {

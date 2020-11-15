@@ -693,15 +693,15 @@ export default typesAndInstances({
       const propToMoveUp = propsInOrder.filter((pDef) => pDef.name === pN)[0]
       if (propToMoveUp.name === propsInOrder[0].name) return
 
-      const propToMoveDown = propsInOrder.filter((pDef, i, ar) => ar[i + 1].name === pN)[0]
+      const propToMoveDown = propsInOrder.filter((pDef, i, ar) => ar[i + 1] && ar[i + 1].name === pN)[0]
 
       // With each reorder order value is brought down in case
       // it was inflated due to props removal (removal is not adjusting order).
       const upperOrder = propToMoveDown.order
       const lowerOrder = upperOrder + 1
 
-      mutate('CHANGE_PROP_ORDER', { order: upperOrder }, 'PropDefinition', tId, pN)
-      mutate('CHANGE_PROP_ORDER', { order: lowerOrder }, 'PropDefinition', tId, propToMoveDown.name)
+      mutate('CHANGE_PROP_ORDER', { order: upperOrder }, 'PropDefinition', tId, '', pN)
+      mutate('CHANGE_PROP_ORDER', { order: lowerOrder }, 'PropDefinition', tId, '', propToMoveDown.name)
     },
     movePropDown(state, p: { tId: string, pN: string }) {
       const { tId, pN } = p
@@ -713,15 +713,15 @@ export default typesAndInstances({
       const propToMoveDown = propsInOrder.filter((pDef) => pDef.name === pN)[0]
       if (propToMoveDown.name === propsInOrder.last().name) return
 
-      const propToMoveUp = propsInOrder.filter((pDef, i, ar) => ar[i - 1].name === pN)[0]
+      const propToMoveUp = propsInOrder.filter((pDef, i, ar) => ar[i - 1] && ar[i - 1].name === pN)[0]
 
       // With each reorder order value is brought down in case
       // it was inflated due to props removal (removal is not adjusting order).
       const upperOrder = propToMoveDown.order
       const lowerOrder = upperOrder + 1
 
-      mutate('CHANGE_PROP_ORDER', { order: lowerOrder }, 'PropDefinition', tId, pN)
-      mutate('CHANGE_PROP_ORDER', { order: upperOrder }, 'PropDefinition', tId, propToMoveUp.name)
+      mutate('CHANGE_PROP_ORDER', { order: lowerOrder }, 'PropDefinition', tId, '', pN)
+      mutate('CHANGE_PROP_ORDER', { order: upperOrder }, 'PropDefinition', tId, '', propToMoveUp.name)
     },
     // Non transactioned actions:
     revertLastChange() {

@@ -22,16 +22,18 @@
         </div>
       </div>
     </div>
-    <template v-for="(pDef, pN) in type.definition">
-      <PropView
-        v-if="pN !== 'id' && (!pN.startsWith('meta') || showMeta || alwaysMeta)"
-        :tId="tId"
-        :iId="iId"
-        :pDef="pDef"
-        :key="pN"
-        :onlyValues="onlyValues"
-      />
-    </template>
+    <div class="props-wrapper">
+      <template v-for="(pDef, pN) in type.definition">
+        <PropView
+          v-if="pN !== 'id' && (!pN.startsWith('meta') || showMeta || alwaysMeta)"
+          :tId="tId"
+          :iId="iId"
+          :pDef="pDef"
+          :key="pN"
+          :onlyValues="onlyValues"
+        />
+      </template>
+    </div>
   </div>
 </template>
 
@@ -198,6 +200,12 @@ export default class TypeView extends Vue {
       justify-content: space-between;
       width: 240px;
     }
+  }
+
+  .props-wrapper {
+    border-bottom: 1px solid rgba(100,100,100);
+    display: flex;
+    flex-flow: column;
   }
 }
 .meta-toggle label {
