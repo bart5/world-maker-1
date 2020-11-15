@@ -21,7 +21,7 @@ interface UiData {
 
 interface Transaction {
   id: string;
-  actionType: ActionType;
+  actionType: ActionType | 'initialState';
   changes: Array<Change>;
 }
 

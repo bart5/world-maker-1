@@ -8,10 +8,7 @@ import { ipc } from '@/game/data/ipcHandlersRenderer'
 import { transactionHandler } from '@/store/transactions'
 import { Options, Vue } from 'vue-class-component'
 
-@Options({
-  components: {
-  },
-})
+@Options({})
 export default class AppLoader extends Vue {
   get applicationData(): ApplicationData {
     return this.$store.getters.applicationData
@@ -24,10 +21,11 @@ export default class AppLoader extends Vue {
           this.closeWidgets(e)
           break
         case 'z':
-          transactionHandler.revert()
+          console.log('z')
+          transactionHandler.revertTo()
           break
         case 'y':
-          transactionHandler.unRevert()
+          transactionHandler.unRevertTo()
           break
         default:
           break;
@@ -49,6 +47,8 @@ export default class AppLoader extends Vue {
     ipc.initListeners(this)
     transactionHandler.init(this)
     await this.$store.dispatch('asyncLoadApplicationData')
+
+    this.addGlobalListeners()
 
     if (this.applicationData.lastProjectPath) {
       this.$store.dispatch('asyncOpenProjectFromPath', this.applicationData.lastProjectPath)

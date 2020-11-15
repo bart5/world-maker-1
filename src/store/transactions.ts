@@ -8,14 +8,13 @@ export const transactionHandler = {
     this.store = vm.$store
   },
   transactionStoreLimit: 200,
-  mutate(
-    mN: string | null, // mutation name
-    args: MutArgs,
+  makeSnapshot(
     eT: EntityType,
     tId: string, // type id
     iId = '', // instance id
     pN = '', // prop name
-    newName = '' // it's needed for renaming props
+    newName = '', // it's needed for renaming props
+    initial = false
   ) {
     let entity
     let entityCopy
@@ -32,12 +31,31 @@ export const transactionHandler = {
       entity = this.store.state.project.instances[tId][iId][pN] as PropValues
       entityCopy = !entity ? null : utils.copyPropValues(entity)
     }
-    this.registerChange(entityCopy, eT, tId, iId, pN, newName)
+    this.registerChange(entityCopy, eT, tId, iId, pN, newName, initial)
+  },
+  mutate(
+    mN: string | null, // mutation name
+    args: MutArgs,
+    eT: EntityType,
+    tId: string, // type id
+    iId = '', // instance id
+    pN = '', // prop name
+    newName = '' // it's needed for renaming props
+  ) {
+    // Make first snapshot if there is none
+    const recentChanges = this.store.state.project.recentChanges
+    const hasPastState = recentChanges.last().changes.some((c) => {
+      return c.entityType === eT && c.tId === tId && c.iId === iId && c.pN === pN
+    })
+    if (!hasPastState || recentChanges.last().actionType === 'initialState') {
+      this.makeSnapshot(eT, tId, iId, pN, newName, true)
+    }
 
     // This is slightly contradictory with the name of this method
     if (mN !== null) {
       this.store.commit(mN, { tId, iId, pN, ...args })
     }
+    this.makeSnapshot(eT, tId, iId, pN, newName)
   },
   act(actionType: ActionType, context: PublicActionContext) {
     this.store.dispatch('publicAction', { actionType, context })
@@ -48,19 +66,25 @@ export const transactionHandler = {
     tId: string,
     iId = '',
     pN = '',
-    newName = ''
+    newName = '',
+    initial = false
   ) {
     const state = this.store.state
 
-    if (!state.currentTransaction) return
+    const transaction = initial ? state.project.recentChanges.last() : state.currentTransaction
 
-    if (state.currentTransaction.changes.length === this.transactionStoreLimit) {
-      state.currentTransaction.changes.splice(0, 1)
+    if (!transaction) {
+      console.error('Tried to register change with no existing transaction.')
+      return
+    }
+
+    if (transaction.changes.length === this.transactionStoreLimit) {
+      transaction.changes.splice(0, 1)
     }
 
     state.ui.lastRevertedTransactions = []
 
-    state.currentTransaction.changes.push({
+    transaction.changes.push({
       entityBefore: entityCopy,
       entityType,
       tId,
@@ -120,38 +144,55 @@ export const transactionHandler = {
         Error(`Unknown entity type of the change: ${change.entityType}.`)
     }
   },
-  revertTransaction(t: Transaction) {
-    for (let i = 0; i < t.changes.length; i++) {
-      const changeToRevert = t.changes[i] as Change
-      this.revertChange(changeToRevert)
+  revertTransaction(t: Transaction, direction: 'backward' | 'forward') {
+    if (direction === 'backward') {
+      for (let i = t.changes.length - 1; i >= 0; i--) {
+        this.revertChange(t.changes[i])
+      }
+    } else {
+      for (let i = 0; i < t.changes.length; i++) {
+        this.revertChange(t.changes[i])
+      }
     }
   },
-  revert(id?: string) {
+  revertTo(id?: string) {
     const state = this.store.state
+    if (state.project.recentChanges.last().id === 'initialState') return
+    if (id && !state.project.recentChanges.find((t) => t.id === id)) {
+      console.error('No such change to revert to.')
+      return
+    }
 
-    const lastTransaction = state.project.recentChanges.pop()
-    if (!lastTransaction) return
+    const currentState = state.project.recentChanges.pop()
+    if (!currentState) return
 
-    state.ui.lastRevertedTransactions.push(lastTransaction)
+    state.ui.lastRevertedTransactions.unshift(currentState)
 
-    this.revertTransaction(lastTransaction)
+    const previousState = state.project.recentChanges.last()
 
-    if (id && state.project.recentChanges.find((t) => t.id === id)) {
-      this.revert(id)
+    this.revertTransaction(previousState, 'backward')
+
+    // If our id is very last then we stop
+    if (id && state.project.recentChanges.last().id !== id) {
+      this.revertTo(id)
     }
   },
-  unRevert(id?: string) {
+  unRevertTo(id?: string) {
     const state = this.store.state
+    if (id && !state.ui.lastRevertedTransactions.find((t) => t.id === id)) {
+      console.error('No such change to un-revert to.')
+      return
+    }
 
-    const lastRevertedTransaction = state.ui.lastRevertedTransactions.pop()
+    const lastRevertedTransaction = state.ui.lastRevertedTransactions.shift()
     if (!lastRevertedTransaction) return
 
     state.project.recentChanges.push(lastRevertedTransaction)
 
-    this.revertTransaction(lastRevertedTransaction)
+    this.revertTransaction(lastRevertedTransaction, 'forward')
 
-    if (id && state.project.recentChanges.find((t) => t.id === id)) {
-      this.revert(id)
+    if (id && state.ui.lastRevertedTransactions.find((t) => t.id === id)) {
+      this.unRevertTo(id)
     }
   }
 }
@@ -180,12 +221,12 @@ export const actions: { [k in ActionType]: (ctx: PublicActionContext) => void } 
   removeInstance: (ctx) => act('removeInstance', ctx),
 }
 
-export function revert(id?: string) {
-  transactionHandler.revert(id)
+export function revertTo(id?: string) {
+  transactionHandler.revertTo(id)
 }
 
-export function unRevert(id?: string) {
-  transactionHandler.unRevert(id)
+export function unRevertTo(id?: string) {
+  transactionHandler.unRevertTo(id)
 }
 
 export function mutate(

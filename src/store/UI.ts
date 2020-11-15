@@ -61,7 +61,7 @@ export default UI({
       return state.ui.activeWidgetKey
     },
     lastTransactionIdInUI: (state) => {
-      return state.project.recentChanges.last().id
+      return state.project.recentChanges?.last()?.id || ''
     }
   },
   mutations: {
@@ -301,7 +301,7 @@ export default UI({
       state.ui.activeWidgetKey = p.widgetKey
     },
     SET_LAST_SAVED_TRANSACTION_ID(state) {
-      state.ui.lastSavedTransactionId = state.project.recentChanges.last().id
+      state.ui.lastSavedTransactionId = state.project.recentChanges?.last()?.id || ''
     },
     /* =========== APPLICATION DATA MUTATIONS =========== */
     SET_APPLICATION_DATA(state, data) {

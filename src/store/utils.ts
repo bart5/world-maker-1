@@ -203,7 +203,7 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
         prop5: getPropDef('int32', 'prop5', 4, true),
         prop6: getPropDef('flt', 'prop6', 5, true),
         prop7: getPropDef('string', 'prop7', 6, true),
-        prop8: getPropDef('bool', 'prop8', 6, true),
+        prop8: getPropDef('bool', 'prop8', 7, true),
       }
     },
   }
@@ -304,7 +304,11 @@ export function getNewProjectTemplate(): Project {
   return {
     instances: { ...getMockedInstances() },
     types: { ...getMockedTypesDefinitions() },
-    recentChanges: [],
+    recentChanges: [{
+      id: 'initialState',
+      actionType: 'initialState',
+      changes: []
+    }],
     uiData: {
       ...getNewProjectUiData()
     }

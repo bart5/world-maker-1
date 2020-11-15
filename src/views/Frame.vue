@@ -811,7 +811,7 @@ export default class Frame extends Vue {
   }
 
   .status-bar {
-    display: none;
+    // display: none;
     position: absolute;
     left: 0;
     bottom: 0;
