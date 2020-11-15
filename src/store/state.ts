@@ -2,8 +2,6 @@ const initialState: ApplicationState = {
   applicationData: null,
   project: {} as Project,
   projectUiDataMutated: false,
-  projectInstancesMutated: false,
-  projectEntityBindingsMutated: false,
   currentTransaction: null,
   ui: {
     connectingInProgress: false,
@@ -18,6 +16,8 @@ const initialState: ApplicationState = {
     lastProjectLoadTime: '',
     frameData: null,
     activeWidgetKey: 0,
+    lastSavedTransactionId: '',
+    lastRevertedTransactions: [],
   }
 }
 

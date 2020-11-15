@@ -17,18 +17,38 @@ export default class AppLoader extends Vue {
     return this.$store.getters.applicationData
   }
 
+  keyboardHandler(e: KeyboardEvent) {
+    if (e.ctrlKey) {
+      switch (e.key) {
+        case 'Escape':
+          this.closeWidgets(e)
+          break
+        case 'z':
+          transactionHandler.revert()
+          break
+        case 'y':
+          transactionHandler.unRevert()
+          break
+        default:
+          break;
+      }
+    }
+  }
+
   closeWidgets(e: any | MouseEvent | KeyboardEvent) {
     if (e.key && e.key !== 'Escape') return
     this.$store.dispatch('setWidgetKey', {})
+  }
+
+  addGlobalListeners() {
+    window.addEventListener('click', this.closeWidgets)
+    window.addEventListener('keydown', this.keyboardHandler)
   }
 
   async mounted() {
     ipc.initListeners(this)
     transactionHandler.init(this)
     await this.$store.dispatch('asyncLoadApplicationData')
-
-    window.addEventListener('click', this.closeWidgets)
-    window.addEventListener('keydown', this.closeWidgets)
 
     if (this.applicationData.lastProjectPath) {
       this.$store.dispatch('asyncOpenProjectFromPath', this.applicationData.lastProjectPath)

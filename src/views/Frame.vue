@@ -135,7 +135,7 @@
 
       <Sidebar v-if="projectDataIsLoaded"/>
 
-      <div class="status-bar">Status bar</div>
+      <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
     </div>
   </div>
 </template>
@@ -187,6 +187,10 @@ export default class Frame extends Vue {
   // @Watch('lastProjectSaveTime')
   // handleProjectSave() {
   // }
+
+  get isUnsavedData() {
+    return this.$store.getters.isUnsavedData
+  }
 
   get lastProjectSaveTime() {
     return this.$store.getters.lastProjectSaveTime

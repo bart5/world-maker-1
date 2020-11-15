@@ -7,6 +7,7 @@ export const transactionHandler = {
   init(vm: Vue) {
     this.store = vm.$store
   },
+  transactionStoreLimit: 200,
   mutate(
     mN: string | null, // mutation name
     args: MutArgs,
@@ -49,9 +50,17 @@ export const transactionHandler = {
     pN = '',
     newName = ''
   ) {
-    if (!this.store.state.currentTransaction) return
+    const state = this.store.state
 
-    this.store.state.currentTransaction.changes.push({
+    if (!state.currentTransaction) return
+
+    if (state.currentTransaction.changes.length === this.transactionStoreLimit) {
+      state.currentTransaction.changes.splice(0, 1)
+    }
+
+    state.ui.lastRevertedTransactions = []
+
+    state.currentTransaction.changes.push({
       entityBefore: entityCopy,
       entityType,
       tId,
@@ -110,6 +119,40 @@ export const transactionHandler = {
       default:
         Error(`Unknown entity type of the change: ${change.entityType}.`)
     }
+  },
+  revertTransaction(t: Transaction) {
+    for (let i = 0; i < t.changes.length; i++) {
+      const changeToRevert = t.changes[i] as Change
+      this.revertChange(changeToRevert)
+    }
+  },
+  revert(id?: string) {
+    const state = this.store.state
+
+    const lastTransaction = state.project.recentChanges.pop()
+    if (!lastTransaction) return
+
+    state.ui.lastRevertedTransactions.push(lastTransaction)
+
+    this.revertTransaction(lastTransaction)
+
+    if (id && state.project.recentChanges.find((t) => t.id === id)) {
+      this.revert(id)
+    }
+  },
+  unRevert(id?: string) {
+    const state = this.store.state
+
+    const lastRevertedTransaction = state.ui.lastRevertedTransactions.pop()
+    if (!lastRevertedTransaction) return
+
+    state.project.recentChanges.push(lastRevertedTransaction)
+
+    this.revertTransaction(lastRevertedTransaction)
+
+    if (id && state.project.recentChanges.find((t) => t.id === id)) {
+      this.revert(id)
+    }
   }
 }
 
@@ -137,8 +180,12 @@ export const actions: { [k in ActionType]: (ctx: PublicActionContext) => void } 
   removeInstance: (ctx) => act('removeInstance', ctx),
 }
 
-export function revertChange(change: Change) {
-  transactionHandler.revertChange(change)
+export function revert(id?: string) {
+  transactionHandler.revert(id)
+}
+
+export function unRevert(id?: string) {
+  transactionHandler.unRevert(id)
 }
 
 export function mutate(

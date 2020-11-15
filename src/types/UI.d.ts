@@ -20,6 +20,7 @@ interface UiData {
 }
 
 interface Transaction {
+  id: string;
   actionType: ActionType;
   changes: Array<Change>;
 }
@@ -110,8 +111,6 @@ interface ApplicationState {
   project: Project;
   currentTransaction: Transaction | null;
   projectUiDataMutated: boolean;
-  projectInstancesMutated: boolean;
-  projectEntityBindingsMutated: boolean;
   ui: UIState;
 }
 
@@ -128,6 +127,8 @@ interface UIState {
   lastProjectLoadTime: string;
   frameData: { board: HTMLElement, workspace: HTMLElement } | null;
   activeWidgetKey: number;
+  lastSavedTransactionId: string;
+  lastRevertedTransactions: Array<Transaction>;
 }
 
 interface WorkspaceConfiguration {

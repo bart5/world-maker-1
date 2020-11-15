@@ -1,11 +1,7 @@
 import { createStore } from 'vuex';
 import * as utils from './utils';
 import initialState from './state';
-import { mutate, revertChange } from './transactions';
-
-const registerInstancesMutation = (state: ApplicationState) => {
-  state.projectInstancesMutated = true
-}
+import { mutate } from './transactions';
 
 const identity = <T>(payload: T) => payload
 const typesAndInstances = identity as unknown as typeof createStore
@@ -324,7 +320,9 @@ export default typesAndInstances({
   mutations: {
     OPEN_TRANSACTION(state, actionType: ActionType) {
       if (state.currentTransaction) return
+      const id = utils.getUniqueId()
       state.currentTransaction = {
+        id,
         actionType,
         changes: []
       }
@@ -336,17 +334,8 @@ export default typesAndInstances({
       })
       state.currentTransaction = null
     },
-    REVERT_LAST_CHANGE(state) {
-      const lastTransaction = state.project.recentChanges.pop()
-      if (!lastTransaction) return
-      while (lastTransaction.changes.length) {
-        const changeToRevert = lastTransaction.changes.pop() as Change
-        revertChange(changeToRevert)
-      }
-    },
     CREATE_TYPE(state, p: { tId: string }) { // OK
       const { tId } = p
-      registerInstancesMutation(state)
 
       const uniqueName = utils.getUniqueTypeName(state)
 
@@ -358,7 +347,6 @@ export default typesAndInstances({
       state.project.instances[tId] = {}
     },
     RENAME_TYPE(state, p: { tId: string, newName: string }) { // OK
-      registerInstancesMutation(state)
       const { tId, newName } = p
 
       const type = state.project.types[tId]
@@ -366,7 +354,6 @@ export default typesAndInstances({
     },
     REMOVE_TYPE(state, p: { tId: string }) { // OK
       const { tId } = p
-      registerInstancesMutation(state)
 
       delete state.project.types[tId]
       // At this point all instance are removed
@@ -374,21 +361,18 @@ export default typesAndInstances({
     },
     CREATE_PROP(state, p: { tId: string, prop: PropDefinition }) { // OK
       const { tId, prop } = p
-      registerInstancesMutation(state)
 
       // Prop is added to all existing instances in separate step
       state.project.types[tId].definition[prop.name] = prop
     },
     REMOVE_PROP(state, p: { tId: string, pN: string }) { // OK
       const { tId, pN } = p
-      registerInstancesMutation(state)
 
       // At this point prop is already removed from all instances
       delete state.project.types[tId].definition[pN]
     },
     RENAME_PROP(state, p: { tId: string, pN: string, newName: string }) { // OK
       const { tId, pN, newName } = p
-      registerInstancesMutation(state)
 
       state.project.types[tId].definition[pN].name = newName
       state.project.types[tId].definition[newName] = state.project.types[tId].definition[pN]
@@ -396,7 +380,6 @@ export default typesAndInstances({
     },
     CHANGE_PROP_VALUE_TYPE(state, p: { tId: string, pN: string, newType: ValueType }) { // OK
       const { tId, pN, newType } = p
-      registerInstancesMutation(state)
 
       // If it was ref before remove it's target Id.
       // If it becomes ref the target will be set in separate action.
@@ -409,67 +392,57 @@ export default typesAndInstances({
     },
     CHANGE_PROP_ARITY(state, p: { tId: string, pN: string, isArray: boolean }) { // OK
       const { tId, pN, isArray } = p
-      registerInstancesMutation(state)
 
       // At this point arity is already changed in all instances
       state.project.types[tId].definition[pN].isArray = isArray
     },
     CHANGE_PROP_REF_TARGET_TYPE(state, p: { tId: string, pN: string, newTargetId: string }) { // OK
       const { tId, pN, newTargetId } = p
-      registerInstancesMutation(state)
 
       // At this point all instances refs business is resolved
       state.project.types[tId].definition[pN].refTargetTypeId = newTargetId
     },
     CHANGE_PROP_VALUE(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
       const { tId, iId, pN, value } = p
-      registerInstancesMutation(state)
 
       // At this point all instances refs business is resolved
       state.project.instances[tId][iId][pN] = value
     },
     ADD_PROP_VALUE(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
       const { tId, iId, pN, value } = p
-      registerInstancesMutation(state)
 
       // At this point all instances refs business is resolved
       state.project.instances[tId][iId][pN].pushUnique(value[0])
     },
     REMOVE_PROP_VALUE(state, p: { tId: string, iId: string, pN: string, value: Values }) { // OK
       const { tId, iId, pN, value } = p
-      registerInstancesMutation(state)
 
       // At this point all instances refs business is resolved
       state.project.instances[tId][iId][pN].remove(value[0])
     },
     CREATE_INSTANCE(state, p: { tId: string, iId: string, tN: string, }) { // Ok
       const { tId, iId, tN } = p
-      registerInstancesMutation(state)
 
       state.project.instances[tId][iId] = utils.getNewInstanceData(state, tN, iId)
     },
     REMOVE_INSTANCE(state, p: { tId: string, iId: string }) { // OK
       const { tId, iId } = p
-      registerInstancesMutation(state)
 
       delete state.project.instances[tId][iId]
     },
     REMOVE_INSTANCE_PROP(state, p: { tId: string, iId: string, pN: string }) { // OK
       const { tId, iId, pN } = p
-      registerInstancesMutation(state)
 
       delete state.project.instances[tId][iId][pN]
     },
     RENAME_INSTANCE_PROP(state, p: { tId: string, iId: string, pN: string, newName: string }) { // OK
       const { tId, iId, pN, newName } = p
-      registerInstancesMutation(state)
 
       state.project.instances[tId][iId][newName] = state.project.instances[tId][iId][pN]
       delete state.project.instances[tId][iId][pN]
     },
     CHANGE_PROP_ORDER(state, p: { tId: string, pN: string, order: number }) { // OK
       const { tId, pN, order } = p
-      registerInstancesMutation(state)
 
       state.project.types[tId].definition[pN].order = order
     },
@@ -722,10 +695,6 @@ export default typesAndInstances({
 
       mutate('CHANGE_PROP_ORDER', { order: lowerOrder }, 'PropDefinition', tId, '', pN)
       mutate('CHANGE_PROP_ORDER', { order: upperOrder }, 'PropDefinition', tId, '', propToMoveUp.name)
-    },
-    // Non transactioned actions:
-    revertLastChange() {
-      this.commit('REVERT_LAST_CHANGE')
     },
     /* =====================================================================
      *

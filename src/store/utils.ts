@@ -67,9 +67,10 @@ export function oToA<T>(o: {[k: string]: T}): Array<T> {
   return Object.entries(o).map(([, v]) => v)
 }
 
-export function getUniqueId(state: ApplicationState) {
-  // const getId = () => Date.now().toString().substring(3).substring(-1)
+export function getUniqueId(state?: ApplicationState) {
   const getId = () => Math.random().toString().substring(10)
+  if (!state) return getId()
+
   const isUnique = (id: string) => {
     const types = state.project.types
     return !Object.entries(types).some(([tId]) => {

@@ -11,11 +11,6 @@ const minTileSize = {
 const registerUiDataMutation = (state: ApplicationState) => {
   state.projectUiDataMutated = true
 }
-const resetMutations = (state: ApplicationState) => {
-  state.projectUiDataMutated = false
-  state.projectInstancesMutated = false
-  state.projectEntityBindingsMutated = false
-}
 
 const identity = (payload: any) => payload
 const UI = identity as unknown as typeof createStore
@@ -52,10 +47,9 @@ export default UI({
     activeModal: (state) => state.ui.activeModal,
     applicationData: (state) => state.applicationData,
     projectDataIsLoaded: (state) => state.ui.projectDataIsLoaded,
-    isUnsavedData: (state) => {
-      return state.projectEntityBindingsMutated
-        || state.projectInstancesMutated
-        || state.projectUiDataMutated
+    isUnsavedData: (state, getters) => {
+      const staticDataChanged = getters.lastTransactionIdInUI !== state.ui.lastSavedTransactionId
+      return staticDataChanged || state.projectUiDataMutated
     },
     lastProjectSaveTime: (state) => {
       return state.ui.lastProjectSaveTime
@@ -65,6 +59,9 @@ export default UI({
     },
     activeWidgetKey: (state) => {
       return state.ui.activeWidgetKey
+    },
+    lastTransactionIdInUI: (state) => {
+      return state.project.recentChanges.last().id
     }
   },
   mutations: {
@@ -292,6 +289,7 @@ export default UI({
     LOAD_PROJECT_NON_UI_DATA(state, project: Project) {
       state.project.types = project.types
       state.project.instances = project.instances
+      state.project.recentChanges = project.recentChanges
       window.setTimeout(() => {
         state.ui.lastProjectLoadTime = String(Date.now())
       })
@@ -302,10 +300,16 @@ export default UI({
     SET_WIDGET_KEY(state, p: { widgetKey: number }) {
       state.ui.activeWidgetKey = p.widgetKey
     },
+    SET_LAST_SAVED_TRANSACTION_ID(state) {
+      state.ui.lastSavedTransactionId = state.project.recentChanges.last().id
+    },
     /* =========== APPLICATION DATA MUTATIONS =========== */
     SET_APPLICATION_DATA(state, data) {
       state.applicationData = data
     },
+    RESET_MUTATIONS(state) {
+      state.projectUiDataMutated = false
+    }
   },
   actions: {
     loadInstances(state) {
@@ -440,6 +444,7 @@ export default UI({
             .catch((e) => Error(`Failed fetching project. \n${e}`))
         )
       this.commit('LOAD_PROJECT_TO_UI', project)
+      this.commit('SET_LAST_SAVED_TRANSACTION_ID')
       if (isNew) {
         await state.dispatch('asyncSaveProjectAs')
           .catch((e) => Error(`Failed saving project as. \n${e}`))
@@ -455,6 +460,7 @@ export default UI({
         .catch((e) => Error(`Failed fetching project. \n${e}`))
 
       this.commit('LOAD_PROJECT_NON_UI_DATA', project)
+      this.commit('SET_LAST_SAVED_TRANSACTION_ID')
     },
     asyncLoadApplicationData() {
       return ipc.exchange('loadApplicationData').then((data: ApplicationData) => {
@@ -495,7 +501,8 @@ export default UI({
           this.dispatch('saveCurrentWorkspaceCamera')
           const { project } = state.state
           return ipc.exchange('saveProject', { data: project }).then(() => {
-            resetMutations(state.state)
+            this.commit('RESET_MUTATIONS')
+            this.commit('SET_LAST_SAVED_TRANSACTION_ID')
           }).finally(() => {
             this.commit('STOP_SAVING_PROJECT')
           })

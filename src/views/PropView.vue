@@ -1,7 +1,3 @@
-<!-- This component is meant for:
-  1) Edition of Types
-  2) Rudimentary display of Instances - they should be edited in their dedicated viewers
--->
 <template>
   <div class="prop-wrapper" :style="{...order}" @keydown.esc="stopEdit()">
 
@@ -512,12 +508,22 @@ export default class PropView extends Vue {
     }
   }
 
+  .target-type {
+    width: 90px;
+
+    select {
+      width: 100%;
+    }
+  }
+
   .move-prop {
     padding: 0 6px;
   }
 
   .delete-prop {
     padding: 0 6px;
+    flex-grow: 1;
+    justify-content: flex-end;
   }
 
   input {
