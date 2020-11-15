@@ -93,7 +93,7 @@ export default typesAndInstances({
       Object.entries(state.project.instances).forEach(([typeId, instanceList]) => { // for each type instance
         Object.entries(instanceList).forEach(([instanceId, instance]) => {
           Object.entries(instance).forEach(([propName, values]) => {
-            if (!propName.includes('meta') || propName !== 'id') {
+            if (!propName.startsWith('meta') || propName !== 'id') {
               if (!values.length) {
                 instances.push({
                   instanceId,
@@ -128,9 +128,17 @@ export default typesAndInstances({
       const { tId, pN } = p
       return (getters.getType({ typeId: tId }) as TypeWrapper).definition[pN].isArray
     },
-    getPropValues: (state, getters) => (p: { tId: string, iId: string, pN: string }) => {
+    getPropValues: (state, getters) => (p: { iId: string, pN: string }) => {
       const { iId, pN } = p
       return (getters.instance({ iId }) as Instance)[pN]
+    },
+    // Without Id and meta
+    getPropsCount: (state, getters) => (p: { tId: string }) => {
+      const { tId } = p
+      const type: TypeWrapper = getters.getType({ tId })
+      return utils.oToA(type.definition).filter((pDef) => {
+        return !(pDef.name.startsWith('meta') || pDef.name === 'id')
+      }).length
     },
     getFilteredInstances: (state, getters) => (
       p: { iId: string, tN: string, tId: string,
@@ -459,6 +467,12 @@ export default typesAndInstances({
       state.project.instances[tId][iId][newName] = state.project.instances[tId][iId][pN]
       delete state.project.instances[tId][iId][pN]
     },
+    CHANGE_PROP_ORDER(state, p: { tId: string, pN: string, order: number }) { // OK
+      const { tId, pN, order } = p
+      registerInstancesMutation(state)
+
+      state.project.types[tId].definition[pN].order = order
+    },
     UPDATE_REF_META_FROM_A_TO_B(state, p: { iA: Instance, iB: Instance, propsToCheck: string[] }) {
       const { iA, iB, propsToCheck } = p
       const iAId = iA.id[0]
@@ -529,7 +543,8 @@ export default typesAndInstances({
     createProp(state, p: { tId: string }) { // OK
       const { tId } = p
       const uniquePropName = utils.getUniquePropName(state.state, tId)
-      const prop = utils.getPropDef('int32', uniquePropName)
+      const propsCount = state.getters.getPropsCount({ tId })
+      const prop = utils.getPropDef('int32', uniquePropName, propsCount)
       mutate('CREATE_PROP', { prop }, 'PropDefinition', tId)
 
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
@@ -664,6 +679,53 @@ export default typesAndInstances({
       this.dispatch('removeAllRefsToInstA', { iId })
 
       mutate('REMOVE_INSTANCE', {}, 'Instance', tId, iId)
+    },
+    // Meta fileds have always order -2
+    // Id has always order -1
+    // The rest is >=0
+    movePropUp(state, p: { tId: string, pN: string }) {
+      const { tId, pN } = p
+      const type: TypeWrapper = state.getters.getType({ tId })
+      const propsInOrder = utils.oToA(type.definition).filter((pDef) => {
+        return !(pDef.name.startsWith('meta') || pDef.name === 'id')
+      }).sort((pDefA, pDefB) => pDefA.order - pDefB.order)
+
+      const propToMoveUp = propsInOrder.filter((pDef) => pDef.name === pN)[0]
+      if (propToMoveUp.name === propsInOrder[0].name) return
+
+      const propToMoveDown = propsInOrder.filter((pDef, i, ar) => ar[i + 1].name === pN)[0]
+
+      // With each reorder order value is brought down in case
+      // it was inflated due to props removal (removal is not adjusting order).
+      const upperOrder = propToMoveDown.order
+      const lowerOrder = upperOrder + 1
+
+      mutate('CHANGE_PROP_ORDER', { order: upperOrder }, 'PropDefinition', tId, pN)
+      mutate('CHANGE_PROP_ORDER', { order: lowerOrder }, 'PropDefinition', tId, propToMoveDown.name)
+    },
+    movePropDown(state, p: { tId: string, pN: string }) {
+      const { tId, pN } = p
+      const type: TypeWrapper = state.getters.getType({ tId })
+      const propsInOrder = utils.oToA(type.definition).filter((pDef) => {
+        return !(pDef.name.startsWith('meta') || pDef.name === 'id')
+      }).sort((pDefA, pDefB) => pDefA.order - pDefB.order)
+
+      const propToMoveDown = propsInOrder.filter((pDef) => pDef.name === pN)[0]
+      if (propToMoveDown.name === propsInOrder.last().name) return
+
+      const propToMoveUp = propsInOrder.filter((pDef, i, ar) => ar[i - 1].name === pN)[0]
+
+      // With each reorder order value is brought down in case
+      // it was inflated due to props removal (removal is not adjusting order).
+      const upperOrder = propToMoveDown.order
+      const lowerOrder = upperOrder + 1
+
+      mutate('CHANGE_PROP_ORDER', { order: lowerOrder }, 'PropDefinition', tId, pN)
+      mutate('CHANGE_PROP_ORDER', { order: upperOrder }, 'PropDefinition', tId, propToMoveUp.name)
+    },
+    // Non transactioned actions:
+    revertLastChange() {
+      this.commit('REVERT_LAST_CHANGE')
     },
     /* =====================================================================
      *
@@ -804,16 +866,5 @@ export default typesAndInstances({
 
       mutate('CHANGE_PROP_VALUE_TYPE', { newType }, 'PropDefinition', tId, '', pN)
     },
-
-    revertLastChange() {
-      this.commit('REVERT_LAST_CHANGE')
-    },
-
-    // moveTypePropUp(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-    //   this.commit('MOVE_TYPE_PROP_UP', payload)
-    // },
-    // moveTypePropDown(state, payload: { newProp: PropDefinition, typeName: string, instanceId: string }) {
-    //   this.commit('MOVE_TYPE_PROP_DOWN', payload)
-    // },
   },
 });

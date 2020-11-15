@@ -18,6 +18,7 @@ function initOverrides() {
         return pushUnique.bind(this);
       }
     });
+
     function remove(this: any[], value: any) {
       if (typeof value === 'string' || typeof value === 'number' || typeof value === 'object') {
         const matchIndex = this.indexOf(value)
@@ -36,6 +37,17 @@ function initOverrides() {
       set() {},
       get() {
         return remove.bind(this as Array<any>);
+      }
+    });
+
+    function last(this: any[]) {
+      return this
+    }
+    Object.defineProperty(Array.prototype, 'remove', {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      set() {},
+      get() {
+        return last.bind(this as Array<any>);
       }
     });
   }())

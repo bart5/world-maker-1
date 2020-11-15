@@ -7,4 +7,8 @@ interface Array<T> {
    * Remove first found instance of value from the array.
    */
   remove(itemToRemove: any): Array<T>
+  /**
+   * Remove first found instance of value from the array.
+   */
+  last(): T
 }

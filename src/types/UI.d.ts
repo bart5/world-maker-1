@@ -48,6 +48,8 @@ type ActionType =
   | 'renameProp'
   // 1 step:
   //  1) rename prop in type, rename prop in all instances. (subjects = typeWrapper + [all instances of type])
+  | 'movePropUp'
+  | 'movePropDown'
   | 'changePropType' // cast with trimmed precision
   // | 'changePropType_int32<->flt' // cast with trimmed precision
   // | 'changePropType_int32<->string' // literal cast
@@ -224,7 +226,7 @@ interface PropDefinition {
   name: string;
   isArray: bool;
   refTargetTypeId: string,
-  order?: number;
+  order: number;
 }
 
 interface Instances {
@@ -246,6 +248,7 @@ interface MutArgs {
   prop?: PropDefinition;
   isArray?: boolean;
   tN?: string; // a type name for creating new instance of a type
+  order?: number; // a type name for creating new instance of a type
 }
 
 interface MutCtx extends MutArgs {

@@ -24,7 +24,7 @@
     </div>
     <template v-for="(pDef, pN) in type.definition">
       <PropView
-        v-if="pN !== 'id' && (!pN.includes('meta') || showMeta || alwaysMeta)"
+        v-if="pN !== 'id' && (!pN.startsWith('meta') || showMeta || alwaysMeta)"
         :tId="tId"
         :iId="iId"
         :pDef="pDef"
@@ -185,6 +185,10 @@ export default class TypeView extends Vue {
 
       button {
         margin-left: 4px;
+      }
+
+      input {
+        border: none;
       }
     }
     .type-config {

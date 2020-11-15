@@ -71,27 +71,32 @@
       <span>{{ localPDef.valueType + (localPDef.isArray ? '[]' : '') }}</span>
     </div>
 
-    <div v-if="!onlyValues" class="target-type">
-      <select class="target-selector" :disabled="readonly" :value="localPDef.refTargetTypeId" @change="getEValue($event, changePropTargetType)">
-        <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
-      </select>
-    </div>
-
     <div v-if="!onlyValues" class="arity-choice hover" :class="{ 'isArray': localPDef.isArray }">
-      <!-- <span @click="changePropArity(localPDef.isArray)">[ ]</span> -->
       <div class="list">
-        <!-- <span @click="changePropArity(localPDef.isArray)">[ ]</span> -->
-        <div class="top-field" @click="startEdit('arity', $event)">[ ]</div>
+        <div class="top-field" @click="!readonly && startEdit('arity', $event)">[ ]</div>
         <div v-if="doesEdit('arity')" class="values-list no-scroll">
           <div class="value-available" :class="{ 'selected': !localPDef.isArray }" @click="changePropArity(false)">Single</div>
           <div class="value-available" :class="{ 'selected': localPDef.isArray }" @click="changePropArity(true)">Array</div>
         </div>
       </div>
-      <!-- <input type="checkbox" :disabled="readonly" :checked="localPDef.isArray" @change="changePropArity(localPDef.isArray)"> -->
+    </div>
+
+    <div v-if="!onlyValues" class="target-type">
+      <select class="target-selector" :disabled="readonly || !isRef" :value="localPDef.refTargetTypeId" @change="getEValue($event, changePropTargetType)">
+        <option v-for="type in types" :key="type.id" :value="type.id">{{ type.name }}</option>
+      </select>
+    </div>
+
+    <div v-if="!onlyValues" class="move-prop-up">
+      <button class="basic" @click="movePropUp" :disabled="readonly">&#8593;</button>
+    </div>
+
+    <div v-if="!onlyValues" class="move-prop-down">
+      <button class="basic" @click="movePropDown" :disabled="readonly">&#8595;</button>
     </div>
 
     <div v-if="!onlyValues" class="delete-prop">
-      <button @click="removeProp" :disabled="readonly">X</button>
+      <button class="basic" @click="removeProp" :disabled="readonly">Remove</button>
     </div>
   </div>
 </template>
@@ -171,6 +176,16 @@ export default class PropView extends Vue {
   removeValue(value: number | boolean | string) {
     if (!this.pV.includes(value)) return
     actions.removePropValue(this.getCtx({ value }))
+    this.updatelocalPDef()
+  }
+
+  movePropUp() {
+    actions.movePropUp(this.simpCtx)
+    this.updatelocalPDef()
+  }
+
+  movePropDown() {
+    actions.movePropDown(this.simpCtx)
     this.updatelocalPDef()
   }
 
@@ -492,7 +507,10 @@ export default class PropView extends Vue {
         align-items: center;
       }
     }
+  }
 
+  .delete-prop {
+    padding: 0 6px;
   }
 
   input {
