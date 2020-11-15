@@ -77,8 +77,17 @@
       </select>
     </div>
 
-    <div v-if="!onlyValues" class="arity-choice">
-      <input type="checkbox" :disabled="readonly" :checked="localPDef.isArray" @change="changePropArity(localPDef.isArray)">
+    <div v-if="!onlyValues" class="arity-choice hover" :class="{ 'isArray': localPDef.isArray }">
+      <!-- <span @click="changePropArity(localPDef.isArray)">[ ]</span> -->
+      <div class="list">
+        <!-- <span @click="changePropArity(localPDef.isArray)">[ ]</span> -->
+        <div class="top-field" @click="startEdit('arity', $event)">[ ]</div>
+        <div v-if="doesEdit('arity')" class="values-list no-scroll">
+          <div class="value-available" :class="{ 'selected': !localPDef.isArray }" @click="changePropArity(false)">Single</div>
+          <div class="value-available" :class="{ 'selected': localPDef.isArray }" @click="changePropArity(true)">Array</div>
+        </div>
+      </div>
+      <!-- <input type="checkbox" :disabled="readonly" :checked="localPDef.isArray" @change="changePropArity(localPDef.isArray)"> -->
     </div>
 
     <div v-if="!onlyValues" class="delete-prop">
@@ -92,7 +101,7 @@ import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator';
 import { actions } from '@/store/transactions'
 
-type FieldType = 'name' | 'values' | 'type' | 'target' | ''
+type FieldType = 'name' | 'values' | 'type' | 'target' | 'arity' | ''
 
 @Options({})
 export default class PropView extends Vue {
@@ -149,7 +158,6 @@ export default class PropView extends Vue {
 
   changeValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
-    console.log('changing value to : ', value)
     actions.changePropValue(this.getCtx({ value }))
     this.updatelocalPDef()
   }
@@ -383,62 +391,73 @@ export default class PropView extends Vue {
           max-height: 100%;
         }
       }
+    }
+  }
 
-      .values-list {
-        font-size: 14px;
-        position: absolute;
-        right: 0;
-        top: 100%;
-        width: 85%;
-        border-top: none;
-        background: lightgray;
+  .values-list {
+    font-size: 14px;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    width: 85%;
+    min-width: 60px;
+    border-top: none;
+    background: lightgray;
+    display: flex;
+    flex-flow: column nowrap;
+    max-height: calc(6 * 24px);
+    overflow-y: scroll;
+    z-index: 2;
+    box-shadow:
+      3px 3px 4px 2px rgba(80,80,80, 0.4),
+      -3px 3px 4px 2px rgba(80,80,80, 0.4);
+
+    & > div {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      height: 24px;
+    }
+
+    &.no-scroll {
+      overflow: visible;
+    }
+
+    .value-selected {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+
+      .value {
+        margin-left: 6px;
+        flex-grow: 1;
+        text-align: left;
+        height: 100%;
         display: flex;
-        flex-flow: column nowrap;
-        max-height: calc(6 * 24px);
-        overflow-y: scroll;
-        z-index: 2;
-        box-shadow:
-          3px 3px 4px 2px rgba(80,80,80, 0.4),
-          -3px 3px 4px 2px rgba(80,80,80, 0.4);
+        align-items: center;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
 
-        & > div {
-          display: flex;
-          justify-content: flex-start;
-          align-items: center;
-          height: 24px;
-        }
+      .remove-value-button {
+        background-color: rgba(255,0,0,0.22);
+      }
+    }
 
-        .value-selected {
-          display: flex;
-          width: 100%;
-          justify-content: space-between;
+    .value-available {
+      padding-left: 6px;
+      order: 1;
 
-          .value {
-            margin-left: 6px;
-            flex-grow: 1;
-            text-align: left;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-          }
+      &.selected {
+        order: 0;
+        color: rgba(150,150,150)
+      }
 
-          .remove-value-button {
-            background-color: rgba(255,0,0,0.22);
-          }
-        }
-
-        .value-available {
-          padding-left: 6px;
-
-          &:hover {
-            cursor: pointer;
-            color: white;
-            background: gray;
-          }
-        }
+      &:not(.selected):hover {
+        cursor: pointer;
+        color: white;
+        background: gray;
       }
     }
   }
@@ -449,10 +468,44 @@ export default class PropView extends Vue {
     padding-left: 2px;
   }
 
+  .arity-choice {
+    position: relative;
+    font-weight: bold;
+    width: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &:not(.isArray) .top-field {
+      color: rgba(150,150,150, 0.35);
+    }
+
+    .list {
+      height: 100%;
+      width: 100%;
+
+      .top-field {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+    }
+
+  }
+
   input {
     border: none;
     background: rgba(230,230,230);
     border-bottom: dashed 2px darkgray;
+  }
+  select {
+    border: none;
+
+    &:hover {
+      cursor: pointer;
+    }
   }
 }
 

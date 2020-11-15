@@ -42,11 +42,12 @@ export default class Collapsible extends Vue {
   width: 100%;
   min-height: 50%; // Total height of sidebar / number of panels
   box-sizing: content-box;
+  transition: min-height 0.2s, flex-grow 0.2s;
 
   &.collapsed {
     flex-grow: 0;
     flex-shrink: 0;
-    min-height: unset;
+    min-height: 0;
   }
 
   .header {
