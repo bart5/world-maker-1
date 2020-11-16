@@ -130,8 +130,8 @@ export default class Sidebar extends Vue {
 .sidebar-wrapper {
   height: 100%;
   overflow-y: scroll;
-  min-width: 700px;
-  max-width: 700px;
+  min-width: 560px;
+  max-width: 560px;
   background: lightgray;
   padding: 12px;
   display: flex;

@@ -112,7 +112,7 @@ export default class Filteres extends Vue {
     return this.$store.getters.getTypeName({ tId })
   }
 
-  // Empty in meaning that all values are: ''
+  // Empty meaning that all values are: ''
   isObjectEmpty(o: {[k: string]: any }): boolean {
     return Object.entries(o).every(([, value]) => {
       return typeof value === 'object' ? this.isObjectEmpty(value) : !value.length

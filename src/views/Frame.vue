@@ -32,11 +32,6 @@
           <input :disabled="!projectDataIsLoaded" type="checkbox" class="workspace-view-lock" v-model="workspaceConfig.lockView" @change="onViewLockChange">
         </label>
       </div>
-      <!-- <div class="widget">
-        <label>Fit to Tiles:
-          <input type="checkbox" class="workspace-view-lock" v-model="workspaceConfig.fitToTiles" @change="onFitToTilesChange">
-        </label>
-      </div> -->
     </div>
     <div class="workspace-selector">
       <template v-if="projectDataIsLoaded">
@@ -136,7 +131,10 @@
       <Sidebar v-if="projectDataIsLoaded"/>
 
       <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
+
     </div>
+
+    <div class="repaint-trigger" ref="repaintTrigger"></div>
   </div>
 </template>
 
@@ -183,10 +181,6 @@ export default class Frame extends Vue {
   draggedTabPosition = 0
 
   draggedTabWorkspaceId = ''
-
-  // @Watch('lastProjectSaveTime')
-  // handleProjectSave() {
-  // }
 
   get isUnsavedData() {
     return this.$store.getters.isUnsavedData
@@ -336,6 +330,7 @@ export default class Frame extends Vue {
   resetZoom() {
     if (this.disableZoom) return
     this.workspaceScale = 1
+    console.log(this)
   }
 
   get workspaces(): Workspace[] {
@@ -352,6 +347,10 @@ export default class Frame extends Vue {
 
   getWorkspaceNameInputElement() {
     return this.$refs.workspaceNameInput as HTMLInputElement
+  }
+
+  get repaintTriggerElement() {
+    return this.$refs.repaintTrigger as HTMLElement
   }
 
   get activeWorkspaceId(): string {
@@ -400,14 +399,6 @@ export default class Frame extends Vue {
     }
     this.setWorkspaceConfig({ lockView: newValue, lockedViewPosition: currentViewPosition })
   }
-
-  // onFitToTilesChange() {
-  //   const newValue = this.workspaceConfig.fitToTiles
-  //   if (newValue) {
-  //     this.fitViewToTiles()
-  //   }
-  //   this.setWorkspaceConfig({ fitToTiles: newValue })
-  // }
 
   fitViewToTiles() {
     this.workspaceConfig.lockScale = true
@@ -960,5 +951,12 @@ export default class Frame extends Vue {
   &.new-connector {
     z-index: 9999;
   }
+}
+
+.repaint-trigger {
+  width: 0;
+  height: 0;
+  position: fixed;
+  display: none;
 }
 </style>

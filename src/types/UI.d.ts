@@ -19,86 +19,6 @@ interface UiData {
   activeWorkspaceId: workspaceId;
 }
 
-interface Transaction {
-  id: string;
-  actionType: ActionType | 'initialState';
-  changes: Array<Change>;
-}
-
-type ActionType =
-  | 'createType'
-  // 1 step:
-  //  1) creates type. (subjects = typeWrapper to remove)
-  | 'removeType'
-  // 5 steps:
-  //  1) removes references FROM all instances of type. (subjects = [all instances of type])
-  //  2) removes references TO all instances of type. (subjects = [some instances of some types])
-  //  3) removes all instances. (subjects = [all instances of type])
-  //  4) remove all references in types propDefs
-  //  5) remove the type itself
-  | 'renameType'
-  // 1 step:
-  //  1) changes name in typeWrapper and meta_typeId in all instances. (subjects = typeWrapper + [all instances of type])
-  | 'createProp'
-  // 1 step:
-  //  1) create prop for type and create props for all instances. (subjects = typeWrapper + [all instances of type])
-  | 'removeProp'
-  //
-  //  1) remove all references from property to other instances
-  //  2) Remove property from type and instances
-  | 'renameProp'
-  // 1 step:
-  //  1) rename prop in type, rename prop in all instances. (subjects = typeWrapper + [all instances of type])
-  | 'movePropUp'
-  | 'movePropDown'
-  | 'changePropType' // cast with trimmed precision
-  // | 'changePropType_int32<->flt' // cast with trimmed precision
-  // | 'changePropType_int32<->string' // literal cast
-  // | 'changePropType_int32<->bool' // cast to 1 or 0 and true or false
-  // | 'changePropType_flt<->string' // literal cast
-  // | 'changePropType_flt<->bool' // cast to 1 or 0 and true or false
-  // | 'changePropType_string<->bool' // cast to 'true' or 'false' and (from string) true or false
-  // 1 step:
-  //  1) change valueType in typeWrapper and props of instances. cast props values.
-  //    (subjects = typeWrapper + [all instances of type])
-  | 'changePropToArray' // lossless
-  // 1 step:
-  //  1) change arity in prop definition, change arity in props of all instances.
-  //    (subjects = typeWrapper + [all instances of type])
-  | 'changePropToSingle' // lose all values but first
-  // 1 step:
-  //  1) change arity in prop definition, change arity in props of all instances. Trim values.
-  //    (subjects = typeWrapper + [all instances of type])
-  | 'changePropTargetType'
-  // 2 steps:
-  //  1) Remove *ref values* from prop in all instances of type.
-  //    (subjects = [all instances of type] + [other through meta])
-  //  2) Change refTargetType in prop of type and props of all instances.
-  //    (subjects = typeWrapper + [all instances of type])
-  | 'changePropValue'
-  // 1 step:
-  //  1) Change prop values
-  //    (subjects = instance)
-  | 'addPropValue'
-  | 'removePropValue'
-  | 'createInstance'
-  | 'removeInstance'
-  // | 'changePropOrder'
-  // 1 step:
-  //  1) Change prop definition order and re-shuffle other
-  //    (subjects = type)
-
-type EntityType = 'TypeWrapper' | 'PropDefinition' | 'Instance' | 'PropValues'
-
-interface Change {
-  entityBefore: TypeWrapper | PropDefinition | Instance | PropValues | null;
-  entityType: EntityType
-  tId: string;
-  iId: string;
-  pN: string;
-  newName?: string;
-}
-
 interface Project {
   instances: Instances;
   types: TypesDefinitions;
@@ -190,6 +110,86 @@ type modalTypes =
   | 'typesManager'
   | null;
 
+  interface Transaction {
+    id: string;
+    actionType: ActionType | 'initialState';
+    changes: Array<Change>;
+  }
+
+  type ActionType =
+    | 'createType'
+    // 1 step:
+    //  1) creates type. (subjects = typeWrapper to remove)
+    | 'removeType'
+    // 5 steps:
+    //  1) removes references FROM all instances of type. (subjects = [all instances of type])
+    //  2) removes references TO all instances of type. (subjects = [some instances of some types])
+    //  3) removes all instances. (subjects = [all instances of type])
+    //  4) remove all references in types propDefs
+    //  5) remove the type itself
+    | 'renameType'
+    // 1 step:
+    //  1) changes name in typeWrapper and meta_typeId in all instances. (subjects = typeWrapper + [all instances of type])
+    | 'createProp'
+    // 1 step:
+    //  1) create prop for type and create props for all instances. (subjects = typeWrapper + [all instances of type])
+    | 'removeProp'
+    //
+    //  1) remove all references from property to other instances
+    //  2) Remove property from type and instances
+    | 'renameProp'
+    // 1 step:
+    //  1) rename prop in type, rename prop in all instances. (subjects = typeWrapper + [all instances of type])
+    | 'movePropUp'
+    | 'movePropDown'
+    | 'changePropType' // cast with trimmed precision
+    // | 'changePropType_int32<->flt' // cast with trimmed precision
+    // | 'changePropType_int32<->string' // literal cast
+    // | 'changePropType_int32<->bool' // cast to 1 or 0 and true or false
+    // | 'changePropType_flt<->string' // literal cast
+    // | 'changePropType_flt<->bool' // cast to 1 or 0 and true or false
+    // | 'changePropType_string<->bool' // cast to 'true' or 'false' and (from string) true or false
+    // 1 step:
+    //  1) change valueType in typeWrapper and props of instances. cast props values.
+    //    (subjects = typeWrapper + [all instances of type])
+    | 'changePropToArray' // lossless
+    // 1 step:
+    //  1) change arity in prop definition, change arity in props of all instances.
+    //    (subjects = typeWrapper + [all instances of type])
+    | 'changePropToSingle' // lose all values but first
+    // 1 step:
+    //  1) change arity in prop definition, change arity in props of all instances. Trim values.
+    //    (subjects = typeWrapper + [all instances of type])
+    | 'changePropTargetType'
+    // 2 steps:
+    //  1) Remove *ref values* from prop in all instances of type.
+    //    (subjects = [all instances of type] + [other through meta])
+    //  2) Change refTargetType in prop of type and props of all instances.
+    //    (subjects = typeWrapper + [all instances of type])
+    | 'changePropValue'
+    // 1 step:
+    //  1) Change prop values
+    //    (subjects = instance)
+    | 'addPropValue'
+    | 'removePropValue'
+    | 'createInstance'
+    | 'removeInstance'
+    // | 'changePropOrder'
+    // 1 step:
+    //  1) Change prop definition order and re-shuffle other
+    //    (subjects = type)
+
+  type EntityType = 'TypeWrapper' | 'PropDefinition' | 'Instance' | 'PropValues'
+
+  interface Change {
+    entityBefore: TypeWrapper | PropDefinition | Instance | PropValues | null;
+    entityType: EntityType
+    tId: string;
+    iId: string;
+    pN: string;
+    newName?: string;
+  }
+
 // ===================
 
 type ValueType = 'int32' | 'flt' | 'string' | 'bool' | 'ref'
@@ -267,10 +267,6 @@ interface PublicActionContext {
   newTargetId?: string;
   value?: Values;
 }
-
-// interface PublicGettersContext {
-
-// }
 
 interface InstanceBasics {
   id: PropValues<[string]>;

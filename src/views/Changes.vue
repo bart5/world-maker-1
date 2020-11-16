@@ -77,6 +77,7 @@ export default class Changes extends Vue {
   &.recent.current {
     background: rgba(40,40,40);
     color: white;
+    border-color: black;
   }
 
   &.recent-reverted {

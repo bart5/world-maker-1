@@ -219,7 +219,9 @@ export default UI({
       })
     },
     ACTIVATE_WORKSPACE(state, workspaceId: string) {
-      registerUiDataMutation(state)
+      if (workspaceId !== state.project.uiData.activeWorkspaceId) {
+        registerUiDataMutation(state)
+      }
 
       if (workspaceId) {
         state.project.uiData.activeWorkspaceId = workspaceId
