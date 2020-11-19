@@ -1,6 +1,6 @@
 <template>
   <div class="board-wrapper" @mousedown="stopConnectingTiles">
-    <div class="top-bar">
+    <div v-if="localBoardId" class="top-bar">
       <button @click="centerOnTiles">Center view</button>
       <button :disabled="disableZoom" @click="zoomIn">Zoom in</button>
       <button :disabled="disableZoom" @click="resetZoom">Reset zoom</button>
@@ -30,6 +30,7 @@
       </div>
     </div>
     <div
+      v-if="localBoardId"
       class="board-frame"
       :class="{ 'dragging-board': draggingBoard }"
       ref="boardFrame"
@@ -77,7 +78,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop } from 'vue-property-decorator';
+import { Prop, Watch } from 'vue-property-decorator';
 import TileComponent from '@/views/Tile.vue'
 import Curve from '@/views/Curve.vue'
 
@@ -89,6 +90,8 @@ import Curve from '@/views/Curve.vue'
 })
 export default class Board extends Vue {
   @Prop() boardId!: string
+
+  localBoardId = ''
 
   relativeMousePosition = {
     x: 0,
@@ -104,11 +107,11 @@ export default class Board extends Vue {
   resizeInProgress = false
 
   get tiles(): Tile[] {
-    return this.$store.getters.getBoardTiles({ boardId: this.boardId })
+    return this.$store.getters.getBoardTiles({ boardId: this.localBoardId })
   }
 
   get lastCamera() {
-    return this.$store.getters.getBoardCamera({ boardId: this.boardId })
+    return this.$store.getters.getBoardCamera({ boardId: this.localBoardId })
   }
 
   get config(): BoardConfig {
@@ -121,7 +124,18 @@ export default class Board extends Vue {
     //   lockTiles: false,
     //   lastSessionCamera: null
     // }
-    return this.$store.getters.getBoardConfig({ boardId: this.boardId })
+    return this.$store.getters.getBoardConfig({ boardId: this.localBoardId })
+  }
+
+  @Watch('boardId')
+  handleBoardChange(newBoardId: string) {
+    this.saveCamera()
+    this.localBoardId = newBoardId
+    this.setupBoard()
+  }
+
+  beforeUnmount() {
+    this.saveCamera()
   }
 
   get boardStyle() {
@@ -272,12 +286,12 @@ export default class Board extends Vue {
 
   snapTilesToModulus(modulus: number) {
     // this.$store.dispatch('snapWorkspaceTilesToModulus', { workspaceId: this.activeWorkspaceId, modulus })
-    this.$store.dispatch('snapBoardTilesToModulus', { boardId: this.boardId, modulus })
+    this.$store.dispatch('snapBoardTilesToModulus', { boardId: this.localBoardId, modulus })
   }
 
   setconfig(newConfig: Partial<configuration>) {
     // this.$store.dispatch('setconfig', { workspaceId: this.activeWorkspaceId, newConfig })
-    this.$store.dispatch('setBoardConfig', { boardId: this.boardId, newConfig })
+    this.$store.dispatch('setBoardConfig', { boardId: this.localBoardId, newConfig })
   }
 
   stopConnectingTiles() {
@@ -350,12 +364,16 @@ export default class Board extends Vue {
 
   saveCamera() {
     // this.$store.dispatch('saveCurrentWorkspaceCamera')
-    this.$store.dispatch('saveCamera')
+    this.$store.dispatch('saveBoardCamera', { boardId: this.localBoardId })
   }
 
   loadCamera() {
     if (!this.lastCamera) {
-      this.centerOnTiles()
+      if (this.tiles.length) {
+        this.centerOnTiles()
+      } else {
+        this.centerOnBoardCenter()
+      }
       this.boardScale = 1
       this.saveCamera()
     } else {
@@ -364,18 +382,23 @@ export default class Board extends Vue {
     }
   }
 
-  mounted() {
-    window.addEventListener('keydown', this.keyboardHandler)
-    // this.$store.dispatch('referenceFrameData', {
-    //   board: this.boardFrameElement,
-    //   workspace: this.boardElement
-    // })
+  setupBoard() {
     this.$store.dispatch('referenceBoardData', {
       boardFrame: this.boardFrameElement,
       board: this.boardElement
     })
-    this.centerOnBoardCenter()
     this.loadCamera()
+  }
+
+  mounted() {
+    window.addEventListener('keydown', this.keyboardHandler)
+    this.localBoardId = this.boardId
+    // this.$store.dispatch('referenceFrameData', {
+    //   board: this.boardFrameElement,
+    //   workspace: this.boardElement
+    // })
+    // this.centerOnBoardCenter()
+    // this.loadCamera()
   }
 }
 </script>

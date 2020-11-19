@@ -72,20 +72,8 @@ export default class TabSelector extends Vue {
     return this.$store.getters.workspaces
   }
 
-  get workspaceElement() {
-    return this.$refs.workspace as HTMLElement
-  }
-
-  get boardElement() {
-    return this.$refs.board as HTMLElement
-  }
-
   getWorkspaceNameInputElement() {
     return this.$refs.workspaceNameInput as HTMLInputElement
-  }
-
-  get repaintTriggerElement() {
-    return this.$refs.repaintTrigger as HTMLElement
   }
 
   get activeWorkspaceId(): string {
@@ -97,12 +85,7 @@ export default class TabSelector extends Vue {
   }
 
   activateWorkspace(workspaceId: string) {
-    // Saving and loading camera could potentialy go to store
-    // Also, since workspace configuration will change (e.g. custom size)
-    // current behaviour may be not exactly right
-    this.saveCurrentWorkspaceCamera()
     this.$store.dispatch('activateWorkspace', workspaceId)
-    this.loadWorkspaceCamera()
   }
 
   createNewWorkspace() {
