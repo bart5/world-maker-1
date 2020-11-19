@@ -3,7 +3,7 @@
     <template v-if="projectDataIsLoaded">
       <WorkspaceSelector />
       <div class="main-view">
-        <BasicWS v-if="is('basic')" />
+        <TypesWS v-if="is('types')" />
       </div>
 
       <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
@@ -16,13 +16,13 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import WorkspaceSelector from '@/views/WorkspaceSelector.vue'
-import BasicWS from '@/views/BasicWS.vue'
+import TypesWS from '@/views/TypesWS.vue'
 import Sidebar from '@/views/Sidebar.vue'
 
 @Options({
   components: {
     WorkspaceSelector,
-    BasicWS,
+    TypesWS,
     Sidebar,
   },
 })

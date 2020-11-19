@@ -15,7 +15,7 @@ interface ApplicationData {
 
 interface UiData {
   workspaces: Array<Workspace>;
-  boards: Boards;
+  // boards: Boards;
   // tiles: Array<Tile>;
   activeWorkspaceId: workspaceId;
 }
@@ -61,7 +61,7 @@ interface Board {
 }
 
 interface Boards {
-  'types': Board;
+  'types'?: Board;
   [k: string]: Board;
 }
 
@@ -75,7 +75,7 @@ interface BoardConfig {
   lockTiles: boolean;
 }
 
-type WorkspaceType = 'basic' | 'quest' | 'dialog'
+type WorkspaceType = 'types' | 'quests' | 'dialogs'
 
 type boardId = string
 
@@ -84,10 +84,9 @@ interface Workspace {
   type: WorkpsaceType;
   name: string;
   order: number;
-  // cameras: {
-  //   [k: boardId]: camera
-  // },
-  selectedInstance: string;
+  boards: Boards;
+  // selectedInstance: string;
+  activeBoardId: string;
 }
 
 interface Block {
@@ -101,12 +100,10 @@ interface Block {
 }
 
 interface Tile extends Block {
-  id: tileId;
-  // iId: string;
+  entityId: string;
   // name: string;
   // workspaceId: string;
   inputSource: tileId;
-  hideConnectors: boolean;
   zIndex: number;
 }
 

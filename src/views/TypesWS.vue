@@ -17,7 +17,7 @@ import Board from '@/views/Board.vue';
     Board
   },
 })
-export default class BasicWS extends Vue {
+export default class TypesWS extends Vue {
   deleteModeIsOn = false
 
   get activeWorkspace(): Workspace {
