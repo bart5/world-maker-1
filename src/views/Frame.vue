@@ -1,6 +1,9 @@
 <template>
   <div class="frame-wrapper" @mousedown="stopConnectingTiles">
     <TabSelector />
+    <div class="main-view">
+      <BasicWS v-if="is('basic')" />
+    </div>
 
     <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
 
@@ -11,13 +14,23 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import Sidebar from '@/views/Sidebar.vue'
+import BasicWS from '@/views/BasicWS.vue'
 
 @Options({
   components: {
-    Sidebar
+    Sidebar,
+    BasicWS
   },
 })
 export default class Frame extends Vue {
+  get activeWorkspace(): Workspace {
+    return this.$store.getters.activeWorkspace
+  }
+
+  is(type: WorkspaceType) {
+    return this.activeWorkspace.type === type
+  }
+
   get isUnsavedData() {
     return this.$store.getters.isUnsavedData
   }

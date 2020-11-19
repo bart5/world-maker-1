@@ -51,7 +51,19 @@ interface UIState {
   lastRevertedTransactions: Array<Transaction>;
 }
 
-interface WorkspaceConfiguration {
+interface Board {
+  id: string;
+  tiles: Array<Tile>;
+  config: BoardConfig;
+  camera: Camera | null;
+}
+
+interface Boards {
+  'types': Board;
+  [k: string]: Board;
+}
+
+interface BaordConfig {
   modulus: number;
   fitToTiles: boolean;
   lockScale: boolean;
@@ -59,14 +71,16 @@ interface WorkspaceConfiguration {
   lockView: boolean;
   lockedViewPosition: {};
   lockTiles: boolean;
-  lastSessionCamera: Camera | null;
 }
+
+type WorkspaceType = 'basic' | 'quest' | 'dialog'
 
 interface Workspace {
   id: workspaceId;
+  type: WorkpsaceType;
   name: string;
   order: number;
-  configuration: WorkspaceConfiguration
+  selectedInstance: string;
 }
 
 interface Block {
@@ -81,16 +95,12 @@ interface Block {
 
 interface Tile extends Block {
   id: tileId;
-  name: string;
-  workspaceId: string;
+  // iId: string;
+  // name: string;
+  // workspaceId: string;
   inputSource: tileId;
-  filter: any;
   hideConnectors: boolean;
   zIndex: number;
-  output: {
-    allData: any,
-    slectionData: any,
-  }
 }
 
 interface Coords {

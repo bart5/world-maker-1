@@ -4,16 +4,27 @@
       <button :disabled="!activeWorkspace" @click="createNewTile">Create new tile</button>
       <button :disabled="!projectDataIsLoaded" :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
     </div>
+    <Board :boardId="boardId" />
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop } from 'vue-property-decorator';
+import Board from '@/views/Board.vue';
 
-@Options({})
+@Options({
+  components: {
+    Board
+  },
+})
 export default class BasicWS extends Vue {
+  get activeWorkspace(): Workspace {
+    return this.$store.getters.activeWorkspace
+  }
 
+  get boardId() {
+    return this.activeWorkspace.selectedInstance
+  }
 }
 </script>
 
