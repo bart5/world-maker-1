@@ -15,7 +15,8 @@ interface ApplicationData {
 
 interface UiData {
   workspaces: Array<Workspace>;
-  tiles: Array<Tile>;
+  boards: Boards;
+  // tiles: Array<Tile>;
   activeWorkspaceId: workspaceId;
 }
 
@@ -45,7 +46,8 @@ interface UIState {
   activeModal: modalTypes;
   lastProjectSaveTime: string;
   lastProjectLoadTime: string;
-  frameData: { board: HTMLElement, workspace: HTMLElement } | null;
+  // frameData: { board: HTMLElement, workspace: HTMLElement } | null;
+  currentBoardData: { boardFrame: HTMLElement, board: HTMLElement } | null;
   activeWidgetKey: number;
   lastSavedTransactionId: string;
   lastRevertedTransactions: Array<Transaction>;
@@ -63,7 +65,7 @@ interface Boards {
   [k: string]: Board;
 }
 
-interface BaordConfig {
+interface BoardConfig {
   modulus: number;
   fitToTiles: boolean;
   lockScale: boolean;
@@ -75,11 +77,16 @@ interface BaordConfig {
 
 type WorkspaceType = 'basic' | 'quest' | 'dialog'
 
+type boardId = string
+
 interface Workspace {
   id: workspaceId;
   type: WorkpsaceType;
   name: string;
   order: number;
+  // cameras: {
+  //   [k: boardId]: camera
+  // },
   selectedInstance: string;
 }
 

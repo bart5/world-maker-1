@@ -14,7 +14,7 @@ const initialState: ApplicationState = {
     activeModal: null,
     lastProjectSaveTime: '',
     lastProjectLoadTime: '',
-    frameData: null,
+    currentBoardData: null,
     activeWidgetKey: 0,
     lastSavedTransactionId: '',
     lastRevertedTransactions: [],

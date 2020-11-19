@@ -55,7 +55,7 @@
 import { Options, Vue } from 'vue-class-component'
 
 @Options({})
-export default class TabSelector extends Vue {
+export default class WorkspaceSelector extends Vue {
   deleteModeIsOn = false
 
   workspaceToRename = ''

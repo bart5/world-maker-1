@@ -21,14 +21,15 @@ export default UI({
     workspaces: (state) => state.project.uiData.workspaces,
     activeWorkspaceId: (state) => state.project.uiData?.activeWorkspaceId,
     activeWorkspace: (state) => state.project.uiData?.workspaces.filter((ws) => ws.id === state.project.uiData.activeWorkspaceId)[0],
-    allTilesOfWorkspace: (state) => (workspaceId: string) => state.project.uiData?.tiles.filter((tile) => {
-      return tile.workspaceId === workspaceId
-    }),
-    activeWorkspaceTiles: (state, getters) => getters.allTilesOfWorkspace(getters.activeWorkspaceId),
-    activeWorkspaceTileOfId: (state, getters) => (tileId: string) => {
-      return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
-    },
-    tileOfId: (state) => (tileId: string) => state.project.uiData.tiles.filter((tile: Tile) => tile.id === tileId)?.[0],
+    // allTilesOfWorkspace: (state) => (workspaceId: string) => state.project.uiData?.tiles.filter((tile) => {
+    //   return tile.workspaceId === workspaceId
+    // }),
+    getBoardTiles: (state) => (boardId: string) => state.project.uiData.boards[boardId]?.tiles || [],
+    // activeWorkspaceTiles: (state, getters) => getters.allTilesOfWorkspace(getters.activeWorkspaceId),
+    // activeWorkspaceTileOfId: (state, getters) => (tileId: string) => {
+    //   return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
+    // },
+    // tileOfId: (state) => (tileId: string) => state.project.uiData.boards[boardId].tiles.filter((tile: Tile) => tile.id === tileId)?.[0],
     selectedInputSourceTileId: (state) => state.ui.selectedInputSourceTile,
     selectedInputSourceTile: (state, getters) => getters.tileOfId(state.ui.selectedInputSourceTile),
     connectingInProgress: (state) => state.ui.connectingInProgress,
@@ -40,10 +41,11 @@ export default UI({
     getInputSourceTileOfTile: (state, getters) => (tile: Tile) => getters.tileOfId(tile.inputSource),
     tileDeletionInProgress: (state) => state.ui.tileDeletionInProgress,
     workspaceDeletionInProgress: (state) => state.ui.workspaceDeletionInProgress,
-    getLastSessionCamera: (state, getters) => () => {
-      const activeWorkspaceConfig: WorkspaceConfiguration = getters.activeWorkspace.configuration
-      return activeWorkspaceConfig.lastSessionCamera
-    },
+    // getLastSessionCamera: (state, getters) => () => {
+    //   const activeWorkspaceConfig: WorkspaceConfiguration = getters.activeWorkspace.configuration
+    //   return activeWorkspaceConfig.lastSessionCamera
+    // },
+    getBoardCamera: (state) => (boardId: string) => state.project.uiData.boards[boardId].camera,
     activeModal: (state) => state.ui.activeModal,
     applicationData: (state) => state.applicationData,
     projectDataIsLoaded: (state) => state.ui.projectDataIsLoaded,
@@ -66,86 +68,88 @@ export default UI({
   },
   mutations: {
     /* =========== PROJECT CONFIGURATION MUTATIONS =========== */
-    CREATE_NEW_TILE(state, { workspaceId, tileId, position }) {
+    CREATE_NEW_TILE(state, { boardId, tileId, position }) {
       registerUiDataMutation(state)
 
-      state.project.uiData.tiles.push({
+      const tiles = state.project.uiData.boards[boardId].tiles
+
+      tiles.push({
         id: tileId,
-        name: 'New Tile',
-        workspaceId,
         inputSource: '',
-        filter: '',
         hideConnectors: false,
         width: 120,
         height: 180,
         x: position.x,
         y: position.y,
-        zIndex: state.project.uiData.tiles.length || 0,
-        output: {
-          allData: null,
-          slectionData: null,
-        }
+        zIndex: tiles.length || 0,
       })
     },
-    RESIZE_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
+    RESIZE_TILE(state, { boardId, tileId, newPosition }: { boardId: string, tileId: string, newPosition: { x: number, y: number } }) {
       registerUiDataMutation(state)
 
-      const tile = state.project.uiData.tiles.filter((t) => t.id === tileId)[0]
+      const tile = state.project.uiData.boards[boardId].tiles.filter((t) => t.id === tileId)[0]
       tile.width = Math.max(newPosition.x - tile.x, minTileSize.width)
       tile.height = Math.max(newPosition.y - tile.y, minTileSize.height)
     },
-    DRAG_TILE(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
+    // DRAG_TILE(state, { boardId, tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
+    DRAG_TILE(state, { boardId, tileId, newPosition }) {
       registerUiDataMutation(state)
 
-      const tile = state.project.uiData.tiles.filter((t) => t.id === tileId)[0]
+      const tile = state.project.uiData.boards[boardId].tiles.filter((t) => t.id === tileId)[0]
       tile.x = newPosition.x
       tile.y = newPosition.y
     },
-    BRING_TILE_FORWARD(state, tileId) {
+    BRING_TILE_FORWARD(state, p: { boardId: string, tileId: string }) {
+      const { boardId, tileId } = p
       registerUiDataMutation(state)
 
-      const newFrontTile = state.project.uiData.tiles.filter((t) => t.id === tileId)[0]
+      const newFrontTile = state.project.uiData.boards[boardId].tiles.filter((t) => t.id === tileId)[0]
       // Push other tiles behind
       // Notice that we only push behind the tiles that were in front
-      state.project.uiData.tiles.forEach((t) => {
+      state.project.uiData.boards[boardId].tiles.forEach((t) => {
         if (t.zIndex > newFrontTile.zIndex) {
           t.zIndex -= 1
         }
       })
-      newFrontTile.zIndex = state.project.uiData.tiles.length
+      newFrontTile.zIndex = state.project.uiData.boards[boardId].tiles.length
     },
-    CONNECT_TO_THIS_TILE(state, tileId) {
+    CONNECT_TO_THIS_TILE(state, p: { boardId: string, tileId: string }) {
+      const { boardId, tileId } = p
       registerUiDataMutation(state)
 
       state.ui.connectingInProgress = false
       const source = state.ui.selectedInputSourceTile
       state.ui.selectedInputSourceTile = ''
 
-      state.project.uiData.tiles.filter((t) => t.id === tileId)[0].inputSource = source
+      state.project.uiData.boards[boardId].tiles.filter((t) => t.id === tileId)[0].inputSource = source
     },
-    DELETE_TILE_OUT_BOUND_CONNECTIONS(state, tileId) {
+    DELETE_TILE_OUT_BOUND_CONNECTIONS(state, p: { boardId: string, tileId: string }) {
+      const { boardId, tileId } = p
       registerUiDataMutation(state)
 
-      state.project.uiData.tiles.forEach((t) => {
+      state.project.uiData.boards[boardId].tiles.forEach((t) => {
         if (t.inputSource === tileId) {
           t.inputSource = ''
         }
       })
     },
-    DELETE_TILE_IN_BOUND_CONNECTIONS(state, tileId) {
+    DELETE_TILE_IN_BOUND_CONNECTIONS(state, p: { boardId: string, tileId: string }) {
+      const { boardId, tileId } = p
       registerUiDataMutation(state)
 
       /* As of now tile can have just one inbound connection */
-      state.project.uiData.tiles.filter((t) => t.id === tileId)[0].inputSource = ''
+      state.project.uiData.boards[boardId].tiles.filter((t) => t.id === tileId)[0].inputSource = ''
     },
-    DELETE_TILE(state, tileId) {
+    DELETE_TILE(state, p: { boardId: string, tileId: string }) {
+      const { boardId, tileId } = p
       registerUiDataMutation(state)
 
-      state.project.uiData.tiles = [
-        ...state.project.uiData.tiles.filter((t) => t.id !== tileId)
+      state.project.uiData.boards[boardId].tiles = [
+        ...state.project.uiData.boards[boardId].tiles.filter((t) => t.id !== tileId)
       ]
     },
-    CREATE_NEW_WORKSPACE(state, workspaceId: string) {
+    CREATE_NEW_WORKSPACE(state, p: { workspaceId: string, type: WorkspaceType }) {
+      const { workspaceId, type } = p
       registerUiDataMutation(state)
 
       const order = state.project.uiData.workspaces.length
@@ -154,18 +158,10 @@ export default UI({
 
       state.project.uiData.workspaces.push({
         id: workspaceId,
+        type,
         name: 'New Workspace' + (state.project.uiData.workspaces.length + 1),
         order,
-        configuration: {
-          modulus: 1,
-          fitToTiles: false,
-          lockScale: false,
-          lockedScale: 1,
-          lockView: false,
-          lockedViewPosition: {},
-          lockTiles: false,
-          lastSessionCamera: null,
-        },
+        selectedInstance: '',
       })
     },
     DELETE_WORKSPACE(state, workspaceId) {
@@ -175,7 +171,6 @@ export default UI({
         state.project.uiData.workspaces.findIndex((w) => w.id === workspaceId),
         1
       )
-      state.project.uiData.tiles = state.project.uiData.tiles.filter((t) => t.workspaceId !== workspaceId)
     },
     RENAME_WORKSPACE(state, { workspaceId, newName }) {
       registerUiDataMutation(state)
@@ -191,31 +186,56 @@ export default UI({
       workspaceToMoveLeft.order = leftPosition
       workspaceToMoveRight.order = rightPosition
     },
-    SET_WORKSPACE_CONFIG(state, { workspaceId, newConfig }) {
+    SET_BOARD_CONFIG(state, { boardId, newConfig }) {
       registerUiDataMutation(state)
 
-      const workspace = state.project.uiData.workspaces.find((w) => w.id === workspaceId)
-      if (!workspace) return
-      workspace.configuration = {
-        ...workspace.configuration,
+      const board: Board = state.project.uiData.boards[boardId]
+      if (!board) return
+      board.config = {
+        ...board.config,
         ...newConfig
       }
     },
-    SNAP_WORKSPACE_TILES_TO_MODULUS(state, { workspaceId, modulus }) {
+    // SET_WORKSPACE_CONFIG(state, { workspaceId, newConfig }) {
+    //   registerUiDataMutation(state)
+
+    //   const workspace = state.project.uiData.workspaces.find((w) => w.id === workspaceId)
+    //   if (!workspace) return
+    //   workspace.configuration = {
+    //     ...workspace.configuration,
+    //     ...newConfig
+    //   }
+    // },
+    // SNAP_WORKSPACE_TILES_TO_MODULUS(state, { workspaceId, modulus }) {
+    //   registerUiDataMutation(state)
+
+    //   const workspace = state.project.uiData.workspaces.find((w) => w.id === workspaceId)
+    //   if (!workspace) return
+    //   const alignToModulus = (n: number, mod: number) => {
+    //     return n - (n % mod)
+    //   }
+    //   state.project.uiData.boards[boardId].tiles.forEach((t) => {
+    //     if (t.workspaceId === workspaceId) {
+    //       t.x = alignToModulus(t.x, modulus)
+    //       t.y = alignToModulus(t.y, modulus)
+    //       t.width = alignToModulus(t.width, modulus)
+    //       t.height = alignToModulus(t.height, modulus)
+    //     }
+    //   })
+    // },
+    SNAP_BOARD_TILES_TO_MODULUS(state, { boardId, modulus }) {
       registerUiDataMutation(state)
 
-      const workspace = state.project.uiData.workspaces.find((w) => w.id === workspaceId)
+      const workspace = state.project.uiData.workspaces.find((w) => w.id === boardId)
       if (!workspace) return
       const alignToModulus = (n: number, mod: number) => {
         return n - (n % mod)
       }
-      state.project.uiData.tiles.forEach((t) => {
-        if (t.workspaceId === workspaceId) {
-          t.x = alignToModulus(t.x, modulus)
-          t.y = alignToModulus(t.y, modulus)
-          t.width = alignToModulus(t.width, modulus)
-          t.height = alignToModulus(t.height, modulus)
-        }
+      state.project.uiData.boards[boardId].tiles.forEach((t) => {
+        t.x = alignToModulus(t.x, modulus)
+        t.y = alignToModulus(t.y, modulus)
+        t.width = alignToModulus(t.width, modulus)
+        t.height = alignToModulus(t.height, modulus)
       })
     },
     ACTIVATE_WORKSPACE(state, workspaceId: string) {
@@ -227,17 +247,21 @@ export default UI({
         state.project.uiData.activeWorkspaceId = workspaceId
       }
     },
-    SET_CURRENT_WORKSPACE_CAMERA(state) {
-      const camera = {
-        x: state.ui.frameData?.board.scrollLeft || 0,
-        y: state.ui.frameData?.board.scrollTop || 0,
-        scale: Number(state.ui.frameData?.workspace?.style.transform.replace(/scale|\(|\)/g, '')) || 1
-      }
-      if (!state.project.uiData) return
-      const activeWorkspace = state.project.uiData.workspaces.find(
-        (w) => w.id === state.project.uiData.activeWorkspaceId
-      ) as Workspace
-      activeWorkspace.configuration.lastSessionCamera = camera
+    // SET_CURRENT_BOARD_CAMERA(state) {
+    //   const camera = {
+    //     x: state.ui.currentBoardData?.boardFrame.scrollLeft || 0,
+    //     y: state.ui.currentBoardData?.boardFrame.scrollTop || 0,
+    //     scale: Number(state.ui.currentBoardData?.board?.style.transform.replace(/scale|\(|\)/g, '')) || 1
+    //   }
+    //   if (!state.project.uiData) return
+    //   const activeWorkspace = state.project.uiData.workspaces.find(
+    //     (w) => w.id === state.project.uiData.activeWorkspaceId
+    //   ) as Workspace
+    //   activeWorkspace.configuration.lastSessionCamera = camera
+    // },
+    SAVE_BOARD_CAMERA(state, p: { boardId: string, camera: Camera }) {
+      const { boardId, camera } = p
+      state.project.uiData.boards[boardId].camera = camera
     },
     /* =========== UI STATE MUTATIONS =========== */
     START_CONNECTING_TILES(state, tileId) {
@@ -296,8 +320,11 @@ export default UI({
         state.ui.lastProjectLoadTime = String(Date.now())
       })
     },
-    REFERENCE_FRAME_DATA(state, payload: { board: HTMLElement, workspace: HTMLElement }) {
-      state.ui.frameData = payload
+    // REFERENCE_FRAME_DATA(state, payload: { board: HTMLElement, workspace: HTMLElement }) {
+    //   state.ui.currentBoardData = payload
+    // },
+    REFERENCE_CURRENT_BOARD_DATA(state, payload: { boardFrame: HTMLElement, board: HTMLElement }) {
+      state.ui.currentBoardData = payload
     },
     SET_WIDGET_KEY(state, p: { widgetKey: number }) {
       state.ui.activeWidgetKey = p.widgetKey
@@ -546,11 +573,11 @@ export default UI({
     openSelectFileDialog() {
       return ipc.exchange('selectFileDialog')
     },
-    referenceFrameData(state, payload: { board: HTMLElement, workspace: HTMLElement }) {
-      this.commit('REFERENCE_FRAME_DATA', payload)
+    referencecurrentBoardData(state, payload: { boardFrame: HTMLElement, board: HTMLElement }) {
+      this.commit('REFERENCE_CURRENT_BOARD_DATA', payload)
     },
-    saveCurrentWorkspaceCamera() {
-      this.commit('SET_CURRENT_WORKSPACE_CAMERA')
+    saveBoardCamera(state, p: { boardId: string, camera: Camera }) {
+      this.commit('SAVE_BOARD_CAMERA', p)
     },
     setWidgetKey(state, p: { widgetKey: number }) {
       this.commit('SET_WIDGET_KEY', p)

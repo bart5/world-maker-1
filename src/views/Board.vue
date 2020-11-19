@@ -107,11 +107,11 @@ export default class Board extends Vue {
   resizeInProgress = false
 
   get tiles(): Tile[] {
-    return this.$store.getters.getBoardTiles({ boardId: this.localBoardId })
+    return this.$store.getters.getBoardTiles(this.localBoardId)
   }
 
   get lastCamera() {
-    return this.$store.getters.getBoardCamera({ boardId: this.localBoardId })
+    return this.$store.getters.getBoardCamera(this.localBoardId)
   }
 
   get config(): BoardConfig {
@@ -124,7 +124,7 @@ export default class Board extends Vue {
     //   lockTiles: false,
     //   lastSessionCamera: null
     // }
-    return this.$store.getters.getBoardConfig({ boardId: this.localBoardId })
+    return this.$store.getters.getBoardConfig(this.localBoardId)
   }
 
   @Watch('boardId')
@@ -289,7 +289,7 @@ export default class Board extends Vue {
     this.$store.dispatch('snapBoardTilesToModulus', { boardId: this.localBoardId, modulus })
   }
 
-  setconfig(newConfig: Partial<configuration>) {
+  setconfig(newConfig: Partial<BoardConfig>) {
     // this.$store.dispatch('setconfig', { workspaceId: this.activeWorkspaceId, newConfig })
     this.$store.dispatch('setBoardConfig', { boardId: this.localBoardId, newConfig })
   }
@@ -364,7 +364,15 @@ export default class Board extends Vue {
 
   saveCamera() {
     // this.$store.dispatch('saveCurrentWorkspaceCamera')
-    this.$store.dispatch('saveBoardCamera', { boardId: this.localBoardId })
+    this.$store.dispatch('saveBoardCamera', { boardId: this.localBoardId, camera: this.camera })
+  }
+
+  get camera(): Camera {
+    return {
+      x: this.boardFrameElement.scrollLeft || 0,
+      y: this.boardFrameElement.scrollTop || 0,
+      scale: this.boardScale
+    }
   }
 
   loadCamera() {

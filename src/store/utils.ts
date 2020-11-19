@@ -5,8 +5,34 @@ export function validateProjectDataKeys(data: any) {
   return Object.keys(data).every((k) => Object.keys(getNewProjectTemplate()).some((dk) => dk === k))
 }
 
-export function getWorkspaceConfigurationDefaults() {
-  const workspaceConfiguration: WorkspaceConfiguration = {
+// export function getWorkspaceConfigurationDefaults() {
+//   const workspaceConfiguration: WorkspaceConfiguration = {
+//     modulus: 1,
+//     fitToTiles: false,
+//     lockScale: false,
+//     lockedScale: 1,
+//     lockView: false,
+//     lockedViewPosition: {},
+//     lockTiles: false,
+//     lastSessionCamera: null,
+//   }
+//   return workspaceConfiguration
+// }
+
+// export function getWorkspaceDefaults() {
+//   const workspace: Workspace = {
+//     id: `workspace_${Date.now()}${Math.random()}`,
+//     name: 'New Workspace',
+//     order: 1,
+//     configuration: {
+//       ...getWorkspaceConfigurationDefaults()
+//     }
+//   }
+//   return workspace
+// }
+
+export function getBoardConfig(): BoardConfigConfig {
+  return {
     modulus: 1,
     fitToTiles: false,
     lockScale: false,
@@ -14,21 +40,26 @@ export function getWorkspaceConfigurationDefaults() {
     lockView: false,
     lockedViewPosition: {},
     lockTiles: false,
-    lastSessionCamera: null,
   }
-  return workspaceConfiguration
 }
 
-export function getWorkspaceDefaults() {
-  const workspace: Workspace = {
-    id: `workspace_${Date.now()}${Math.random()}`,
-    name: 'New Workspace',
-    order: 1,
-    configuration: {
-      ...getWorkspaceConfigurationDefaults()
-    }
+export function getBoardDefaults(instanceId: string): Board {
+  return {
+    id: instanceId,
+    tiles: [],
+    config: { ...getBoardConfig() },
+    camera: null,
   }
-  return workspace
+}
+
+export function getWorkspaceDefaults(): Workspace {
+  return {
+    id: getUniqueId(),
+    type: 'basic',
+    name: 'Basic WS 1',
+    order: 1,
+    selectedInstance: 'types',
+  }
 }
 
 export function getNewProjectUiData() {
@@ -37,7 +68,11 @@ export function getNewProjectUiData() {
     workspaces: [{
       ...workspaceDefaults
     }],
-    tiles: [],
+    boards: {
+      'types': {
+        ...getBoardDefaults('types')
+      }
+    },
     activeWorkspaceId: workspaceDefaults.id,
   }
   return uiData

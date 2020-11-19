@@ -1,6 +1,6 @@
 <template>
   <div class="frame-wrapper" @mousedown="stopConnectingTiles">
-    <TabSelector />
+    <WorkspaceSelector />
     <div class="main-view">
       <BasicWS v-if="is('basic')" />
     </div>
@@ -13,13 +13,15 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import Sidebar from '@/views/Sidebar.vue'
+import WorkspaceSelector from '@/views/WorkspaceSelector.vue'
 import BasicWS from '@/views/BasicWS.vue'
+import Sidebar from '@/views/Sidebar.vue'
 
 @Options({
   components: {
+    WorkspaceSelector,
+    BasicWS,
     Sidebar,
-    BasicWS
   },
 })
 export default class Frame extends Vue {

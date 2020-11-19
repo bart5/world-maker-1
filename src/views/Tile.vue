@@ -26,8 +26,10 @@
     <div class="tile">
       <div class="section data-section" v-if="sectionToShow === dataSection">
         Data section
-        {{ self.x }}
-        {{ self.y }}
+        <!-- {{ self.x }}
+        {{ self.y }} -->
+        {{ tile.x }}
+        {{ tile.y }}
       </div>
       <div class="section filters-section" v-else-if="sectionToShow === filtersSection">
         Filters section
@@ -54,7 +56,7 @@ import { Prop } from 'vue-property-decorator'
   },
 })
 export default class TileComponent extends Vue {
-  @Prop() id!: string
+  @Prop() tile!: Tile
 
   @Prop() scale!: number
 
@@ -93,20 +95,20 @@ export default class TileComponent extends Vue {
     return this.connectingInProgress && !this.isValidConnectionCandidate
   }
 
-  get self(): Tile {
-    return this.$store.getters.tileOfId(this.id)
-  }
+  // get self(): Tile {
+  //   return this.$store.getters.tileOfId(this.id)
+  // }
 
   get isValidConnectionCandidate() {
     return !this.hasConnectedInput && !this.isConnectedWithSelectedInputSource && !this.isSelectedInputSource
   }
 
   get isConnectedWithSelectedInputSource() {
-    return this.selectedInputSourceTile.inputSource === this.id
+    return this.selectedInputSourceTile.inputSource === this.tile.id
   }
 
   get hasConnectedInput() {
-    return this.self.inputSource !== ''
+    return this.tile.inputSource !== ''
   }
 
   get selectedInputSourceTile(): Tile {
@@ -114,7 +116,7 @@ export default class TileComponent extends Vue {
   }
 
   get isSelectedInputSource() {
-    return this.selectedInputSourceTile.id === this.id
+    return this.selectedInputSourceTile.id === this.tile.id
   }
 
   get connectingInProgress() {
@@ -131,14 +133,14 @@ export default class TileComponent extends Vue {
 
   startConnecting(e: MouseEvent) {
     if (this.connectingInProgress) return
-    this.$store.dispatch('startConnectingTiles', this.id)
+    this.$store.dispatch('startConnectingTiles', this.tile.id)
     this.startMousemoveListener()
     this.$emit('connecting', e)
   }
 
   tryConnect(e: MouseEvent) {
     if (this.isValidConnectionCandidate) {
-      this.$store.dispatch('connectToThisTile', this.id)
+      this.$store.dispatch('connectToThisTile', this.tile.id)
       this.$store.dispatch('stopConnectingTiles')
       this.stopMousemoveListener()
     } else {
@@ -155,7 +157,7 @@ export default class TileComponent extends Vue {
   }
 
   deleteTile() {
-    this.$store.dispatch('deleteTile', this.id)
+    this.$store.dispatch('deleteTile', this.tile.id)
   }
 
   startMousemoveListener(onMouseUp?: (...args: []) => void) {
@@ -218,7 +220,7 @@ export default class TileComponent extends Vue {
       x: newPositionX - (newPositionX % this.modulus),
       y: newPositionY - (newPositionY % this.modulus)
     }
-    this.$store.dispatch('resizeTile', { tileId: this.id, newPosition })
+    this.$store.dispatch('resizeTile', { tileId: this.tile.id, newPosition })
   }
 
   dragHandler() {
@@ -228,11 +230,11 @@ export default class TileComponent extends Vue {
       x: newPositionX - (newPositionX % this.modulus),
       y: newPositionY - (newPositionY % this.modulus)
     }
-    this.$store.dispatch('dragTile', { tileId: this.id, newPosition })
+    this.$store.dispatch('dragTile', { tileId: this.tile.id, newPosition })
   }
 
   get tileStyle() {
-    const { width, height, x, y, zIndex } = this.self
+    const { width, height, x, y, zIndex } = this.tile
 
     return {
       width: width + 'px',
@@ -244,7 +246,7 @@ export default class TileComponent extends Vue {
   }
 
   bringTileForward(e: MouseEvent) {
-    this.$store.dispatch('bringTileForward', this.id)
+    this.$store.dispatch('bringTileForward', this.tile.id)
     e.stopPropagation()
     e.preventDefault()
   }
