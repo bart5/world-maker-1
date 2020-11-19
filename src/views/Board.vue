@@ -1,18 +1,47 @@
 <template>
   <div class="board-wrapper" @mousedown="stopConnectingTiles">
+    <div class="top-bar">
+      <button @click="centerOnTiles">Center view</button>
+      <button :disabled="disableZoom" @click="zoomIn">Zoom in</button>
+      <button :disabled="disableZoom" @click="resetZoom">Reset zoom</button>
+      <button :disabled="disableZoom" @click="zoomOut">Zoom out</button>
+      |
+      <div class="widget">
+        <label>Mod:
+          <input
+            :disabled="!projectDataIsLoaded"
+            type="number"
+            min="1" step="1" max="50"
+            class="board-modulus"
+            v-model="config.modulus"
+            @input="onModulusChange"
+          >
+        </label>
+      </div>
+      <div class="widget">
+        <label>Zoom lock:
+          <input :disabled="!projectDataIsLoaded" type="checkbox" class="board-zoom-lock" v-model="config.lockScale" @change="onZoomLockChange">
+        </label>
+      </div>
+      <div class="widget">
+        <label>Anchor view:
+          <input :disabled="!projectDataIsLoaded" type="checkbox" class="board-view-lock" v-model="config.lockView" @change="onViewLockChange">
+        </label>
+      </div>
+    </div>
     <div
-      class="board"
+      class="board-frame"
       :class="{ 'dragging-board': draggingBoard }"
-      ref="board"
-      :style="boardStyle"
+      ref="boardFrame"
+      :style="boardFrameStyle"
       @mousedown="startBoardMove"
     >
       <div class="board-background" :style="backgroundStyle"></div>
 
       <div
-        class="workspace"
-        ref="workspace"
-        :style="workspaceStyle"
+        class="board"
+        ref="board"
+        :style="boardStyle"
         @mousemove="onMousemove"
       >
         <Curve
@@ -22,7 +51,7 @@
           :p2="relativeMousePosition"
         />
 
-        <template v-for="tile in allTilesOfActiveWorkspace" :key="tile.id">
+        <template v-for="tile in tiles" :key="tile.id">
           <Curve
             v-if="!!tile.inputSource"
             class="connector-curve"
@@ -31,8 +60,8 @@
           />
           <TileComponent
             :id="tile.id"
-            :scale="workspaceScale"
-            :modulus="workspaceConfig.modulus"
+            :scale="boardScale"
+            :modulus="config.modulus"
             :relativeMousePosition="relativeMousePosition"
             @connecting="(e) => updateRelativeMousePosition(e)"
             @start-drag="dragInProgress = true"
@@ -48,7 +77,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator';
+import { Prop } from 'vue-property-decorator';
 import TileComponent from '@/views/Tile.vue'
 import Curve from '@/views/Curve.vue'
 
@@ -58,7 +87,7 @@ import Curve from '@/views/Curve.vue'
     Curve,
   },
 })
-export default class Frame extends Vue {
+export default class Board extends Vue {
   @Prop() boardId!: string
 
   relativeMousePosition = {
@@ -66,9 +95,9 @@ export default class Frame extends Vue {
     y: 0,
   }
 
-  workspaceWidth = 10000
-  workspaceHeight = 10000
-  workspaceScale = 1
+  boardWidth = 10000
+  boardHeight = 10000
+  boardScale = 1
 
   dragInProgress = false
   draggingBoard = false
@@ -78,50 +107,63 @@ export default class Frame extends Vue {
     return this.$store.getters.getBoardTiles({ boardId: this.boardId })
   }
 
+  get lastCamera() {
+    return this.$store.getters.getBoardCamera({ boardId: this.boardId })
+  }
+
   get config(): BoardConfig {
+    // {
+    //   modulus: 1,
+    //   lockScale: false,
+    //   lockedScale: 1,
+    //   lockView: false,
+    //   lockedViewPosition: {},
+    //   lockTiles: false,
+    //   lastSessionCamera: null
+    // }
     return this.$store.getters.getBoardConfig({ boardId: this.boardId })
   }
 
-  get workspaceStyle() {
-    const width = this.workspaceWidth
-    const height = this.workspaceHeight
+  get boardStyle() {
+    const width = this.boardWidth
+    const height = this.boardHeight
     return {
       minWidth: width + 'px',
       minHeight: height + 'px',
-      transform: `scale(${this.workspaceScale})`,
+      transform: `scale(${this.boardScale})`,
     }
   }
 
   get backgroundStyle() {
-    const width = this.workspaceWidth
-    const height = this.workspaceHeight
+    const width = this.boardWidth
+    const height = this.boardHeight
     return {
       minWidth: width + 'px',
       minHeight: height + 'px',
     }
   }
 
-  get boardStyle() {
+  get boardFrameStyle() {
     return {
       overflow: (this.dragInProgress || this.resizeInProgress) ? 'hidden' : 'auto',
     }
   }
 
   setBoardScroll(coords: Coords) {
-    this.boardElement.scrollTo(coords.x, coords.y)
+    this.boardFrameElement.scrollTo(coords.x, coords.y)
   }
 
-  centerOnWorkspaceCenter() {
-    const x = this.workspaceWidth * 0.5 - this.boardElement.offsetWidth * 0.5
-    const y = this.workspaceHeight * 0.5 - this.boardElement.offsetHeight * 0.5
+  centerOnBoardCenter() {
+    const x = this.boardWidth * 0.5 - this.boardFrameElement.offsetWidth * 0.5
+    const y = this.boardHeight * 0.5 - this.boardFrameElement.offsetHeight * 0.5
     this.setBoardScroll({ x, y })
   }
 
   centerOnTiles() {
-    if (this.workspaceConfig.lockView) return
+    if (this.config.lockView) return
 
-    if (!this.allTilesOfActiveWorkspace?.length) {
-      this.centerOnWorkspaceCenter()
+    if (!this.tiles?.length) {
+      this.centerOnBoardCenter()
       return
     }
 
@@ -129,7 +171,7 @@ export default class Frame extends Vue {
     let minX = 0
     let maxY = 0
     let minY = 0
-    this.allTilesOfActiveWorkspace.forEach((t, i) => {
+    this.tiles.forEach((t, i) => {
       if (i === 0) {
         maxX = t.x + t.width
         minX = t.x
@@ -144,27 +186,26 @@ export default class Frame extends Vue {
     })
     const centerX = 0.5 * (minX + maxX)
     const centerY = 0.5 * (minY + maxY)
-    if (this.workspaceScale >= 1) {
-      this.boardElement.scrollTo(
-        /* Ah, yes, famous (1 + this.workspaceScale / 100) adjustment formula. Of course. */
-        centerX - this.boardElement.clientWidth * 0.5 * (1 + this.workspaceScale / 100),
-        centerY - this.boardElement.clientHeight * 0.5,
+    if (this.boardScale >= 1) {
+      this.boardFrameElement.scrollTo(
+        /* Ah, yes, famous (1 + this.boardScale / 100) adjustment formula. Of course. */
+        centerX - this.boardFrameElement.clientWidth * 0.5 * (1 + this.boardScale / 100),
+        centerY - this.boardFrameElement.clientHeight * 0.5,
       )
     } else {
-      this.boardElement.scrollBy(
-        this.workspaceElement.getBoundingClientRect().x,
-        this.workspaceElement.getBoundingClientRect().y,
+      this.boardFrameElement.scrollBy(
+        this.boardElement.getBoundingClientRect().x,
+        this.boardElement.getBoundingClientRect().y,
       )
-      this.boardElement.scrollBy(
+      this.boardFrameElement.scrollBy(
         /* Align to center of the viewport */
-        centerX * this.workspaceScale - window.innerWidth * 0.5,
-        centerY * this.workspaceScale - window.innerHeight * 0.5,
+        centerX * this.boardScale - window.innerWidth * 0.5,
+        centerY * this.boardScale - window.innerHeight * 0.5,
       )
     }
   }
 
   startBoardMove(e: MouseEvent) {
-    if (!this.projectDataIsLoaded) return
     if (this.dragInProgress || this.resizeInProgress) return
     this.draggingBoard = true
     this.updateRelativeMousePosition(e)
@@ -178,115 +219,65 @@ export default class Frame extends Vue {
 
   zoomOut() {
     if (this.disableZoom) return
-    this.workspaceScale -= 0.05
+    this.boardScale -= 0.05
   }
 
   zoomIn() {
     if (this.disableZoom) return
-    this.workspaceScale += 0.05
+    this.boardScale += 0.05
   }
 
   resetZoom() {
     if (this.disableZoom) return
-    this.workspaceScale = 1
+    this.boardScale = 1
     console.log(this)
-  }
-
-  get workspaceElement() {
-    return this.$refs.workspace as HTMLElement
   }
 
   get boardElement() {
     return this.$refs.board as HTMLElement
   }
 
-  get activeWorkspaceId(): string {
-    return this.$store.getters.activeWorkspaceId
-  }
-
-  get activeWorkspace(): Workspace | undefined {
-    return this.$store.getters.activeWorkspace
-  }
-
-  get workspaceConfig(): WorkspaceConfiguration {
-    if (this.activeWorkspace) {
-      return {
-        ...this.activeWorkspace.configuration
-      }
-    }
-    return {
-      modulus: 1,
-      fitToTiles: false,
-      lockScale: false,
-      lockedScale: 1,
-      lockView: false,
-      lockedViewPosition: {},
-      lockTiles: false,
-      lastSessionCamera: null
-    }
+  get boardFrameElement() {
+    return this.$refs.boardFrame as HTMLElement
   }
 
   onModulusChange() {
-    const newModulus = this.workspaceConfig.modulus
+    const newModulus = this.config.modulus
     this.snapTilesToModulus(newModulus)
     this.centerOnTiles()
-    // this.setWorkspaceConfig({ modulus: newModulus })
+    this.setconfig({ modulus: newModulus })
   }
 
   onZoomLockChange() {
-    const newValue = this.workspaceConfig.lockScale
-    // this.setWorkspaceConfig({ lockScale: newValue, lockedScale: this.workspaceScale })
+    const newValue = this.config.lockScale
+    this.setconfig({ lockScale: newValue, lockedScale: this.boardScale })
   }
 
   onViewLockChange() {
-    const newValue = this.workspaceConfig.lockView
+    const newValue = this.config.lockView
     const currentViewPosition = {
-      x: this.boardElement.scrollLeft,
-      y: this.boardElement.scrollTop
+      x: this.boardFrameElement.scrollLeft,
+      y: this.boardFrameElement.scrollTop
     }
-    // this.setWorkspaceConfig({ lockView: newValue, lockedViewPosition: currentViewPosition })
-  }
-
-  fitViewToTiles() {
-    this.workspaceConfig.lockScale = true
-    this.workspaceConfig.lockView = true
+    this.setconfig({ lockView: newValue, lockedViewPosition: currentViewPosition })
   }
 
   get disableZoom() {
-    return this.workspaceConfig.lockScale
+    return this.config.lockScale
   }
 
   get disableViewChange() {
-    return this.workspaceConfig.lockView
+    return this.config.lockView
   }
 
   snapTilesToModulus(modulus: number) {
-    this.$store.dispatch('snapWorkspaceTilesToModulus', { workspaceId: this.activeWorkspaceId, modulus })
+    // this.$store.dispatch('snapWorkspaceTilesToModulus', { workspaceId: this.activeWorkspaceId, modulus })
+    this.$store.dispatch('snapBoardTilesToModulus', { boardId: this.boardId, modulus })
   }
 
-  setWorkspaceConfig(newConfig: Partial<WorkspaceConfiguration>) {
-    this.$store.dispatch('setWorkspaceConfig', { workspaceId: this.activeWorkspaceId, newConfig })
-  }
-
-  get allTilesOfActiveWorkspace(): Tile[] {
-    return this.$store.getters.allTilesOfWorkspace(this.activeWorkspaceId)
-  }
-
-  createNewTile() {
-    if (this.allTilesOfActiveWorkspace.length) {
-      const minDistance = 20
-      this.$store.dispatch('createNewTile', {
-        x: this.workspaceConfig.modulus < minDistance
-          ? minDistance + (minDistance % this.workspaceConfig.modulus)
-          : this.workspaceConfig.modulus,
-        y: 0
-      })
-      return
-    }
-    this.$store.dispatch('createNewTile', {
-      x: this.workspaceWidth * 0.5,
-      y: this.workspaceHeight * 0.5
-    })
+  setconfig(newConfig: Partial<configuration>) {
+    // this.$store.dispatch('setconfig', { workspaceId: this.activeWorkspaceId, newConfig })
+    this.$store.dispatch('setBoardConfig', { boardId: this.boardId, newConfig })
   }
 
   stopConnectingTiles() {
@@ -322,8 +313,8 @@ export default class Frame extends Vue {
   onMousemove(e: MouseEvent) {
     if (!this.watchMouseMove) return
     if (this.draggingBoard) {
-      if (this.workspaceConfig.lockView) return
-      this.boardElement.scrollBy(
+      if (this.config.lockView) return
+      this.boardFrameElement.scrollBy(
         e.movementX < 0 ? -0.95 * e.movementX : -0.9 * e.movementX,
         e.movementY < 0 ? -0.95 * e.movementY : -0.9 * e.movementY
       )
@@ -333,9 +324,9 @@ export default class Frame extends Vue {
   }
 
   updateRelativeMousePosition(e: MouseEvent) {
-    const workspaceRect = this.workspaceElement.getBoundingClientRect()
-    const newPositionX = (e.clientX - workspaceRect.x) * (1 / this.workspaceScale)
-    const newPositionY = (e.clientY - workspaceRect.y) * (1 / this.workspaceScale)
+    const boardRect = this.boardElement.getBoundingClientRect()
+    const newPositionX = (e.clientX - boardRect.x) * (1 / this.boardScale)
+    const newPositionY = (e.clientY - boardRect.y) * (1 / this.boardScale)
     this.relativeMousePosition = {
       x: newPositionX,
       y: newPositionY
@@ -357,37 +348,34 @@ export default class Frame extends Vue {
     }
   }
 
-  saveCurrentWorkspaceCamera() {
-    this.$store.dispatch('saveCurrentWorkspaceCamera')
+  saveCamera() {
+    // this.$store.dispatch('saveCurrentWorkspaceCamera')
+    this.$store.dispatch('saveCamera')
   }
 
-  loadWorkspaceCamera() {
-    const camera = this.getLastSessionCamera()
-    if (!camera) {
+  loadCamera() {
+    if (!this.lastCamera) {
       this.centerOnTiles()
-      this.workspaceScale = 1
-      this.saveCurrentWorkspaceCamera()
+      this.boardScale = 1
+      this.saveCamera()
     } else {
-      this.setBoardScroll({ x: camera.x, y: camera.y })
-      this.workspaceScale = camera.scale
+      this.setBoardScroll({ x: this.lastCamera.x, y: this.lastCamera.y })
+      this.boardScale = this.lastCamera.scale
     }
-  }
-
-  getLastSessionCamera(workspaceId?: string) {
-    return this.$store.getters.getLastSessionCamera(workspaceId)
-  }
-
-  setupFrame() {
-    this.loadWorkspaceCamera()
   }
 
   mounted() {
     window.addEventListener('keydown', this.keyboardHandler)
-    this.$store.dispatch('referenceFrameData', {
-      board: this.boardElement,
-      workspace: this.workspaceElement
+    // this.$store.dispatch('referenceFrameData', {
+    //   board: this.boardFrameElement,
+    //   workspace: this.boardElement
+    // })
+    this.$store.dispatch('referenceBoardData', {
+      boardFrame: this.boardFrameElement,
+      board: this.boardElement
     })
-    this.centerOnWorkspaceCenter()
+    this.centerOnBoardCenter()
+    this.loadCamera()
   }
 }
 </script>
@@ -402,7 +390,7 @@ export default class Frame extends Vue {
   flex-flow: row nowrap;
   overflow: hidden;
 
-  .board {
+  .board-frame {
     height: 100%;
     width: 100%;
     display: flex;
@@ -431,7 +419,7 @@ export default class Frame extends Vue {
   display: none;
 }
 
-.workspace {
+.board {
   position: absolute;
   flex-grow: 1;
   backface-visibility: hidden;
@@ -490,6 +478,25 @@ export default class Frame extends Vue {
 
   &.new-connector {
     z-index: 9999;
+  }
+}
+
+.top-bar {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  height: 24px;
+  background-color: darkgray;
+
+  .widget {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    color: black;
+
+    .board-modulus {
+      width: 42px;
+    }
   }
 }
 </style>
