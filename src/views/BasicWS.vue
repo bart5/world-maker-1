@@ -1,6 +1,5 @@
 <template>
-  <div class="frame-wrapper" @mousedown="stopConnectingTiles">
-    <TabSelector />
+  <div class="frame-wrapper">
     <div class="top-bar">
       <button :disabled="!activeWorkspace" @click="createNewTile">Create new tile</button>
       <button :disabled="!activeWorkspace" @click="centerOnTiles">Center view</button>
@@ -34,125 +33,14 @@
         </label>
       </div>
     </div>
-    <div class="workspace-selector">
-      <template v-if="projectDataIsLoaded">
-        <div
-          v-for="workspace in workspaces"
-          :key="workspace.id"
-          :ref="`tab_${workspace.id}`"
-          class="workspace-tab"
-          :class="{
-            'active': workspace.id === activeWorkspaceId,
-            'inDeleteMode': deleteModeIsOn,
-            'isDragged': getTabIsDragged(workspace.id),
-          }"
-          :style="getTabIsDragged(workspace.id) ? dragTabStyle : { order: workspace.order * 10 }"
-        >
-          <div
-            @dblclick="startRenamingWorkspace(workspace)"
-            @mousedown="(e) => onWorkspaceTabMousedown(e, workspace.id)"
-          >
-            <input
-              v-if="workspaceToRename === workspace.id"
-              ref="workspaceNameInput"
-              type="text"
-              v-model="newWorkspaceName"
-              @blur="stopRenamingWorkspace"
-              @keydown="(e) => e.key === 'Enter' && renameWorkspace(workspace.id)"
-            >
-            <span v-else>{{ workspace.name }}</span>
-          </div>
-          <button
-            v-if="deleteModeIsOn"
-            class="delete-workspace"
-            @click="(e) => tryDeleteWorkspace(e, workspace)"
-          >x</button>
-        </div>
-      </template>
-
-      <div
-        v-if="tabDragInProgress"
-        class="workspace-tab invisible-tab"
-        :style="{ order: (draggedTabWorkspace.order - 1) * 10 + 1 }"
-      >
-        <span>{{ draggedTabWorkspace.name }}</span>
-      </div>
-
-      <button
-        :disabled="!projectDataIsLoaded"
-        class="workspace-tab add-new-tab-tab"
-        @click="createNewWorkspace"
-      >+</button>
-    </div>
-
-    <div class="board-wrapper">
-      <div
-        class="workspace-board"
-        :class="{ 'dragging-board': draggingBoard }"
-        ref="board"
-        :style="boardStyle"
-        @mousedown="startBoardMove"
-      >
-        <div class="workspace-background" :style="backgroundStyle"></div>
-        <div
-          class="workspace"
-          ref="workspace"
-          :style="workspaceStyle"
-          @mousemove="onMousemove"
-        >
-          <Curve
-            class="connector-curve new-connector"
-            v-if="connectingInProgress"
-            :p1="getTileCoordinates(selectedInputSourceTile)"
-            :p2="relativeMousePosition"
-          />
-
-          <template v-for="tile in allTilesOfActiveWorkspace" :key="tile.id">
-            <Curve
-              v-if="!!tile.inputSource"
-              class="connector-curve"
-              :p1="getTileCoordinates(tile)"
-              :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
-            />
-            <TileComponent
-              :id="tile.id"
-              :scale="workspaceScale"
-              :modulus="workspaceConfig.modulus"
-              :relativeMousePosition="relativeMousePosition"
-              @connecting="(e) => updateRelativeMousePosition(e)"
-              @start-drag="dragInProgress = true"
-              @stop-drag="dragInProgress = false"
-              @start-resize="resizeInProgress = true"
-              @stop-resize="resizeInProgress = false"
-            />
-          </template>
-        </div>
-      </div>
-
-      <Sidebar v-if="projectDataIsLoaded"/>
-
-      <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
-
-    </div>
-
-    <div class="repaint-trigger" ref="repaintTrigger"></div>
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Watch } from 'vue-property-decorator';
-import TileComponent from '@/views/Tile.vue'
-import Curve from '@/views/Curve.vue'
-import Sidebar from '@/views/Sidebar.vue'
 
-@Options({
-  components: {
-    TileComponent,
-    Curve,
-    Sidebar
-  },
-})
+@Options({})
 export default class Frame extends Vue {
   relativeMousePosition = {
     x: 0,

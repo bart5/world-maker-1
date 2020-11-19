@@ -1,5 +1,5 @@
 <template>
-  <div class="board-wrapper">
+  <div class="board-wrapper" @mousedown="stopConnectingTiles">
     <div
       class="board"
       :class="{ 'dragging-board': draggingBoard }"
@@ -16,8 +16,8 @@
         @mousemove="onMousemove"
       >
         <Curve
-          class="connector-curve new-connector"
           v-if="connectingInProgress"
+          class="connector-curve new-connector"
           :p1="getTileCoordinates(selectedInputSourceTile)"
           :p2="relativeMousePosition"
         />
@@ -43,29 +43,24 @@
         </template>
       </div>
     </div>
-
-    <Sidebar v-if="projectDataIsLoaded"/>
-
-    <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
-
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Watch } from 'vue-property-decorator';
+import { Prop, Watch } from 'vue-property-decorator';
 import TileComponent from '@/views/Tile.vue'
 import Curve from '@/views/Curve.vue'
-import Sidebar from '@/views/Sidebar.vue'
 
 @Options({
   components: {
     TileComponent,
     Curve,
-    Sidebar
   },
 })
 export default class Frame extends Vue {
+  @Prop() boardId!: string
+
   relativeMousePosition = {
     x: 0,
     y: 0,
@@ -79,27 +74,12 @@ export default class Frame extends Vue {
   draggingBoard = false
   resizeInProgress = false
 
-  tabDragInProgress = false
-  draggedTabPosition = 0
-  draggedTabWorkspaceId = ''
-
-  deleteModeIsOn = false
-
-  get isUnsavedData() {
-    return this.$store.getters.isUnsavedData
+  get tiles(): Tile[] {
+    return this.$store.getters.getBoardTiles({ boardId: this.boardId })
   }
 
-  @Watch('lastProjectLoadTime')
-  handleProjectLoad() {
-    this.setupFrame()
-  }
-
-  get lastProjectLoadTime() {
-    return this.$store.getters.lastProjectLoadTime
-  }
-
-  get projectDataIsLoaded() {
-    return this.$store.getters.projectDataIsLoaded
+  get config(): BoardConfig {
+    return this.$store.getters.getBoardConfig({ boardId: this.boardId })
   }
 
   get workspaceStyle() {
@@ -218,10 +198,6 @@ export default class Frame extends Vue {
 
   get boardElement() {
     return this.$refs.board as HTMLElement
-  }
-
-  get repaintTriggerElement() {
-    return this.$refs.repaintTrigger as HTMLElement
   }
 
   get activeWorkspaceId(): string {
@@ -356,10 +332,6 @@ export default class Frame extends Vue {
     this.updateRelativeMousePosition(e)
   }
 
-  swapWorkspacesOrder(workspaceToMoveLeft: Workspace, workspaceToMoveRight: Workspace) {
-    this.$store.dispatch('swapWorkspacesOrder', { workspaceToMoveLeft, workspaceToMoveRight })
-  }
-
   updateRelativeMousePosition(e: MouseEvent) {
     const workspaceRect = this.workspaceElement.getBoundingClientRect()
     const newPositionX = (e.clientX - workspaceRect.x) * (1 / this.workspaceScale)
@@ -383,12 +355,6 @@ export default class Frame extends Vue {
           break;
       }
     }
-  }
-
-  activateNthOrderWorkspace(n: number) {
-    this.activateWorkspace(
-      this.workspaces.sort((w1, w2) => w1.order - w2.order)[n - 1]?.id || ''
-    )
   }
 
   saveCurrentWorkspaceCamera() {
