@@ -1,13 +1,15 @@
 <template>
-  <div class="frame-wrapper" @mousedown="stopConnectingTiles">
-    <WorkspaceSelector />
-    <div class="main-view">
-      <BasicWS v-if="is('basic')" />
-    </div>
+  <div class="frame-wrapper">
+    <template v-if="projectDataIsLoaded">
+      <WorkspaceSelector />
+      <div class="main-view">
+        <BasicWS v-if="is('basic')" />
+      </div>
 
-    <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
+      <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
 
-    <Sidebar v-if="projectDataIsLoaded"/>
+      <Sidebar v-if="projectDataIsLoaded" class="sidebar"/>
+    </template>
   </div>
 </template>
 
@@ -73,5 +75,18 @@ export default class Frame extends Vue {
   flex-flow: column nowrap;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  position: relative;
+  overflow: hidden;
 }
+
+.main-view {
+  flex-grow: 1;
+}
+
+.sidebar {
+  position: absolute;
+  right: -560px;
+  top: 20px;
+}
+
 </style>

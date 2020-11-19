@@ -361,11 +361,12 @@ export default class FrameOld extends Vue {
     return this.$store.getters.activeWorkspace
   }
 
-  get workspaceConfig(): WorkspaceConfiguration {
+  // get workspaceConfig(): WorkspaceConfiguration {
+  get workspaceConfig() {
     if (this.activeWorkspace) {
-      return {
-        ...this.activeWorkspace.configuration
-      }
+      // return {
+      //   ...this.activeWorkspace.configuration
+      // }
     }
     return {
       modulus: 1,
@@ -417,7 +418,8 @@ export default class FrameOld extends Vue {
     this.$store.dispatch('snapWorkspaceTilesToModulus', { workspaceId: this.activeWorkspaceId, modulus })
   }
 
-  setWorkspaceConfig(newConfig: Partial<WorkspaceConfiguration>) {
+  // setWorkspaceConfig(newConfig: Partial<WorkspaceConfiguration>) {
+  setWorkspaceConfig(newConfig: any) {
     this.$store.dispatch('setWorkspaceConfig', { workspaceId: this.activeWorkspaceId, newConfig })
   }
 

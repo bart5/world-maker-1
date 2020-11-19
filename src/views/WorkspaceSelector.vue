@@ -68,6 +68,10 @@ export default class WorkspaceSelector extends Vue {
 
   draggedTabWorkspaceId = ''
 
+  get projectDataIsLoaded() {
+    return this.$store.getters.projectDataIsLoaded
+  }
+
   get workspaces(): Workspace[] {
     return this.$store.getters.workspaces
   }

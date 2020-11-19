@@ -31,7 +31,7 @@ export function validateProjectDataKeys(data: any) {
 //   return workspace
 // }
 
-export function getBoardConfig(): BoardConfigConfig {
+export function getBoardConfig(): BoardConfig {
   return {
     modulus: 1,
     fitToTiles: false,

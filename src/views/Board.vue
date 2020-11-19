@@ -9,7 +9,6 @@
       <div class="widget">
         <label>Mod:
           <input
-            :disabled="!projectDataIsLoaded"
             type="number"
             min="1" step="1" max="50"
             class="board-modulus"
@@ -20,12 +19,12 @@
       </div>
       <div class="widget">
         <label>Zoom lock:
-          <input :disabled="!projectDataIsLoaded" type="checkbox" class="board-zoom-lock" v-model="config.lockScale" @change="onZoomLockChange">
+          <input type="checkbox" class="board-zoom-lock" v-model="config.lockScale" @change="onZoomLockChange">
         </label>
       </div>
       <div class="widget">
         <label>Anchor view:
-          <input :disabled="!projectDataIsLoaded" type="checkbox" class="board-view-lock" v-model="config.lockView" @change="onViewLockChange">
+          <input type="checkbox" class="board-view-lock" v-model="config.lockView" @change="onViewLockChange">
         </label>
       </div>
     </div>
@@ -416,9 +415,8 @@ export default class Board extends Vue {
   width: 100%;
   height: 100%;
   position: relative;
-  border: 2px solid;
   display: flex;
-  flex-flow: row nowrap;
+  flex-flow: column;
   overflow: hidden;
 
   .board-frame {

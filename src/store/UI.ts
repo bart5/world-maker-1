@@ -24,7 +24,8 @@ export default UI({
     // allTilesOfWorkspace: (state) => (workspaceId: string) => state.project.uiData?.tiles.filter((tile) => {
     //   return tile.workspaceId === workspaceId
     // }),
-    getBoardTiles: (state) => (boardId: string) => state.project.uiData.boards[boardId]?.tiles || [],
+    getBoardTiles: (state) => (boardId: string) => state.project.uiData.boards[boardId].tiles,
+    getBoardConfig: (state) => (boardId: string) => state.project.uiData.boards[boardId].config,
     // activeWorkspaceTiles: (state, getters) => getters.allTilesOfWorkspace(getters.activeWorkspaceId),
     // activeWorkspaceTileOfId: (state, getters) => (tileId: string) => {
     //   return getters.activeWorkspaceTiles.filter((tile: Tile) => tile.id === tileId)
