@@ -9,7 +9,7 @@ const typesAndInstances = identity as unknown as typeof createStore
 export default typesAndInstances({
   state: initialState,
   getters: {
-    types(state) {
+    types(state): TypeWrapper [] {
       return utils.oToA(state.project.types)
     },
     getTypeById: (state) => (p: { tId: string }) => {

@@ -77,7 +77,6 @@ export default UI({
       tiles.push({
         id: tileId,
         inputSource: '',
-        hideConnectors: false,
         width: 120,
         height: 180,
         x: position.x,
@@ -162,7 +161,7 @@ export default UI({
         type,
         name: 'New Workspace' + (state.project.uiData.workspaces.length + 1),
         order,
-        selectedInstance: '',
+        activeBoardId: '',
       })
     },
     DELETE_WORKSPACE(state, workspaceId) {
@@ -357,9 +356,10 @@ export default UI({
     saveInstances(state, data: Instances) {
       window.ipcRenderer.send('saveInstances', data)
     },
-    createNewTile(state, p: { boardId: string }) {
-      const { boardId } = p
-      const boardConfig: BoardConfig = state.getters.getBoardConfig()
+    // Id is either tId or iId
+    createNewTile(state, p: { boardId: string, id: string }) {
+      const { boardId, id } = p
+      const boardConfig: BoardConfig = state.getters.getBoardConfig(boardId)
       const modulus = boardConfig.modulus
       const boardWidth = boardConfig.width
       const boardHeight = boardConfig.height
@@ -378,7 +378,7 @@ export default UI({
         spaceY = boardHeight / 2
       }
 
-      const tileId = `tile_${utils.getUniqueId()}`
+      const tileId = id
 
       const getTileInitialPosition = (): { x: number, y: number } => {
         /*
@@ -401,7 +401,7 @@ export default UI({
 
       const position = getTileInitialPosition()
 
-      this.commit('CREATE_NEW_TILE', { workspaceId: state.getters.activeWorkspaceId, tileId, position })
+      this.commit('CREATE_NEW_TILE', { boardId, tileId, position })
     },
     createNewWorkspace() {
       const workspaceId = `workspace_${Date.now()}${Math.random()}`
@@ -414,7 +414,8 @@ export default UI({
       this.commit('RESIZE_TILE', { tileId, newPosition })
     },
     dragTile(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
-      this.commit('DRAG_TILE', { tileId, newPosition })
+      const boardId = (state.getters.activeWorkspace as Workspace).activeBoardId
+      this.commit('DRAG_TILE', { boardId, tileId, newPosition })
     },
     startConnectingTiles(state, tileId) {
       this.commit('START_CONNECTING_TILES', tileId)
@@ -431,7 +432,8 @@ export default UI({
       this.commit('CONNECT_TO_THIS_TILE', tileId)
     },
     bringTileForward(state, tileId) {
-      this.commit('BRING_TILE_FORWARD', tileId)
+      const boardId = (state.getters.activeWorkspace as Workspace).activeBoardId
+      this.commit('BRING_TILE_FORWARD', { boardId, tileId })
     },
     startTileDeletion() {
       this.commit('START_TILE_DELETION')
@@ -546,7 +548,7 @@ export default UI({
       if (state.getters.isUnsavedData) {
         const decision = noConfirm || window.confirm('You have unsaved changes, do you want to save them?')
         if (decision) {
-          this.dispatch('saveCurrentWorkspaceCamera')
+          // this.dispatch('saveCurrentWorkspaceCamera')
           const { project } = state.state
           return ipc.exchange('saveProject', { data: project }).then(() => {
             this.commit('RESET_MUTATIONS')
@@ -572,7 +574,7 @@ export default UI({
     asyncSaveProjectAs(state) {
       if (Object.keys(state.state.project).length === 0) return Promise.resolve()
       this.commit('START_SAVING_PROJECT')
-      this.dispatch('saveCurrentWorkspaceCamera')
+      // this.dispatch('saveCurrentWorkspaceCamera')
       const projectData = state.state.project
       return ipc.exchange('saveProjectAs', { data: projectData }).then((path) => {
         return this.dispatch('asyncUpdateApplicationData', { lastProjectPath: path }).then(() => {

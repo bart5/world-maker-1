@@ -59,7 +59,7 @@
             :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
           />
           <TileComponent
-            :id="tile.id"
+            :tile="tile"
             :scale="boardScale"
             :modulus="config.modulus"
             :relativeMousePosition="relativeMousePosition"

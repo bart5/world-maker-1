@@ -43,11 +43,11 @@
       <span>{{ draggedTabWorkspace.name }}</span>
     </div>
 
-    <button
+    <!-- <button
       :disabled="!projectDataIsLoaded"
       class="workspace-tab add-new-tab-tab"
       @click="createNewWorkspace"
-    >+</button>
+    >+</button> -->
   </div>
 </template>
 

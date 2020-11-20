@@ -28,16 +28,10 @@ export function getBoardDefaults(instanceId: string): Board {
   }
 }
 
-function getTypesTiles(): Tile[] {
-
-}
-
 function getTypesBoard(): Board {
   return {
     id: 'types',
-    tiles: [
-      ...getTypesTiles()
-    ],
+    tiles: [],
     config: { ...getBoardConfig() },
     camera: null,
   }
@@ -59,11 +53,7 @@ export function getNewProjectUiData() {
       ...getTypesWorkspace()
     }],
     boards: {
-      types: {
-        types: { ...getTypesBoard() }
-      },
-      quests: {},
-      dialogs: {}
+      types: { ...getTypesBoard() },
     },
     activeWorkspaceId: 'types',
   }
@@ -94,6 +84,8 @@ export function oToA<T>(o: {[k: string]: T}): Array<T> {
   return Object.entries(o).map(([, v]) => v)
 }
 
+// This function creates Id that is unique within set comprised
+// of all types and all instances ids.
 export function getUniqueId(state?: ApplicationState) {
   const getId = () => Math.random().toString().substring(10)
   if (!state) return getId()

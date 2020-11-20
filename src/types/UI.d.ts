@@ -51,23 +51,26 @@ interface UIState {
   lastRevertedTransactions: Array<Transaction>;
 }
 
+type InstanceId = string
+
+/**
+ * Boards exist only for 3 purposes:
+ * 1) Depicting types
+ * 2) Depicting quests
+ * 3) Depicting dialogues
+ * For this reason board are not arbitrary and their ids
+ * are tied to instances they represent.
+ */
 interface Board {
-  id: string;
+  id: InstanceId | 'types';
   tiles: Array<Tile>;
   config: BoardConfig;
   camera: Camera | null;
 }
 
 interface Boards {
-  types: {
-    types: Board
-  };
-  quests: {
-    [k: string]: Board
-  };
-  dialogs: {
-    [k: string]: Board;
-  }
+  types: Board;
+  [k: string]: Board
 }
 
 interface BoardConfig {
@@ -95,7 +98,7 @@ interface Workspace {
 }
 
 interface Tile extends Block {
-  entityId: string;
+  id: string;
   inputSource: tileId;
   zIndex: number;
   width: number;

@@ -37,7 +37,6 @@
       <div class="section sources-section" v-else>
         Sources section
       </div>
-      <!-- <component :is="TaskEditor"></component> -->
     </div>
     <div class="footer" @mousedown="startResize">
       <div class="resize-widget"></div>
@@ -47,12 +46,10 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import TaskEditor from '@/views/TaskEditor.vue'
 import { Prop } from 'vue-property-decorator'
 
 @Options({
   components: {
-    TaskEditor,
   },
 })
 export default class TileComponent extends Vue {
@@ -66,8 +63,6 @@ export default class TileComponent extends Vue {
     x: number,
     y: number,
   }
-
-  TaskEditor = TaskEditor
 
   resizeInProgress = false
 
