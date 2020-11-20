@@ -5,32 +5,6 @@ export function validateProjectDataKeys(data: any) {
   return Object.keys(data).every((k) => Object.keys(getNewProjectTemplate()).some((dk) => dk === k))
 }
 
-// export function getWorkspaceConfigurationDefaults() {
-//   const workspaceConfiguration: WorkspaceConfiguration = {
-//     modulus: 1,
-//     fitToTiles: false,
-//     lockScale: false,
-//     lockedScale: 1,
-//     lockView: false,
-//     lockedViewPosition: {},
-//     lockTiles: false,
-//     lastSessionCamera: null,
-//   }
-//   return workspaceConfiguration
-// }
-
-// export function getWorkspaceDefaults() {
-//   const workspace: Workspace = {
-//     id: `workspace_${Date.now()}${Math.random()}`,
-//     name: 'New Workspace',
-//     order: 1,
-//     configuration: {
-//       ...getWorkspaceConfigurationDefaults()
-//     }
-//   }
-//   return workspace
-// }
-
 export function getBoardConfig(): BoardConfig {
   return {
     modulus: 1,
@@ -52,28 +26,44 @@ export function getBoardDefaults(instanceId: string): Board {
   }
 }
 
-export function getWorkspaceDefaults(): Workspace {
+function getTypesTiles(): Tile[] {
+
+}
+
+function getTypesBoard(): Board {
   return {
-    id: getUniqueId(),
-    type: 'basic',
-    name: 'Basic WS 1',
+    id: 'types',
+    tiles: [
+      ...getTypesTiles()
+    ],
+    config: { ...getBoardConfig() },
+    camera: null,
+  }
+}
+
+function getTypesWorkspace(): Workspace {
+  return {
+    id: 'types',
+    type: 'types',
+    name: 'Types',
     order: 1,
-    selectedInstance: 'types',
+    activeBoardId: 'types',
   }
 }
 
 export function getNewProjectUiData() {
-  const workspaceDefaults = getWorkspaceDefaults()
   const uiData: UiData = {
     workspaces: [{
-      ...workspaceDefaults
+      ...getTypesWorkspace()
     }],
     boards: {
-      'types': {
-        ...getBoardDefaults('types')
-      }
+      types: {
+        types: { ...getTypesBoard() }
+      },
+      quests: {},
+      dialogs: {}
     },
-    activeWorkspaceId: workspaceDefaults.id,
+    activeWorkspaceId: 'types',
   }
   return uiData
 }

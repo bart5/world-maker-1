@@ -15,7 +15,7 @@ interface ApplicationData {
 
 interface UiData {
   workspaces: Array<Workspace>;
-  // boards: Boards;
+  boards: Boards;
   // tiles: Array<Tile>;
   activeWorkspaceId: workspaceId;
 }
@@ -61,8 +61,15 @@ interface Board {
 }
 
 interface Boards {
-  'types'?: Board;
-  [k: string]: Board;
+  types: {
+    types: Board
+  };
+  quests: {
+    [k: string]: Board
+  };
+  dialogs: {
+    [k: string]: Board;
+  }
 }
 
 interface BoardConfig {
@@ -84,7 +91,7 @@ interface Workspace {
   type: WorkpsaceType;
   name: string;
   order: number;
-  boards: Boards;
+  // boards: Boards;
   // selectedInstance: string;
   activeBoardId: string;
 }
