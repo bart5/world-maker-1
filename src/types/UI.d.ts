@@ -16,7 +16,6 @@ interface ApplicationData {
 interface UiData {
   workspaces: Array<Workspace>;
   boards: Boards;
-  // tiles: Array<Tile>;
   activeWorkspaceId: workspaceId;
 }
 
@@ -46,7 +45,6 @@ interface UIState {
   activeModal: modalTypes;
   lastProjectSaveTime: string;
   lastProjectLoadTime: string;
-  // frameData: { board: HTMLElement, workspace: HTMLElement } | null;
   currentBoardData: { boardFrame: HTMLElement, board: HTMLElement } | null;
   activeWidgetKey: number;
   lastSavedTransactionId: string;
@@ -73,6 +71,8 @@ interface Boards {
 }
 
 interface BoardConfig {
+  width: number;
+  height: number;
   modulus: number;
   fitToTiles: boolean;
   lockScale: boolean;
@@ -91,27 +91,18 @@ interface Workspace {
   type: WorkpsaceType;
   name: string;
   order: number;
-  // boards: Boards;
-  // selectedInstance: string;
   activeBoardId: string;
-}
-
-interface Block {
-  width: number;
-  height: number;
-  /**
-   * For Tile it's position withing Workspace window.
-   */
-  x: number;
-  y: number;
 }
 
 interface Tile extends Block {
   entityId: string;
-  // name: string;
-  // workspaceId: string;
   inputSource: tileId;
   zIndex: number;
+  width: number;
+  height: number;
+  // Tile's position withing Board.
+  x: number;
+  y: number;
 }
 
 interface Coords {

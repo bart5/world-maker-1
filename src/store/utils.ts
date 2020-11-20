@@ -7,6 +7,8 @@ export function validateProjectDataKeys(data: any) {
 
 export function getBoardConfig(): BoardConfig {
   return {
+    width: 10000,
+    height: 10000,
     modulus: 1,
     fitToTiles: false,
     lockScale: false,
@@ -246,13 +248,6 @@ export function getMockedInstance(typeId: number, types?: TypesDefinitions): Ins
     const getValues = (valueType: ValueType, isArray?: boolean) => {
       const getValue = (vT: ValueType) => {
         if (vT === 'int32') {
-          // if (prop.name === 'id') {
-          //   return id
-          // } else if (prop.name === 'meta_typeId') {
-          //   return typeId
-          // } else if (prop.name.includes('meta')) {
-          //   return ''
-          // }
           return Math.round(Math.random() * 100)
         } else if (vT === 'flt') {
           return (Math.random() * 100).toFixed(5)

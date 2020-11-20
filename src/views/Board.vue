@@ -97,8 +97,14 @@ export default class Board extends Vue {
     y: 0,
   }
 
-  boardWidth = 10000
-  boardHeight = 10000
+  get boardWidth() {
+    return this.config.width
+  }
+
+  get boardHeight() {
+    return this.config.height
+  }
+
   boardScale = 1
 
   dragInProgress = false
@@ -114,15 +120,6 @@ export default class Board extends Vue {
   }
 
   get config(): BoardConfig {
-    // {
-    //   modulus: 1,
-    //   lockScale: false,
-    //   lockedScale: 1,
-    //   lockView: false,
-    //   lockedViewPosition: {},
-    //   lockTiles: false,
-    //   lastSessionCamera: null
-    // }
     return this.$store.getters.getBoardConfig(this.localBoardId)
   }
 
@@ -400,12 +397,6 @@ export default class Board extends Vue {
   mounted() {
     window.addEventListener('keydown', this.keyboardHandler)
     this.localBoardId = this.boardId
-    // this.$store.dispatch('referenceFrameData', {
-    //   board: this.boardFrameElement,
-    //   workspace: this.boardElement
-    // })
-    // this.centerOnBoardCenter()
-    // this.loadCamera()
   }
 }
 </script>

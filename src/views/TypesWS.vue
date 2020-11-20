@@ -25,7 +25,11 @@ export default class TypesWS extends Vue {
   }
 
   get boardId() {
-    return this.activeWorkspace.selectedInstance
+    return this.activeWorkspace.activeBoardId
+  }
+
+  createNewTile() {
+    this.$store.dispatch('createNewTile', { boardId: this.boardId })
   }
 }
 </script>

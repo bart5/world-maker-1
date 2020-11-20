@@ -357,16 +357,34 @@ export default UI({
     saveInstances(state, data: Instances) {
       window.ipcRenderer.send('saveInstances', data)
     },
-    createNewTile(state, positionShift?: { x: number, y: number }) {
-      const tileId = `tile_${Date.now()}${Math.random()}`
-      const spaceX = positionShift?.x || 20
-      const spaceY = positionShift?.y || 0
+    createNewTile(state, p: { boardId: string }) {
+      const { boardId } = p
+      const boardConfig: BoardConfig = state.getters.getBoardConfig()
+      const modulus = boardConfig.modulus
+      const boardWidth = boardConfig.width
+      const boardHeight = boardConfig.height
+      const minDistance = 20
+
+      let spaceX: number
+      let spaceY: number
+
+      if (state.getters.getBoardTiles(boardId).length) {
+        spaceX = (modulus < minDistance)
+          ? minDistance + (minDistance % modulus)
+          : modulus
+        spaceY = 0
+      } else {
+        spaceX = boardWidth / 2
+        spaceY = boardHeight / 2
+      }
+
+      const tileId = `tile_${utils.getUniqueId()}`
 
       const getTileInitialPosition = (): { x: number, y: number } => {
         /*
           Tile will be inserter not lower than min y and not closer to left than max x
         */
-        const tiles: Tile[] = state.getters.activeWorkspaceTiles
+        const tiles: Tile[] = state.getters.getBoardTiles(boardId)
         const minX: number = (() => {
           if (tiles.length === 0) {
             return 0
