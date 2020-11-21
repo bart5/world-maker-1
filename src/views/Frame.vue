@@ -4,6 +4,8 @@
       <WorkspaceSelector />
       <div class="main-view">
         <TypesWS v-if="is('types')" />
+        <QuestsWS v-else-if="is('quests')" />
+        <DialogsWS v-else-if="is('dialogs')" />
       </div>
 
       <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
@@ -17,12 +19,16 @@
 import { Options, Vue } from 'vue-class-component'
 import WorkspaceSelector from '@/views/WorkspaceSelector.vue'
 import TypesWS from '@/views/TypesWS.vue'
+import QuestsWS from '@/views/QuestsWS.vue'
+import DialogsWS from '@/views/DialogsWS.vue'
 import Sidebar from '@/views/Sidebar.vue'
 
 @Options({
   components: {
     WorkspaceSelector,
     TypesWS,
+    QuestsWS,
+    DialogsWS,
     Sidebar,
   },
 })

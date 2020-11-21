@@ -3,7 +3,6 @@
     <div class="top-bar">
       <button :disabled="!activeWorkspace" @click="createNewType">Create new type</button>
     </div>
-    <Board :boardId="boardId" />
   </div>
 </template>
 
@@ -17,7 +16,7 @@ import { actions } from '@/store/transactions'
     Board
   },
 })
-export default class TypesWS extends Vue {
+export default class TablesWS extends Vue {
   deleteModeIsOn = false
 
   get activeWorkspace(): Workspace {

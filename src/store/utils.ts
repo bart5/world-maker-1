@@ -2,7 +2,9 @@ import { ActionContext } from 'vuex'
 
 /* Shallow */
 export function validateProjectDataKeys(data: any) {
-  return Object.keys(data).every((k) => Object.keys(getNewProjectTemplate()).some((dk) => dk === k))
+  return Object.keys(data).every((k) => {
+    return Object.keys(getNewProjectTemplate()).some((dk) => dk === k)
+  })
 }
 
 export function getBoardConfig(): BoardConfig {
@@ -47,10 +49,32 @@ function getTypesWorkspace(): Workspace {
   }
 }
 
+function getQuestsWorkspace(): Workspace {
+  return {
+    id: 'quests',
+    type: 'quests',
+    name: 'Quests',
+    order: 2,
+    activeBoardId: '',
+  }
+}
+
+function getDialogsWorkspace(): Workspace {
+  return {
+    id: 'dialogs',
+    type: 'dialogs',
+    name: 'Dialogs',
+    order: 3,
+    activeBoardId: '',
+  }
+}
+
 export function getNewProjectUiData() {
   const uiData: UiData = {
     workspaces: [{
-      ...getTypesWorkspace()
+      ...getTypesWorkspace(),
+      ...getQuestsWorkspace(),
+      ...getDialogsWorkspace(),
     }],
     boards: {
       types: { ...getTypesBoard() },
@@ -201,18 +225,33 @@ export function getBasicTypeDef(): TypeDefinition {
 
 export function getMockedTypesDefinitions(): TypesDefinitions {
   return {
-    111111: {
-      id: '111111',
-      name: 'type1',
+    'quest': {
+      id: 'quest',
+      name: 'Quest',
       definition: {
         ...getBasicTypeDef(),
         prop1: getPropDef('int32', 'prop1', 0),
         prop2: getPropDef('int32', 'prop2', 1)
       }
     },
-    222222: {
-      id: '222222',
-      name: 'type2',
+    'task': {
+      id: 'task',
+      name: 'Task',
+      definition: {
+        ...getBasicTypeDef(),
+        prop1: getPropDef('int32', 'prop1', 0),
+        prop2: getPropDef('flt', 'prop2', 1),
+        prop3: getPropDef('string', 'prop3', 2),
+        prop4: getPropDef('bool', 'prop4', 3),
+        prop5: getPropDef('int32', 'prop5', 4, true),
+        prop6: getPropDef('flt', 'prop6', 5, true),
+        prop7: getPropDef('string', 'prop7', 6, true),
+        prop8: getPropDef('bool', 'prop8', 7, true),
+      }
+    },
+    'dialog': {
+      id: 'dialog',
+      name: 'Dialog',
       definition: {
         ...getBasicTypeDef(),
         prop1: getPropDef('int32', 'prop1', 0),
@@ -229,7 +268,7 @@ export function getMockedTypesDefinitions(): TypesDefinitions {
 }
 
 // Mocking does not support references
-export function getMockedInstance(typeId: number, types?: TypesDefinitions): Instance {
+export function getMockedInstance(typeId: number | string, types?: TypesDefinitions): Instance {
   const id = Math.random().toString().substring(10)
   const assignValues = (prop: PropDefinition): PropValues => {
     if (prop.name.startsWith('meta')) {
@@ -287,7 +326,7 @@ export function getMockedInstance(typeId: number, types?: TypesDefinitions): Ins
 }
 
 export function getMockedInstances(): Instances {
-  const getType = (typeId: number) => {
+  const getType = (typeId: number | string) => {
     const instance = getMockedInstance(typeId)
     const id = (instance.id as PropValues)[0] as number
     return {
@@ -297,17 +336,20 @@ export function getMockedInstances(): Instances {
     }
   }
   return {
-    111111: {
-      ...getType(111111),
-      ...getType(111111),
-      ...getType(111111),
-      ...getType(111111)
+    'quest': {
+      ...getType('quest'),
+      ...getType('quest'),
+      ...getType('quest'),
     },
-    222222: {
-      ...getType(222222),
-      ...getType(222222),
-      ...getType(222222),
-      ...getType(222222)
+    'task': {
+      ...getType('task'),
+      ...getType('task'),
+      ...getType('task'),
+      ...getType('task')
+    },
+    'dialog': {
+      ...getType('dialog'),
+      ...getType('dialog'),
     },
   }
 }

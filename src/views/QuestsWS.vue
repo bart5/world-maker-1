@@ -17,7 +17,7 @@ import { actions } from '@/store/transactions'
     Board
   },
 })
-export default class TypesWS extends Vue {
+export default class QuestsWS extends Vue {
   deleteModeIsOn = false
 
   get activeWorkspace(): Workspace {

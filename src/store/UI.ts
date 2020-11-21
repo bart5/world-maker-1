@@ -573,9 +573,9 @@ export default UI({
       })
     },
     asyncFetchProject(state, path: string) {
+      console.log('fetching project')
       return ipc.exchange('fetchProject', { data: path }).then((project: Project) => {
         if (!utils.validateProjectDataKeys(project)) {
-          console.warn('Fetched project data was invalid.')
           /* Will add later some notifications queue and small popup window for them */
           // this.commit('STOP_OPENING_PROJECT')
           // state.dispatch('openPopup', { type: 'error', message: 'Project data is ivalid' })
