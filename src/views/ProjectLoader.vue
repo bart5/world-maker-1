@@ -19,7 +19,7 @@ export default class ProjectLoader extends Vue {
   @Watch('openingProjectInProgress')
   projectOpenHandler(opening: boolean) {
     if (opening) {
-      console.info('Opening a project in progress.')
+      console.info('Opening project in progress.')
     } else {
       console.info('Project opened.')
       this.spawnMissingTiles()
@@ -72,10 +72,6 @@ export default class ProjectLoader extends Vue {
     if (boards.types.tiles.length === 0) {
       types.forEach((tw) => this.createNewTile('types', 'types', tw.id))
     }
-  }
-
-  mounted() {
-    console.log('project loader mounted')
   }
 }
 </script>

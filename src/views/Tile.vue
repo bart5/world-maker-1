@@ -3,7 +3,7 @@
     ref="tileWrapper"
     class="tile-wrapper"
     :class="{'valid-connection': indicateValidConnection, 'invalid-connection': indicateInvalidConnection}"
-    :style="tileStyle"
+    :style="tileWrapperStyle"
     @mousedown="bringTileForward"
   >
     <div v-if="connectingInProgress" class="overlay connect-overlay" @mousedown="tryConnect"></div>
@@ -11,7 +11,7 @@
       <div class="text">Delete</div>
     </div>
     <div class="header-wrapper">
-      <div class="header" @mousedown="startDrag">
+      <div class="header" :style="headerStyle" @mousedown="startDrag">
         <!-- <button class="connect-button" @click="startConnecting">
           <img src="../assets/connector.svg" alt="">
         </button> -->
@@ -23,7 +23,7 @@
         <div class="sources-view" @click="sectionToShow = sourcesSection">Sources</div>
       </div> -->
     </div>
-    <div class="tile">
+    <div class="tile" ref="tile">
       <template v-if="type === 'type'">
         <TypeView :tId="id" />
       </template>
@@ -44,8 +44,8 @@
         Sources section
       </div> -->
     </div>
-    <div class="footer" @mousedown="startResize">
-      <div class="resize-widget"></div>
+    <div class="footer" :style="footerStyle">
+      <!-- <div class="resize-widget" @mousedown="startResize"></div> -->
     </div>
   </div>
 </template>
@@ -66,6 +66,10 @@ export default class TileComponent extends Vue {
   @Prop() scale!: number
 
   @Prop() modulus!: number
+
+  @Prop() boardId!: string
+
+  @Prop({ default: true }) adaptive!: boolean
 
   @Prop() relativeMousePosition!: {
     x: number,
@@ -89,6 +93,10 @@ export default class TileComponent extends Vue {
     x: 0,
     y: 0
   }
+
+  headerHeight = 20
+
+  footerHeight = 10
 
   get type() { return this.tile.type }
 
@@ -132,6 +140,10 @@ export default class TileComponent extends Vue {
 
   get tileWrapperElement() {
     return this.$refs.tileWrapper as HTMLElement
+  }
+
+  get tileElement() {
+    return this.$refs.tile as HTMLElement
   }
 
   startConnecting(e: MouseEvent) {
@@ -236,15 +248,29 @@ export default class TileComponent extends Vue {
     this.$store.dispatch('dragTile', { tileId: this.tile.id, newPosition })
   }
 
-  get tileStyle() {
+  get tileWrapperStyle() {
     const { width, height, x, y, zIndex } = this.tile
 
     return {
-      width: width + 'px',
-      height: height + 'px',
+      width: this.adaptive ? 'auto' : width + 'px',
+      height: this.adaptive ? 'auto' : height + 'px',
       left: x + 'px',
       top: y + 'px',
       zIndex,
+    }
+  }
+
+  get headerStyle() {
+    return {
+      minHeight: this.headerHeight + 'px',
+      maxHeight: this.headerHeight + 'px',
+    }
+  }
+
+  get footerStyle() {
+    return {
+      minHeight: this.footerHeight + 'px',
+      maxHeight: this.footerHeight + 'px',
     }
   }
 
@@ -252,6 +278,28 @@ export default class TileComponent extends Vue {
     this.$store.dispatch('bringTileForward', this.tile.id)
     e.stopPropagation()
     e.preventDefault()
+  }
+
+  get tileWidth() {
+    return this.tileWrapperElement.offsetWidth
+  }
+
+  get tileHeight() {
+    return this.tileWrapperElement.offsetHeight
+  }
+
+  mounted() {
+    if (this.adaptive) {
+      console.log('setting watchers')
+      this.$watch('tileWidth', (width: number) => {
+        console.log('setting width')
+        this.$store.dispatch('setTileWidth', { boardId: this.boardId, tileId: this.id, width })
+      }, { immediate: true })
+      this.$watch('tileHeight', (height: number) => {
+        console.log('setting height')
+        this.$store.dispatch('setTileHeight', { boardId: this.boardId, tileId: this.id, height })
+      }, { immediate: true })
+    }
   }
 }
 </script>
@@ -398,17 +446,6 @@ export default class TileComponent extends Vue {
 
 .tile {
   height: 100%;
-  overflow: auto;
-}
-
-.inner-wrapper {
-  position: relative;
   display: flex;
-  flex-flow: column nowrap;
-  overflow: auto;
-  width: 100%;
-  height: 100%;
-  background: white;
-  z-index: 1;
 }
 </style>

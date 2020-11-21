@@ -99,6 +99,20 @@ export default UI({
       tile.width = Math.max(newPosition.x - tile.x, minTileSize.width)
       tile.height = Math.max(newPosition.y - tile.y, minTileSize.height)
     },
+    SET_TILE_WIDTH(state, p: { boardId: string, tileId: string, width: number }) {
+      const { boardId, tileId, width } = p
+      registerUiDataMutation(state)
+
+      const tile = state.project.uiData.boards[boardId].tiles.filter((t) => t.id === tileId)[0]
+      tile.width = width
+    },
+    SET_TILE_HEIGHT(state, p: { boardId: string, tileId: string, height: number }) {
+      const { boardId, tileId, height } = p
+      registerUiDataMutation(state)
+
+      const tile = state.project.uiData.boards[boardId].tiles.filter((t) => t.id === tileId)[0]
+      tile.height = height
+    },
     // DRAG_TILE(state, { boardId, tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
     DRAG_TILE(state, { boardId, tileId, newPosition }) {
       registerUiDataMutation(state)
@@ -302,11 +316,9 @@ export default UI({
       state.ui.projectDataIsLoaded = value
     },
     START_OPENING_PROJECT(state) {
-      console.log('start opening project')
       state.ui.openingProjectInProgress = true
     },
     STOP_OPENING_PROJECT(state) {
-      console.log('stop opening project')
       state.ui.openingProjectInProgress = false
     },
     START_SAVING_PROJECT(state) {
@@ -422,6 +434,12 @@ export default UI({
     },
     resizeTile(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
       this.commit('RESIZE_TILE', { tileId, newPosition })
+    },
+    setTileWidth(state, p: { boardId: string, tileId: string, width: number }) {
+      this.commit('SET_TILE_WIDTH', p)
+    },
+    setTileHeight(state, p: { boardId: string, tileId: string, height: number }) {
+      this.commit('SET_TILE_HEIGHT', p)
     },
     dragTile(state, { tileId, newPosition }: { tileId: string, newPosition: { x: number, y: number } }) {
       const boardId = (state.getters.activeWorkspace as Workspace).activeBoardId

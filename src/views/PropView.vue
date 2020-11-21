@@ -367,7 +367,7 @@ export default class PropView extends Vue {
   }
 
   .name-field {
-    width: 160px;
+    min-width: 160px;
     flex-shrink: 0;
 
     input {
@@ -477,7 +477,7 @@ export default class PropView extends Vue {
   }
 
   .value-type.short {
-    width: 48px;
+    min-width: 48px;
     font-size: 12px;
     padding-left: 2px;
   }
@@ -485,7 +485,7 @@ export default class PropView extends Vue {
   .arity-choice {
     position: relative;
     font-weight: bold;
-    width: 28px;
+    min-width: 28px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -509,7 +509,7 @@ export default class PropView extends Vue {
   }
 
   .target-type {
-    width: 90px;
+    min-width: 90px;
 
     select {
       width: 100%;

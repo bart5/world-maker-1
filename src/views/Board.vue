@@ -62,6 +62,7 @@
             :tile="tile"
             :scale="boardScale"
             :modulus="config.modulus"
+            :boardId="boardId"
             :relativeMousePosition="relativeMousePosition"
             @connecting="(e) => updateRelativeMousePosition(e)"
             @start-drag="dragInProgress = true"
