@@ -52,11 +52,13 @@
         />
 
         <template v-for="tile in tiles" :key="tile.id">
+            <!-- v-if="!!tile.inputSource" -->
           <Curve
-            v-if="!!tile.inputSource"
+            v-for="sourceTile in getInputSourceTilesOfTile(tile)"
+            :key="sourceTile.id"
             class="connector-curve"
             :p1="getTileCoordinates(tile)"
-            :p2="getTileCoordinates(getInputSourceTileOfTile(tile))"
+            :p2="getTileCoordinates(sourceTile)"
           />
           <TileComponent
             :tile="tile"
@@ -301,8 +303,8 @@ export default class Board extends Vue {
     return this.$store.getters.getWorkspaceConnections(workspaceId)
   }
 
-  getInputSourceTileOfTile(tile: Tile) {
-    return this.$store.getters.getInputSourceTileOfTile(tile)
+  getInputSourceTilesOfTile(tile: Tile) {
+    return this.$store.getters.getInputSourceTilesOfTile({ boardId: this.boardId, tile })
   }
 
   get selectedInputSourceTile() {

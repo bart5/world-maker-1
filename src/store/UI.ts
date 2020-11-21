@@ -40,7 +40,20 @@ export default UI({
         return t.inputSource ? [t.id, t.inputSource] : null
       }).filter(Boolean) as Array<tileId[]>
     },
-    getInputSourceTileOfTile: (state, getters) => (tile: Tile) => getters.tileOfId(tile.inputSource),
+    getInputSourceTilesOfTile: (state, getters) => (p: { boardId: string, tile: Tile}) => {
+      const { boardId, tile } = p
+      let sourcesIds: string[]
+      if (tile.type === 'type') {
+        const referencedTypes: TypeWrapper[] = getters.getFilteredTypes({ isReferencedByType: tile.id })
+        sourcesIds = referencedTypes.map((tw) => tw.id)
+      } else {
+        // If we will only be interested in certain kind of instances we can narrow it down
+        // e.g. passing type or specific prop that is referencing
+        const referencedInstances: Instance[] = getters.getFilteredInstances({ isReferencedByInstance: tile.id })
+        sourcesIds = referencedInstances.map((i) => i.id[0])
+      }
+      return getters.getBoardTiles(boardId).filter((t: Tile) => sourcesIds.some((id) => id === t.id))
+    },
     tileDeletionInProgress: (state) => state.ui.tileDeletionInProgress,
     workspaceDeletionInProgress: (state) => state.ui.workspaceDeletionInProgress,
     // getLastSessionCamera: (state, getters) => () => {

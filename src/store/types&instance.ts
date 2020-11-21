@@ -140,6 +140,7 @@ export default typesAndInstances({
       p: { iId: string, tN: string, tId: string,
         prop: { pN: string, pV: string | number | boolean },
         isReferencedByInstance: string, isReferencingInstance: string,
+        referencingProp: string,
         isReferencedByType: string, isReferencingType: string,
         isBound: boolean, isNotBound: boolean, isBoundTo: string
       }
@@ -148,7 +149,7 @@ export default typesAndInstances({
         return [...acc, ...Object.entries(iL).map(([iId]) => iId)]
       }, [] as string[])
 
-      const { tId, tN, iId, prop, isReferencedByInstance, isReferencingInstance,
+      const { tId, tN, iId, prop, isReferencedByInstance, isReferencingInstance, referencingProp,
         isReferencedByType, isReferencingType, isBound, isNotBound, isBoundTo } = p
 
       if (iId) {
@@ -174,10 +175,16 @@ export default typesAndInstances({
       }
       // Get all referenced by given instance
       if (isReferencedByInstance) {
-        // The instance that is referencing other we look for
-        const instance = getters.getInstance({ iId: isReferencedByInstance }) as Instance
-        // We conveniently have all that data in meta field
-        instancesIds = instancesIds.filter((_iId) => instance.meta_isReferencing.some((instanceId) => _iId === instanceId))
+        // Get all referenced by specific prop in instance
+        if (referencingProp) {
+          const instance = getters.getInstance({ iId: isReferencedByInstance }) as Instance
+          instancesIds = instancesIds.filter((_iId) => instance[referencingProp].some((v) => _iId === v))
+        } else {
+          // The instance that is referencing other we look for
+          const instance = getters.getInstance({ iId: isReferencedByInstance }) as Instance
+          // We conveniently have all that data in meta field
+          instancesIds = instancesIds.filter((_iId) => instance.meta_isReferencing.some((instanceId) => _iId === instanceId))
+        }
       }
       // Get all instances that reference specific instance
       if (isReferencingInstance) {
@@ -251,7 +258,7 @@ export default typesAndInstances({
       if (tId) {
         types = types.filter((wrapper) => wrapper.id === tId)
       }
-      if (prop.pN) {
+      if (prop?.pN) {
         const { pN } = prop
         types = types.filter((wrapper) => pN in wrapper.definition)
       }

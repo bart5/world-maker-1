@@ -1,5 +1,4 @@
 <template>
-  <!-- <div v-if="type" class="type-wrapper"> -->
   <div class="type-wrapper">
     <div class="type-header">
       <div class="name-wrapper">
