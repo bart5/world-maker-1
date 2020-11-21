@@ -367,7 +367,7 @@ export default class PropView extends Vue {
   }
 
   .name-field {
-    min-width: 160px;
+    width: 160px;
     flex-shrink: 0;
 
     input {

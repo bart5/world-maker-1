@@ -112,17 +112,17 @@ export default typesAndInstances({
         }) ? [...acc, _tId] : acc
       }, [] as string[])
     },
-    getAllInstancesFromTypeIds: (state, getters) => (typeIds: string[]) => {
-      return typeIds.reduce((acc, tId) => {
-        return [...acc, getters.getAllInstancesOfType({ typeId: tId })]
-      }, [] as Instance[])
-    },
+    // getAllInstancesFromTypeIds: (state, getters) => (typeIds: string[]) => {
+    //   return typeIds.reduce((acc, tId) => {
+    //     return [...acc, getters.getAllInstancesOfType({ typeId: tId })]
+    //   }, [] as Instance[])
+    // },
     isPropARef: (state, getters) => (tId: string, pN: string) => {
-      return (getters.getType({ typeId: tId }) as TypeWrapper).definition[pN].valueType === 'ref'
+      return (getters.getType({ tId }) as TypeWrapper).definition[pN].valueType === 'ref'
     },
     isPropArray: (state, getters) => (p: { tId: string, pN: string }) => {
       const { tId, pN } = p
-      return (getters.getType({ typeId: tId }) as TypeWrapper).definition[pN].isArray
+      return (getters.getType({ tId }) as TypeWrapper).definition[pN].isArray
     },
     getPropValues: (state, getters) => (p: { iId: string, pN: string }) => {
       const { iId, pN } = p
@@ -299,8 +299,8 @@ export default typesAndInstances({
     ) => {
       const { tAId, iAId, iBId } = p
       let { tBId, tA, tB } = p
-      tA = tA || getters.getType({ typeId: tAId }, iAId) as TypeWrapper
-      tB = tB || getters.getType({ typeId: tBId }, iBId) as TypeWrapper
+      tA = tA || getters.getType({ tId: tAId }, iAId) as TypeWrapper
+      tB = tB || getters.getType({ tId: tBId }, iBId) as TypeWrapper
       tBId = tBId || tB.id
       const propNames: string[] = []
       Object.entries(tA.definition).forEach(([, prop]) => {
@@ -512,6 +512,7 @@ export default typesAndInstances({
       })
 
       mutate('REMOVE_TYPE', {}, 'TypeWrapper', tId)
+      this.dispatch('deleteTile', { boardId: 'types', tileId: tId })
     },
     renameType(state, p: { tId: string, newName: string }) { // OK
       const { tId, newName } = p
@@ -730,7 +731,7 @@ export default typesAndInstances({
 
     removeAllRefsFromInstAtoInstB(state, p: { aIId: string, bIId: string }) { // OK
       const { aIId, bIId } = p
-      const tId = state.getters.getType({}, aIId)
+      const tId = state.getters.getType({ iId: aIId })
 
       const props = state.getters.getPropsOfTypeAWithRefToTypeB({ iAId: aIId, iBId: bIId })
 
@@ -740,7 +741,7 @@ export default typesAndInstances({
     },
     removeAllRefsFromInstA(state, p: { iId: string }) { // OK
       const { iId } = p
-      const type: TypeWrapper = state.getters.getType({ instanceId: iId })
+      const type: TypeWrapper = state.getters.getType({ iId })
 
       const referencedInstances = state.state.project.instances[type.id][iId].meta_isReferencing
 
@@ -750,7 +751,7 @@ export default typesAndInstances({
     },
     removeAllRefsToInstA(state, p: { iId: string }) { // OK
       const { iId } = p
-      const type: TypeWrapper = state.getters.getType({ instanceId: iId })
+      const type: TypeWrapper = state.getters.getType({ iId })
 
       const referencingInstances = state.state.project.instances[type.id][iId].meta_isReferencedBy
 
@@ -772,7 +773,7 @@ export default typesAndInstances({
     updateMetaOfRefsFromInstAToInstB(state, p: { iA: Instance, iB: Instance }) { // OK
       const { iA, iB } = p
       const propsToCheck = state.getters.getPropsOfTypeAWithRefToTypeB({ iAId: iA.id[0], iBId: iB.id[0] })
-      const tId = state.getters.getType({}, iA.id[0])
+      const tId = state.getters.getType({ iId: iA.id[0] })
       // This is so far an exception - a mutation that makes changes to more than one (here exactly two)
       // entities.
       // For now I'll handle it in a dirty way.

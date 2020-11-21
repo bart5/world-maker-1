@@ -32,20 +32,9 @@
           Other content
         </div>
       </template>
-      <!-- <div class="section data-section" v-if="sectionToShow === dataSection">
-        Data section
-        {{ tile.x }}
-        {{ tile.y }}
-      </div>
-      <div class="section filters-section" v-else-if="sectionToShow === filtersSection">
-        Filters section
-      </div>
-      <div class="section sources-section" v-else>
-        Sources section
-      </div> -->
     </div>
     <div class="footer" :style="footerStyle">
-      <!-- <div class="resize-widget" @mousedown="startResize"></div> -->
+      <div v-if="!adaptive" class="resize-widget" @mousedown="startResize"></div>
     </div>
   </div>
 </template>
@@ -277,7 +266,6 @@ export default class TileComponent extends Vue {
   bringTileForward(e: MouseEvent) {
     this.$store.dispatch('bringTileForward', this.tile.id)
     e.stopPropagation()
-    e.preventDefault()
   }
 
   get tileWidth() {
@@ -290,13 +278,10 @@ export default class TileComponent extends Vue {
 
   mounted() {
     if (this.adaptive) {
-      console.log('setting watchers')
       this.$watch('tileWidth', (width: number) => {
-        console.log('setting width')
         this.$store.dispatch('setTileWidth', { boardId: this.boardId, tileId: this.id, width })
       }, { immediate: true })
       this.$watch('tileHeight', (height: number) => {
-        console.log('setting height')
         this.$store.dispatch('setTileHeight', { boardId: this.boardId, tileId: this.id, height })
       }, { immediate: true })
     }

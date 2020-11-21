@@ -1,4 +1,5 @@
 <template>
+  <!-- <div v-if="type" class="type-wrapper"> -->
   <div class="type-wrapper">
     <div class="type-header">
       <div class="name-wrapper">
@@ -34,6 +35,7 @@
         />
       </template>
     </div>
+    <button class="basic" @click="addProp">Add Prop</button>
   </div>
 </template>
 
@@ -114,6 +116,7 @@ export default class TypeView extends Vue {
     if (!this.nameIsValid) return
     actions.renameType({ tId: this.tId, newName })
     this.updateTypeName()
+    this.stopEdit()
   }
 
   getIsNameUnique(name: string) {
@@ -153,6 +156,10 @@ export default class TypeView extends Vue {
 
   doesEdit(fieldType: FieldType) {
     return this.editInProgress === fieldType
+  }
+
+  addProp() {
+    actions.createProp(this.simpCtx)
   }
 
   get activeWidgetKey() { return this.$store.getters.activeWidgetKey }
