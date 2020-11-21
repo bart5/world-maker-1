@@ -106,8 +106,13 @@ export const transactionHandler = {
         entity = change.entityBefore as TypeWrapper
         if (entity === null) {
           delete state.project.types[change.tId]
+          this.store.dispatch('deleteTile', { boardId: 'types', tileId: change.tId })
         } else {
           state.project.types[change.tId] = entity
+          if (!state.project.uiData.boards.types.tiles.some((t) => t.id === change.tId)) {
+            this.store.dispatch('createNewTile', { boardId: 'types', id: change.tId })
+          }
+          // Prepare container for instances
           if (!state.project.instances[change.tId]) {
             state.project.instances[change.tId] = {}
           }

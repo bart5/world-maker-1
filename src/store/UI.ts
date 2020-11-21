@@ -441,9 +441,10 @@ export default UI({
     stopTileDeletion() {
       this.commit('STOP_TILE_DELETION')
     },
-    deleteTile(state, tileId) {
-      this.commit('DELETE_TILE_OUT_BOUND_CONNECTIONS', tileId)
-      this.commit('DELETE_TILE', tileId)
+    deleteTile(state, p: { boardId: string, tileId: string }) {
+      // This should not be needed really
+      // this.commit('DELETE_TILE_OUT_BOUND_CONNECTIONS', tileId)
+      this.commit('DELETE_TILE', p)
     },
     startWorkspaceDeletion() {
       this.commit('START_WORKSPACE_DELETION')

@@ -2,8 +2,6 @@
   <div class="workspace-wrapper">
     <div class="top-bar">
       <button :disabled="!activeWorkspace" @click="createNewType">Create new type</button>
-      <button :disabled="!activeWorkspace" @click="createNewTile">Create new tile</button>
-      <button :class="{ 'active': deleteModeIsOn }" @click="onDeleteMode">Delete Mode</button>
     </div>
     <Board :boardId="boardId" />
   </div>
@@ -30,9 +28,7 @@ export default class TypesWS extends Vue {
   }
 
   createNewType() {
-    this.$store.dispatch('createType').then((tId) => {
-      this.createNewTile(tId)
-    })
+    this.$store.dispatch('createType')
   }
 
   createNewTile(id: string) {
