@@ -489,6 +489,7 @@ export default typesAndInstances({
     createType(state) { // OK
       const tId = utils.getUniqueId(state.state)
       mutate('CREATE_TYPE', {}, 'TypeWrapper', tId)
+      return tId
     },
     removeType(state, p: { tId: string }) { // OK
       const { tId } = p

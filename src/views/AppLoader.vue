@@ -17,15 +17,20 @@ export default class AppLoader extends Vue {
   keyboardHandler(e: KeyboardEvent) {
     if (e.ctrlKey) {
       switch (e.key) {
-        case 'Escape':
-          this.closeWidgets(e)
-          break
         case 'z':
           console.log('z')
           transactionHandler.revertTo()
           break
         case 'y':
           transactionHandler.unRevertTo()
+          break
+        default:
+          break;
+      }
+    } else {
+      switch (e.key) {
+        case 'Escape':
+          this.closeWidgets(e)
           break
         default:
           break;

@@ -8,7 +8,7 @@
 
       <div v-if="isUnsavedData" class="status-bar">UNSAVED CHANGES</div>
 
-      <Sidebar v-if="projectDataIsLoaded" class="sidebar"/>
+      <Sidebar v-if="projectDataIsLoaded" class="sidebar" :class="{ 'show': showSidebar }"/>
     </template>
   </div>
 </template>
@@ -27,6 +27,8 @@ import Sidebar from '@/views/Sidebar.vue'
   },
 })
 export default class Frame extends Vue {
+  showSidebar = false
+
   get activeWorkspace(): Workspace {
     return this.$store.getters.activeWorkspace
   }
@@ -52,12 +54,16 @@ export default class Frame extends Vue {
           this.$store.dispatch('asyncSaveProject', true)
           break;
         case 't':
-          this.$store.dispatch('openModal', 'Sidebar')
+          this.toggleSidebar()
           break;
         default:
           break;
       }
     }
+  }
+
+  toggleSidebar() {
+    this.showSidebar = !this.showSidebar
   }
 
   mounted() {
@@ -85,8 +91,14 @@ export default class Frame extends Vue {
 
 .sidebar {
   position: absolute;
-  right: -560px;
+  right: 0;
+  transform: translateX(100%);
   top: 20px;
+  transition: transform 0.2s;
+
+  &.show {
+    transform: translateX(0);
+  }
 }
 
 </style>
