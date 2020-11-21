@@ -24,6 +24,7 @@ export default UI({
     // allTilesOfWorkspace: (state) => (workspaceId: string) => state.project.uiData?.tiles.filter((tile) => {
     //   return tile.workspaceId === workspaceId
     // }),
+    getAllBoards: (state) => state.project.uiData.boards,
     getBoardTiles: (state) => (boardId: string) => state.project.uiData.boards[boardId].tiles,
     getBoardConfig: (state) => (boardId: string) => state.project.uiData.boards[boardId].config,
     // activeWorkspaceTiles: (state, getters) => getters.allTilesOfWorkspace(getters.activeWorkspaceId),
@@ -65,17 +66,24 @@ export default UI({
     },
     lastTransactionIdInUI: (state) => {
       return state.project.recentChanges?.last()?.id || ''
-    }
+    },
+    openingProjectInProgress: (state) => {
+      return state.ui.openingProjectInProgress
+    },
+    savingProjectInProgress: (state) => {
+      return state.ui.savingProjectInProgress
+    },
   },
   mutations: {
     /* =========== PROJECT CONFIGURATION MUTATIONS =========== */
-    CREATE_NEW_TILE(state, { boardId, tileId, position }) {
+    CREATE_NEW_TILE(state, { boardId, type, tileId, position }) {
       registerUiDataMutation(state)
 
       const tiles = state.project.uiData.boards[boardId].tiles
 
       tiles.push({
         id: tileId,
+        type,
         inputSource: '',
         width: 120,
         height: 180,
@@ -294,9 +302,11 @@ export default UI({
       state.ui.projectDataIsLoaded = value
     },
     START_OPENING_PROJECT(state) {
+      console.log('start opening project')
       state.ui.openingProjectInProgress = true
     },
     STOP_OPENING_PROJECT(state) {
+      console.log('stop opening project')
       state.ui.openingProjectInProgress = false
     },
     START_SAVING_PROJECT(state) {
@@ -357,8 +367,8 @@ export default UI({
       window.ipcRenderer.send('saveInstances', data)
     },
     // Id is either tId or iId
-    createNewTile(state, p: { boardId: string, id: string }) {
-      const { boardId, id } = p
+    createNewTile(state, p: { boardId: string, type: TileType, id: string }) {
+      const { boardId, type, id } = p
       const boardConfig: BoardConfig = state.getters.getBoardConfig(boardId)
       const modulus = boardConfig.modulus
       const boardWidth = boardConfig.width
@@ -401,7 +411,7 @@ export default UI({
 
       const position = getTileInitialPosition()
 
-      this.commit('CREATE_NEW_TILE', { boardId, tileId, position })
+      this.commit('CREATE_NEW_TILE', { boardId, type, tileId, position })
     },
     createNewWorkspace() {
       const workspaceId = `workspace_${Date.now()}${Math.random()}`

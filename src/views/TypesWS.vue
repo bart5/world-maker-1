@@ -10,6 +10,7 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import Board from '@/views/Board.vue';
+import { actions } from '@/store/transactions'
 
 @Options({
   components: {
@@ -28,22 +29,23 @@ export default class TypesWS extends Vue {
   }
 
   createNewType() {
-    this.$store.dispatch('createType')
+    actions.createType({})
   }
 
-  createNewTile(id: string) {
-    this.$store.dispatch('createNewTile', { boardId: this.boardId, id })
-  }
+  // createNewTile(id: string) {
+  //   this.$store.dispatch('createNewTile', { boardId: this.boardId, type: 'type', id })
+  // }
 
   // This is supposed to run only when new project is loaded
   // for the very first time.
-  mounted() {
-    const tiles = this.$store.getters.getBoardTiles(this.boardId)
-    const types: TypeWrapper[] = this.$store.getters.types
-    if (tiles.length === 0) {
-      types.forEach((tw) => this.createNewTile(tw.id))
-    }
-  }
+  // mounted() {
+  //   const tiles = this.$store.getters.getBoardTiles(this.boardId)
+  //   const types: TypeWrapper[] = this.$store.getters.types
+  //   if (tiles.length === 0) {
+  //     console.log('spawning lacking tiles')
+  //     types.forEach((tw) => this.createNewTile(tw.id))
+  //   }
+  // }
 }
 </script>
 

@@ -1,10 +1,10 @@
 <template>
   <div
-    class="tile-wrapper"
     ref="tileWrapper"
+    class="tile-wrapper"
+    :class="{'valid-connection': indicateValidConnection, 'invalid-connection': indicateInvalidConnection}"
     :style="tileStyle"
     @mousedown="bringTileForward"
-    :class="{'valid-connection': indicateValidConnection, 'invalid-connection': indicateInvalidConnection}"
   >
     <div v-if="connectingInProgress" class="overlay connect-overlay" @mousedown="tryConnect"></div>
     <div v-if="tileDeletionInProgress" class="overlay delete-overlay" @click="tryDelete">
@@ -12,22 +12,28 @@
     </div>
     <div class="header-wrapper">
       <div class="header" @mousedown="startDrag">
-        <button class="connect-button" @click="startConnecting">
+        <!-- <button class="connect-button" @click="startConnecting">
           <img src="../assets/connector.svg" alt="">
-        </button>
+        </button> -->
         <div class="tile-title">Title</div>
       </div>
-      <div class="sub-header">
+      <!-- <div class="sub-header">
         <div class="data-view" @click="sectionToShow = dataSection">Data</div>
         <div class="filters-view" @click="sectionToShow = filtersSection">Filters</div>
         <div class="sources-view" @click="sectionToShow = sourcesSection">Sources</div>
-      </div>
+      </div> -->
     </div>
     <div class="tile">
-      <div class="section data-section" v-if="sectionToShow === dataSection">
+      <template v-if="type === 'type'">
+        <TypeView :tId="id" />
+      </template>
+      <template v-else>
+        <div>
+          Other content
+        </div>
+      </template>
+      <!-- <div class="section data-section" v-if="sectionToShow === dataSection">
         Data section
-        <!-- {{ self.x }}
-        {{ self.y }} -->
         {{ tile.x }}
         {{ tile.y }}
       </div>
@@ -36,7 +42,7 @@
       </div>
       <div class="section sources-section" v-else>
         Sources section
-      </div>
+      </div> -->
     </div>
     <div class="footer" @mousedown="startResize">
       <div class="resize-widget"></div>
@@ -47,9 +53,11 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
+import TypeView from '@/views/TypeView.vue'
 
 @Options({
   components: {
+    TypeView
   },
 })
 export default class TileComponent extends Vue {
@@ -81,6 +89,10 @@ export default class TileComponent extends Vue {
     x: 0,
     y: 0
   }
+
+  get type() { return this.tile.type }
+
+  get id() { return this.tile.id }
 
   get indicateValidConnection() {
     return this.connectingInProgress && this.isValidConnectionCandidate

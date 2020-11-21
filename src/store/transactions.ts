@@ -110,7 +110,7 @@ export const transactionHandler = {
         } else {
           state.project.types[change.tId] = entity
           if (!state.project.uiData.boards.types.tiles.some((t) => t.id === change.tId)) {
-            this.store.dispatch('createNewTile', { boardId: 'types', id: change.tId })
+            this.store.dispatch('createNewTile', { boardId: 'types', type: 'type', id: change.tId })
           }
           // Prepare container for instances
           if (!state.project.instances[change.tId]) {

@@ -489,7 +489,7 @@ export default typesAndInstances({
     createType(state) { // OK
       const tId = utils.getUniqueId(state.state)
       mutate('CREATE_TYPE', {}, 'TypeWrapper', tId)
-      this.dispatch('createNewTile', { boardId: 'types', id: tId })
+      this.dispatch('createNewTile', { boardId: 'types', type: 'type', id: tId })
     },
     removeType(state, p: { tId: string }) { // OK
       const { tId } = p

@@ -97,8 +97,11 @@ interface Workspace {
   activeBoardId: string;
 }
 
+type TileType = 'type' | 'task' | 'dialogChoice' | 'dialog' | 'other'
+
 interface Tile {
   id: string;
+  type: TileType;
   inputSource: tileId;
   zIndex: number;
   width: number;

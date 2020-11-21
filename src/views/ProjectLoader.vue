@@ -9,12 +9,32 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
 
 @Options({
   components: {
   },
 })
 export default class ProjectLoader extends Vue {
+  @Watch('openingProjectInProgress')
+  projectOpenHandler(opening: boolean) {
+    if (opening) {
+      console.info('Opening a project in progress.')
+    } else {
+      console.info('Project opened.')
+      this.spawnMissingTiles()
+    }
+  }
+
+  @Watch('savingProjectInProgress')
+  projectSaveHandler(saving: boolean) {
+    if (saving) {
+      console.info('Saving current project in progress.')
+    } else {
+      console.info('Project saved.')
+    }
+  }
+
   get openingProjectInProgress() {
     return this.$store.getters.openingProjectInProgress
   }
@@ -32,6 +52,30 @@ export default class ProjectLoader extends Vue {
       msg = 'Saving project data...'
     }
     return msg
+  }
+
+  createNewTile(boardId: string, type: string, id: string) {
+    this.$store.dispatch('createNewTile', { boardId, type: 'type', id })
+  }
+
+  spawnMissingTiles() {
+    const boards: Boards = this.$store.getters.getAllBoards
+    if (!Object.entries(boards).length) {
+      console.warn('Project has no boards.')
+      return
+    }
+
+    const types: TypeWrapper[] = this.$store.getters.types
+    // const quests = this.$store.getters.quests
+    // const dialogs = this.$store.getters.dialogs
+
+    if (boards.types.tiles.length === 0) {
+      types.forEach((tw) => this.createNewTile('types', 'types', tw.id))
+    }
+  }
+
+  mounted() {
+    console.log('project loader mounted')
   }
 }
 </script>
