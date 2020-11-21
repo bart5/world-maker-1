@@ -99,7 +99,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop } from 'vue-property-decorator';
+import { Prop, Watch } from 'vue-property-decorator';
 import { actions } from '@/store/transactions'
 
 type FieldType = 'name' | 'values' | 'type' | 'target' | 'arity' | ''
@@ -121,6 +121,7 @@ export default class PropView extends Vue {
   unwatch: any = null
   localPDef = { ...this.pDef }
 
+  @Watch('pDef', { deep: true })
   updatelocalPDef() {
     this.localPDef = { ...this.pDef }
   }
@@ -134,62 +135,52 @@ export default class PropView extends Vue {
       newName = 'ref_' + newName
     }
     if (this.pDef.name === newName) return
-    actions.renameType(this.getCtx({ newName }))
-    this.updatelocalPDef()
+    actions.renameProp(this.getCtx({ newName }))
   }
 
   changeType(newType: ValueType) {
     if (this.pDef.valueType === newType) return
     actions.changePropType(this.getCtx({ newType }))
-    this.updatelocalPDef()
   }
 
   changePropTargetType(newTargetId: string) {
     if (this.pDef.refTargetTypeId === newTargetId) return
     actions.changePropTargetType(this.getCtx({ newTargetId }))
-    this.updatelocalPDef()
   }
 
   changePropArity(isArray: boolean) {
     if (this.pDef.isArray === isArray) return
     if (isArray) actions.changePropToArray(this.simpCtx)
     else actions.changePropToSingle(this.simpCtx)
-    this.updatelocalPDef()
   }
 
   changeValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
     actions.changePropValue(this.getCtx({ value }))
-    this.updatelocalPDef()
   }
 
   addValue(value: number | boolean | string) {
     if (this.pV.includes(value)) return
     actions.addPropValue(this.getCtx({ value }))
-    this.updatelocalPDef()
   }
 
   removeValue(value: number | boolean | string) {
     if (!this.pV.includes(value)) return
     actions.removePropValue(this.getCtx({ value }))
-    this.updatelocalPDef()
   }
 
   movePropUp() {
     actions.movePropUp(this.simpCtx)
-    this.updatelocalPDef()
   }
 
   movePropDown() {
     actions.movePropDown(this.simpCtx)
-    this.updatelocalPDef()
   }
 
   removeProp() {
     const accept = window.confirm('Do you really want to remove this property?\n Side effects accross project are possible.')
     if (!accept) return
     actions.removeProp(this.simpCtx)
-    this.updatelocalPDef()
   }
 
   getEValue(e: UIEvent, cb: (v: any) => any, type: 'number' | 'bool') {

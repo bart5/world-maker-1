@@ -173,7 +173,6 @@ export default class TypeView extends Vue {
   width: 100%;
   padding: 12px;
   border: 1px solid;
-  box-sizing: content-box;
 
   .type-header {
     display: flex;

@@ -17,11 +17,6 @@
         </button> -->
         <div class="tile-title">Title</div>
       </div>
-      <!-- <div class="sub-header">
-        <div class="data-view" @click="sectionToShow = dataSection">Data</div>
-        <div class="filters-view" @click="sectionToShow = filtersSection">Filters</div>
-        <div class="sources-view" @click="sectionToShow = sourcesSection">Sources</div>
-      </div> -->
     </div>
     <div class="tile" ref="tile">
       <template v-if="type === 'type'">

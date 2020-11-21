@@ -1,13 +1,13 @@
 function initOverrides() {
   (function extendArray() {
     function pushUnique(this: any[], newValue: any) {
-      if (typeof newValue === 'string' || typeof newValue === 'number' || typeof newValue === 'object') {
+      if (typeof newValue === 'string' || typeof newValue === 'number' || typeof newValue === 'object' || typeof newValue === 'boolean') {
         if ((this as unknown as any[]).some((v) => v === newValue)) return
         this.push(newValue)
         // eslint-disable-next-line consistent-return
         return this
       }
-      Error('Invalid input for uniquePush method. Accepts only strings and numbers.')
+      throw Error('Invalid input for uniquePush method. Accepts only strings and numbers.')
       // eslint-disable-next-line consistent-return
       return this
     }
@@ -20,7 +20,7 @@ function initOverrides() {
     });
 
     function remove(this: any[], value: any) {
-      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'object') {
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'object' || typeof value === 'boolean') {
         const matchIndex = this.indexOf(value)
         if (matchIndex >= 0) {
           this.splice(matchIndex, 1)
@@ -28,7 +28,7 @@ function initOverrides() {
         // eslint-disable-next-line consistent-return
         return this
       }
-      Error('Invalid input for uniquePush method. Accepts only strings and numbers.')
+      throw Error('Invalid input for uniquePush method. Accepts only strings and numbers.')
       // eslint-disable-next-line consistent-return
       return this
     }

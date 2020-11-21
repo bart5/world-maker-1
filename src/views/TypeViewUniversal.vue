@@ -70,4 +70,8 @@ export default class TypeViewUniversal extends Vue {
 </script>
 
 <style lang="scss" scoped>
+  .wrapper {
+    display: flex;
+    flex-flow: column;
+  }
 </style>
