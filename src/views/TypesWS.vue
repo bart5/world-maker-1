@@ -18,8 +18,6 @@ import { actions } from '@/store/transactions'
   },
 })
 export default class TypesWS extends Vue {
-  deleteModeIsOn = false
-
   get activeWorkspace(): Workspace {
     return this.$store.getters.activeWorkspace
   }

@@ -95,6 +95,7 @@ interface Workspace {
   name: string;
   order: number;
   activeBoardId: string;
+  // config?: Workspace
 }
 
 type TileType = 'type' | 'task' | 'dialogChoice' | 'dialog' | 'other'

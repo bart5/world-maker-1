@@ -1,7 +1,11 @@
 <template>
   <div class="workspace-wrapper">
     <div class="top-bar">
-      <button :disabled="!activeWorkspace" @click="createNewType">Create new type</button>
+      <button :disabled="!activeWorkspace" @click="createNewQuest">New quest</button>
+      <button :disabled="!activeWorkspace" @click="removeQuest">Remove quest</button>
+      <select class="" :value="selectedQuestId" v-model="selectedQuestId">
+        <option v-for="quest in filteredQuests" :key="quest.id[0]" :value="quest.id[0]">{{ quest.name[0] }}</option>
+      </select>
     </div>
     <Board :boardId="boardId" />
   </div>
@@ -9,6 +13,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
 import Board from '@/views/Board.vue';
 import { actions } from '@/store/transactions'
 
@@ -18,18 +23,33 @@ import { actions } from '@/store/transactions'
   },
 })
 export default class QuestsWS extends Vue {
-  deleteModeIsOn = false
+  selectedQuestId = ''
+
+  boardId = ''
+
+  @Watch('selectedQuestId')
+  updateBoardId() {
+    this.boardId = this.selectedQuestId
+  }
 
   get activeWorkspace(): Workspace {
     return this.$store.getters.activeWorkspace
   }
 
-  get boardId() {
-    return this.activeWorkspace.activeBoardId
+  get filteredQuests(): Instance[] {
+    return this.$store.getters.getFilteredInstances({ tId: 'quest' })
   }
 
-  createNewType() {
-    actions.createType({})
+  createNewQuest() {
+    actions.createInstance({ tId: 'quest' })
+  }
+
+  removeQuest() {
+    actions.createInstance({ tId: 'quest' })
+  }
+
+  mounted() {
+    this.boardId = this.activeWorkspace.activeBoardId
   }
 }
 </script>

@@ -1,6 +1,7 @@
 import { ipc } from '@/game/data/ipcHandlersRenderer';
 import { createStore } from 'vuex';
 import * as utils from './utils';
+import { getNewProject } from './builtInData';
 import initialState from './state';
 
 const minTileSize = {
@@ -530,7 +531,7 @@ export default UI({
       await state.dispatch('asyncSaveProject')
         .catch((e) => Error(`Failed saving project. \n${e}`))
       const project: Project = isNew
-        ? { ...utils.getNewProjectTemplate() }
+        ? { ...getNewProject() }
         : (
           await state.dispatch('asyncFetchProject', path)
             .catch((e) => Error(`Failed fetching project. \n${e}`))

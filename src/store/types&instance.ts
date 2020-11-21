@@ -1,5 +1,6 @@
 import { createStore } from 'vuex';
 import * as utils from './utils';
+import { getNewTypeData, getNewInstanceData, getPropDef } from './builtInData';
 import initialState from './state';
 import { mutate } from './transactions';
 
@@ -353,7 +354,7 @@ export default typesAndInstances({
       state.project.types[tId] = {
         name: uniqueName,
         id: tId,
-        definition: utils.getNewTypeData()
+        definition: getNewTypeData()
       }
       state.project.instances[tId] = {}
     },
@@ -436,7 +437,7 @@ export default typesAndInstances({
     CREATE_INSTANCE(state, p: { tId: string, iId: string, tN: string, }) { // Ok
       const { tId, iId, tN } = p
 
-      state.project.instances[tId][iId] = utils.getNewInstanceData(state, tN, iId)
+      state.project.instances[tId][iId] = getNewInstanceData(state, tN, iId)
     },
     REMOVE_INSTANCE(state, p: { tId: string, iId: string }) { // OK
       const { tId, iId } = p
@@ -532,7 +533,7 @@ export default typesAndInstances({
       const { tId } = p
       const uniquePropName = utils.getUniquePropName(state.state, tId)
       const propsCount = state.getters.getPropsCount({ tId })
-      const prop = utils.getPropDef('int32', uniquePropName, propsCount)
+      const prop = getPropDef('int32', uniquePropName, propsCount)
       mutate('CREATE_PROP', { prop }, 'PropDefinition', tId)
 
       Object.entries(state.state.project.instances[tId]).forEach(([iId]) => {
