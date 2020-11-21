@@ -97,7 +97,7 @@ interface Workspace {
   activeBoardId: string;
 }
 
-interface Tile extends Block {
+interface Tile {
   id: string;
   inputSource: tileId;
   zIndex: number;

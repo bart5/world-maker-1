@@ -90,10 +90,6 @@ export default class TileComponent extends Vue {
     return this.connectingInProgress && !this.isValidConnectionCandidate
   }
 
-  // get self(): Tile {
-  //   return this.$store.getters.tileOfId(this.id)
-  // }
-
   get isValidConnectionCandidate() {
     return !this.hasConnectedInput && !this.isConnectedWithSelectedInputSource && !this.isSelectedInputSource
   }

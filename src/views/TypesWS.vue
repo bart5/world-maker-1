@@ -35,8 +35,6 @@ export default class TypesWS extends Vue {
   // This is supposed to run only when new project is loaded
   // for the very first time.
   mounted() {
-    console.log('active workspace: ', this.activeWorkspace)
-    console.log('board id: ', this.boardId)
     const tiles = this.$store.getters.getBoardTiles(this.boardId)
     const types: TypeWrapper[] = this.$store.getters.types
     if (tiles.length === 0) {

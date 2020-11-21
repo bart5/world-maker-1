@@ -387,16 +387,21 @@ export default class Board extends Vue {
   }
 
   setupBoard() {
-    this.$store.dispatch('referenceBoardData', {
-      boardFrame: this.boardFrameElement,
-      board: this.boardElement
-    })
+    // this.$store.dispatch('referenceBoardData', {
+    //   boardFrame: this.boardFrameElement,
+    //   board: this.boardElement
+    // })
     this.loadCamera()
   }
 
   mounted() {
     window.addEventListener('keydown', this.keyboardHandler)
     this.localBoardId = this.boardId
+    this.$nextTick(() => this.setupBoard())
+  }
+
+  beforeDestroy() {
+    window.removeEventListener('keydown', this.keyboardHandler)
   }
 }
 </script>
