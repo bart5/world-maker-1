@@ -1,19 +1,20 @@
 <template>
   <div class="workspace-wrapper">
     <div class="top-bar">
-      <button :disabled="!activeWorkspace" @click="createNewQuest">New quest</button>
-      <button :disabled="!activeWorkspace" @click="removeQuest">Remove quest</button>
-      <select class="" :value="selectedQuestId" v-model="selectedQuestId">
-        <option v-for="quest in filteredQuests" :key="quest.id[0]" :value="quest.id[0]">{{ quest.name[0] }}</option>
+      <button @click="createNewEntity">{{ `New ${entityName}` }}</button>
+      <button @click="removeEntity">{{ `New ${entityName}` }}</button>
+      <select class="" v-model="selectedEntityId">
+        <option v-for="entity in filteredEntities" :key="entity.id[0]" :value="entity.id[0]">{{ entity.name[0] || entity.id[0] }}</option>
       </select>
     </div>
-    <Board :boardId="boardId" />
+    <Board v-if="boardId !== ''" :boardId="boardId" />
+    <div v-else>No board to show</div>
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Watch } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import Board from '@/views/Board.vue';
 import { actions } from '@/store/transactions'
 
@@ -23,29 +24,39 @@ import { actions } from '@/store/transactions'
   },
 })
 export default class QuestsWS extends Vue {
-  selectedQuestId = ''
+  @Prop() entityName!: string
+  @Prop() entityTypeId: string = this.entityName
+
+  selectedEntityId = ''
 
   boardId = ''
 
-  @Watch('selectedQuestId')
+  @Watch('selectedEntityId')
   updateBoardId() {
-    this.boardId = this.selectedQuestId
+    this.boardId = this.selectedEntityId
   }
 
   get activeWorkspace(): Workspace {
     return this.$store.getters.activeWorkspace
   }
 
-  get filteredQuests(): Instance[] {
-    return this.$store.getters.getFilteredInstances({ tId: 'quest' })
+  get filteredEntities(): Instance[] {
+    return this.$store.getters.getFilteredInstances(this.simpCtx)
   }
 
-  createNewQuest() {
-    actions.createInstance({ tId: 'quest' })
+  createNewEntity() {
+    actions.createInstance(this.simpCtx)
   }
 
-  removeQuest() {
-    actions.createInstance({ tId: 'quest' })
+  removeEntity() {
+    actions.removeInstance(this.simpCtx)
+  }
+
+  get simpCtx() {
+    return {
+      tId: this.entityTypeId,
+      iId: this.selectedEntityId,
+    }
   }
 
   mounted() {

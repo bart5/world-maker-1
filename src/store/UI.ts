@@ -536,6 +536,8 @@ export default UI({
           await state.dispatch('asyncFetchProject', path)
             .catch((e) => Error(`Failed fetching project. \n${e}`))
         )
+      console.log('new project: ', project)
+      console.log('about to load new project to ui')
       this.commit('LOAD_PROJECT_TO_UI', project)
       this.commit('SET_LAST_SAVED_TRANSACTION_ID')
       if (isNew) {

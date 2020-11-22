@@ -160,7 +160,7 @@ export default typesAndInstances({
         const iL = getters.getInstancesListOfType({ tId, tN }) as InstanceList
         instancesIds = instancesIds.filter((instanceId) => Object.entries(iL).some(([_iId]) => instanceId === _iId))
       }
-      if (prop.pN || prop.pV) {
+      if (prop?.pN || prop?.pV) {
         const { pN, pV } = prop
         const matchByProp = (_iId: string) => {
           const instance = getters.getInstance({ iId: _iId }) as Instance

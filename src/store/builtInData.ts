@@ -5,7 +5,7 @@ export function getBuiltInTypes(): TypesDefinitions {
       name: 'Quest',
       definition: {
         ...getBasicTypeDef(),
-        prop1: getPropDef('int32', 'prop1', 0),
+        name: getPropDef('string', 'name', 0),
         prop2: getPropDef('int32', 'prop2', 1)
       }
     },
@@ -95,13 +95,22 @@ function getTypesBoard(): Board {
   }
 }
 
+export function getEmptyBoard(id: string): Board {
+  return {
+    id,
+    tiles: [],
+    config: { ...getBoardConfig() },
+    camera: null,
+  }
+}
+
 export function getNewProjectUiData() {
   const uiData: UiData = {
-    workspaces: [{
-      ...getTypesWorkspace(),
-      ...getQuestsWorkspace(),
-      ...getDialogsWorkspace(),
-    }],
+    workspaces: [
+      { ...getTypesWorkspace() },
+      { ...getQuestsWorkspace() },
+      { ...getDialogsWorkspace() },
+    ],
     boards: {
       types: { ...getTypesBoard() },
     },
@@ -111,6 +120,7 @@ export function getNewProjectUiData() {
 }
 
 export function getNewProject(): Project {
+  console.log('getting new project')
   return {
     instances: {},
     types: { ...getBuiltInTypes() },

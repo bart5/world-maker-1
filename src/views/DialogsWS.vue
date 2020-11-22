@@ -1,14 +1,20 @@
 <template>
   <div class="workspace-wrapper">
     <div class="top-bar">
-      <button :disabled="!activeWorkspace" @click="createNewType">Create new type</button>
+      <button :disabled="!activeWorkspace" @click="createNewDialog">New dialog</button>
+      <button :disabled="!activeWorkspace" @click="removeDialog">Remove dialog</button>
+      <select class="" :value="selectedDialogId" v-model="selectedDialogId">
+        <option v-for="dialog in filteredDialogs" :key="dialog.id[0]" :value="dialog.id[0]">{{ dialog.name[0] || dialog.id[0] }}</option>
+      </select>
     </div>
-    <Board :boardId="boardId" />
+    <Board v-if="boardId !== ''" :boardId="boardId" />
+    <div v-else>No board to show</div>
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
 import Board from '@/views/Board.vue';
 import { actions } from '@/store/transactions'
 
@@ -18,18 +24,33 @@ import { actions } from '@/store/transactions'
   },
 })
 export default class DialogsWS extends Vue {
-  deleteModeIsOn = false
+  selectedDialogId = ''
+
+  boardId = ''
+
+  @Watch('selectedDialogId')
+  updateBoardId() {
+    this.boardId = this.selectedDialogId
+  }
 
   get activeWorkspace(): Workspace {
     return this.$store.getters.activeWorkspace
   }
 
-  get boardId() {
-    return this.activeWorkspace.activeBoardId
+  get filteredDialogs(): Instance[] {
+    return this.$store.getters.getFilteredInstances({ tId: 'dialog' })
   }
 
-  createNewType() {
-    actions.createType({})
+  createNewDialog() {
+    actions.createInstance({ tId: 'dialog' })
+  }
+
+  removeDialog() {
+    actions.removeInstance({ tId: 'dialog', iId: this.selectedDialogId })
+  }
+
+  mounted() {
+    this.boardId = this.activeWorkspace.activeBoardId
   }
 }
 </script>
