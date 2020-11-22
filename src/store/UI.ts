@@ -458,9 +458,9 @@ export default UI({
 
       this.commit('CREATE_NEW_TILE', { boardId, type, tileId, position })
     },
-    createNewWorkspace() {
-      const workspaceId = `workspace_${Date.now()}${Math.random()}`
-      this.commit('CREATE_NEW_WORKSPACE', workspaceId)
+    createNewWorkspace(state, type: WorkspaceType) {
+      const workspaceId = utils.getUniqueId()
+      this.commit('CREATE_NEW_WORKSPACE', { type, workspaceId })
     },
     activateWorkspace(state, workspaceId: string) {
       this.commit('ACTIVATE_WORKSPACE', workspaceId)

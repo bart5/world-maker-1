@@ -11,10 +11,7 @@
 import { Options, Vue } from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 
-@Options({
-  components: {
-  },
-})
+@Options({})
 export default class ProjectLoader extends Vue {
   @Watch('openingProjectInProgress')
   projectOpenHandler(opening: boolean) {
@@ -22,7 +19,7 @@ export default class ProjectLoader extends Vue {
       console.info('Opening project in progress.')
     } else {
       console.info('Project opened.')
-      this.spawnMissingTiles()
+      this.spawnNewProjectTiles()
     }
   }
 
@@ -58,7 +55,7 @@ export default class ProjectLoader extends Vue {
     this.$store.dispatch('createNewTile', { boardId, type: 'type', id })
   }
 
-  spawnMissingTiles() {
+  spawnNewProjectTiles() {
     const boards: Boards = this.$store.getters.getAllBoards
     if (!Object.entries(boards).length) {
       console.warn('Project has no boards.')
@@ -66,8 +63,6 @@ export default class ProjectLoader extends Vue {
     }
 
     const types: TypeWrapper[] = this.$store.getters.types
-    // const quests = this.$store.getters.quests
-    // const dialogs = this.$store.getters.dialogs
 
     if (boards.types.tiles.length === 0) {
       types.forEach((tw) => this.createNewTile('types', 'types', tw.id))

@@ -25,18 +25,14 @@ import { actions } from '@/store/transactions'
     Board
   },
 })
-export default class QuestsWS extends Vue {
+export default class BoardWS extends Vue {
   @Prop() workspaceId!: string
   @Prop() entityName!: 'quest' | 'dialog'
   @Prop() entityTypeId: 'quest' | 'dialog' = this.entityName
 
   selectedEntityId = ''
 
-  // boardId = ''
-
-  // @Watch('selectedEntityId', { immediate: true })
   updateBoardId(id: string) {
-    // this.boardId = this.selectedEntityId || this.activeWorkspace.activeBoardId
     this.$store.dispatch('setActiveBoardId', { workspaceId: this.workspaceId, boardId: id })
   }
 

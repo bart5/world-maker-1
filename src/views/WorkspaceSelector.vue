@@ -10,6 +10,10 @@
           'active': workspace.id === activeWorkspaceId,
           'inDeleteMode': deleteModeIsOn,
           'isDragged': getTabIsDragged(workspace.id),
+          'types': workspace.type === 'types',
+          'quest': workspace.type === 'quest',
+          'dialog': workspace.type === 'dialog',
+          'table': workspace.type === 'table',
         }"
         :style="getTabIsDragged(workspace.id) ? dragTabStyle : { order: workspace.order * 10 }"
       >
@@ -43,16 +47,21 @@
       <span>{{ draggedTabWorkspace.name }}</span>
     </div>
 
-    <!-- <button
-      :disabled="!projectDataIsLoaded"
-      class="workspace-tab add-new-tab-tab"
-      @click="createNewWorkspace"
-    >+</button> -->
+    <div class="workspace-tab add-new-tab-tab list">
+      <div class="top-field" @click="startEdit('addWorkspace', $event)">+</div>
+      <div v-if="doesEdit('addWorkspace')" class="values-list no-scroll">
+        <div class="value-available" @click="createNewWorkspace('quest')">Quest workspace</div>
+        <div class="value-available" @click="createNewWorkspace('dialog')">Dialog workspace</div>
+        <div class="value-available" @click="createNewWorkspace('Table')">Table workspace</div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
+
+type FieldType = 'addWorkspace' | ''
 
 @Options({})
 export default class WorkspaceSelector extends Vue {
@@ -67,6 +76,34 @@ export default class WorkspaceSelector extends Vue {
   draggedTabPosition = 0
 
   draggedTabWorkspaceId = ''
+
+  editInProgress: FieldType = ''
+  unwatch: any = null
+
+  doesEdit(fieldType: FieldType) {
+    return this.editInProgress === fieldType
+  }
+
+  stopEdit() {
+    if (this.unwatch) this.unwatch()
+    this.editInProgress = ''
+  }
+
+  startEdit(fieldType: FieldType, e: MouseEvent) {
+    e.stopPropagation()
+    if (fieldType === this.editInProgress) return
+    if (this.unwatch) this.unwatch()
+
+    this.editInProgress = fieldType
+
+    const widgetKey = Math.random()
+    this.$store.dispatch('setWidgetKey', { widgetKey }) // in order to active element from other components
+    this.unwatch = this.$watch('activeWidgetKey', (newKey: number) => {
+      if (newKey === widgetKey) return
+      this.stopEdit()
+      this.unwatch()
+    })
+  }
 
   get projectDataIsLoaded() {
     return this.$store.getters.projectDataIsLoaded
@@ -92,8 +129,8 @@ export default class WorkspaceSelector extends Vue {
     this.$store.dispatch('activateWorkspace', workspaceId)
   }
 
-  createNewWorkspace() {
-    this.$store.dispatch('createNewWorkspace')
+  createNewWorkspace(type: WorkspaceType) {
+    this.$store.dispatch('createNewWorkspace', type)
   }
 
   tryDeleteWorkspace(e: MouseEvent, workspace: Workspace) {
@@ -309,12 +346,12 @@ export default class WorkspaceSelector extends Vue {
     position: relative;
     background: white;
     border: 1px solid;
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
     border-bottom: none;
     text-align: center;
-    min-width: 30px;
-    padding: 0 5px 0 5px;
+    min-width: 88px;
+    padding: 0 6px 0 6px;
     margin: 6px 2px 0 0;
     font-size: 14px;
     display: flex;
@@ -358,13 +395,92 @@ export default class WorkspaceSelector extends Vue {
       font-size: 16px;
       font-weight: bold;
     }
+
+    &.types {
+      background-color: rgb(92, 69, 12);
+      border-color: transparent;
+      color: white;
+    }
+    &.quest {
+      background-color: rgb(19, 19, 109);
+      border-color: transparent;
+      color: white;
+    }
+    &.dialog {
+      background-color: rgb(13, 51, 13);
+      border-color: transparent;
+      color: white;
+    }
+    &.table {
+      background-color: rgba(20,20,20);
+      border-color: transparent;
+      color: white;
+    }
   }
 
   .add-new-tab-tab {
+    min-width: 34px;
     order: 99999;
     padding: 0 5px;
     font-weight: bold;
     background-color: gray;
+  }
+}
+
+.values-list {
+  font-size: 14px;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  width: 85%;
+  border-top: none;
+  background: lightgray;
+  display: flex;
+  flex-flow: column nowrap;
+  max-height: calc(6 * 24px);
+  overflow-y: scroll;
+  z-index: 2;
+  box-shadow:
+    3px 3px 4px 2px rgba(80,80,80, 0.4),
+    -3px 3px 4px 2px rgba(80,80,80, 0.4);
+
+  & > div {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 24px;
+  }
+
+  .value-selected {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+
+    .value {
+      margin-left: 6px;
+      flex-grow: 1;
+      text-align: left;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .remove-value-button {
+      background-color: rgba(255,0,0,0.22);
+    }
+  }
+
+  .value-available {
+    padding-left: 6px;
+
+    &:hover {
+      cursor: pointer;
+      color: white;
+      background: gray;
+    }
   }
 }
 </style>

@@ -34,6 +34,14 @@ export const builtInTypes: TypesDefinitions = {
       prop1: getPropDef('int32', 'prop1', 0),
     }
   },
+  'text': {
+    id: 'text',
+    name: 'Text',
+    definition: {
+      ...getBasicTypeDef(),
+      prop1: getPropDef('int32', 'prop1', 0),
+    }
+  },
   'zone': {
     id: 'zone',
     name: 'Zone',

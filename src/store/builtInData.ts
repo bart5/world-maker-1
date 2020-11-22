@@ -88,7 +88,7 @@ export function getNewProjectUiData() {
       {
         id: 'table',
         type: 'table',
-        name: 'Dialogs',
+        name: 'Table',
         order: 4,
         activeBoardId: '',
       },
