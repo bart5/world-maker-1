@@ -85,7 +85,7 @@ interface BoardConfig {
   lockTiles: boolean;
 }
 
-type WorkspaceType = 'types' | 'quests' | 'dialogs'
+type WorkspaceType = 'types' | 'quest' | 'dialog' | 'table'
 
 type boardId = string
 

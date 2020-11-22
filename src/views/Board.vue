@@ -52,7 +52,6 @@
         />
 
         <template v-for="tile in tiles" :key="tile.id">
-            <!-- v-if="!!tile.inputSource" -->
           <Curve
             v-for="sourceTile in getInputSourceTilesOfTile(tile)"
             :key="sourceTile.id"

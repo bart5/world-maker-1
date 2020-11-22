@@ -4,7 +4,9 @@
       <button @click="createNewEntity">{{ `New ${entityName}` }}</button>
       <button @click="removeEntity">{{ `New ${entityName}` }}</button>
       <select class="" v-model="selectedEntityId">
-        <option v-for="entity in filteredEntities" :key="entity.id[0]" :value="entity.id[0]">{{ entity.name[0] || entity.id[0] }}</option>
+        <option v-for="entity in filteredEntities" :key="entity.id[0]" :value="entity.id[0]">
+          {{ entity.name[0] || entity.id[0] }}
+        </option>
       </select>
     </div>
     <Board v-if="boardId !== ''" :boardId="boardId" />
@@ -31,9 +33,10 @@ export default class QuestsWS extends Vue {
 
   boardId = ''
 
-  @Watch('selectedEntityId')
+  @Watch('selectedEntityId', { immediate: true })
   updateBoardId() {
-    this.boardId = this.selectedEntityId
+    this.boardId = this.selectedEntityId || this.activeWorkspace.activeBoardId
+
   }
 
   get activeWorkspace(): Workspace {
@@ -49,7 +52,22 @@ export default class QuestsWS extends Vue {
   }
 
   removeEntity() {
+    const decision1 = window.confirm(`You are about to delete this ${this.entityName}. Are you sure?`)
+    if (!decision1) return
+    else {
+      const decision2 = window.confirm('Do you want to remove also contained entities?')
+      if (decision2) {
+        this.removeAllTiles()
+      }
+    }
     actions.removeInstance(this.simpCtx)
+  }
+
+  removeAllTiles() {
+    const tiles: Tile[] = this.$store.getters.getBoardTiles(this.boardId)
+    tiles.forEach((tile) => {
+      actions.removeInstance({ tId: tile.type, iId: tile.id })
+    })
   }
 
   get simpCtx() {
@@ -57,10 +75,6 @@ export default class QuestsWS extends Vue {
       tId: this.entityTypeId,
       iId: this.selectedEntityId,
     }
-  }
-
-  mounted() {
-    this.boardId = this.activeWorkspace.activeBoardId
   }
 }
 </script>

@@ -1,7 +1,8 @@
 import { ipc } from '@/game/data/ipcHandlersRenderer';
 import { createStore } from 'vuex';
 import * as utils from './utils';
-import { getNewProject } from './builtInData';
+import { getEmptyBoard, builtInBoards } from './builtInData';
+import getNewProject from './newProjectData';
 import initialState from './state';
 
 const minTileSize = {
@@ -89,7 +90,7 @@ export default UI({
     },
   },
   mutations: {
-    /* =========== PROJECT CONFIGURATION MUTATIONS =========== */
+    /* =========== PROJECT UI DATA MUTATIONS =========== */
     CREATE_NEW_TILE(state, { boardId, type, tileId, position }) {
       registerUiDataMutation(state)
 
@@ -282,6 +283,16 @@ export default UI({
       if (workspaceId) {
         state.project.uiData.activeWorkspaceId = workspaceId
       }
+    },
+    CREATE_BOARD(state, id: string) {
+      registerUiDataMutation(state)
+      state.project.uiData.boards[id] = {
+        ...getEmptyBoard(id)
+      }
+    },
+    DELETE_BOARD(state, id: string) {
+      registerUiDataMutation(state)
+      delete state.project.uiData.boards[id]
     },
     // SET_CURRENT_BOARD_CAMERA(state) {
     //   const camera = {
@@ -647,6 +658,13 @@ export default UI({
     },
     setWidgetKey(state, p: { widgetKey: number }) {
       this.commit('SET_WIDGET_KEY', p)
+    },
+    createBoard(state, id: string) {
+      this.commit('CREATE_BOARD', id)
+    },
+    deleteBoard(state, id: string) {
+      if (Object.keys(builtInBoards).some((bib) => bib === id)) return
+      this.commit('DELETE_BOARD', id)
     }
   },
   modules: {

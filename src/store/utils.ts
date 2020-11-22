@@ -1,5 +1,5 @@
 import { ActionContext } from 'vuex'
-import { getNewProject } from './builtInData'
+import getNewProject from './newProjectData'
 
 /* Shallow */
 export function validateProjectDataKeys(data: any) {
