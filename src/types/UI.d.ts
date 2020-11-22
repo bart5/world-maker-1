@@ -287,6 +287,8 @@ interface PublicActionContext {
   newType?: ValueType;
   newTargetId?: string;
   value?: Values;
+  boardId?: string;
+  tileType?: TileType;
 }
 
 interface InstanceBasics {

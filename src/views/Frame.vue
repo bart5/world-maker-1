@@ -4,7 +4,7 @@
       <WorkspaceSelector />
       <div class="main-view">
         <TypesWS v-if="is('types')" />
-        <QuestsWS v-else-if="is('quests')" entityName="quest" />
+        <QuestsWS v-else-if="is('quests')" :workspaceId="activeWorkspace.id" entityName="quest" />
         <DialogsWS v-else-if="is('dialogs')" />
       </div>
 

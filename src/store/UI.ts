@@ -294,6 +294,14 @@ export default UI({
       registerUiDataMutation(state)
       delete state.project.uiData.boards[id]
     },
+    SET_ACTIVE_BOARD_ID(state, p: { workspaceId: string, boardId: string}) {
+      const { workspaceId, boardId } = p
+      registerUiDataMutation(state)
+      const workspace = state.project.uiData.workspaces.find((ws) => ws.id === workspaceId)
+      if (workspace) {
+        workspace.activeBoardId = boardId
+      }
+    },
     // SET_CURRENT_BOARD_CAMERA(state) {
     //   const camera = {
     //     x: state.ui.currentBoardData?.boardFrame.scrollLeft || 0,
@@ -665,6 +673,9 @@ export default UI({
     deleteBoard(state, id: string) {
       if (Object.keys(builtInBoards).some((bib) => bib === id)) return
       this.commit('DELETE_BOARD', id)
+    },
+    setActiveBoardId(state, p: { workspaceId: string, boardId: string}) {
+      this.commit('SET_ACTIVE_BOARD_ID', p)
     }
   },
   modules: {

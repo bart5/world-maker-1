@@ -3,7 +3,7 @@
     <div class="top-bar">
       <button @click="createNewEntity">{{ `New ${entityName}` }}</button>
       <button @click="removeEntity">{{ `New ${entityName}` }}</button>
-      <select class="" v-model="selectedEntityId">
+      <select class="" :value="selectedEntityId" @change="updateBoardId(selectedEntityId)">
         <option v-for="entity in filteredEntities" :key="entity.id[0]" :value="entity.id[0]">
           {{ entity.name[0] || entity.id[0] }}
         </option>
@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
+import { Prop } from 'vue-property-decorator'
 import Board from '@/views/Board.vue';
 import { actions } from '@/store/transactions'
 
@@ -26,21 +26,37 @@ import { actions } from '@/store/transactions'
   },
 })
 export default class QuestsWS extends Vue {
-  @Prop() entityName!: string
-  @Prop() entityTypeId: string = this.entityName
+  @Prop() workspaceId!: string
+  @Prop() entityName!: 'quest' | 'dialog'
+  @Prop() entityTypeId: 'quest' | 'dialog' = this.entityName
 
   selectedEntityId = ''
 
-  boardId = ''
+  // boardId = ''
 
-  @Watch('selectedEntityId', { immediate: true })
-  updateBoardId() {
-    this.boardId = this.selectedEntityId || this.activeWorkspace.activeBoardId
+  // @Watch('selectedEntityId', { immediate: true })
+  updateBoardId(id: string) {
+    // this.boardId = this.selectedEntityId || this.activeWorkspace.activeBoardId
+    this.$store.dispatch('setActiveBoardId', { workspaceId: this.workspaceId, boardId: id })
+  }
 
+  get boardId() {
+    return this.activeWorkspace.activeBoardId
   }
 
   get activeWorkspace(): Workspace {
     return this.$store.getters.activeWorkspace
+  }
+
+  get tileType(): TileType {
+    switch (this.entityName) {
+      case 'quest':
+        return 'questNode'
+      case 'dialog':
+        return 'dialogNode'
+      default:
+        return ''
+    }
   }
 
   get filteredEntities(): Instance[] {
@@ -61,12 +77,13 @@ export default class QuestsWS extends Vue {
       }
     }
     actions.removeInstance(this.simpCtx)
+    this.updateBoardId('')
   }
 
   removeAllTiles() {
     const tiles: Tile[] = this.$store.getters.getBoardTiles(this.boardId)
     tiles.forEach((tile) => {
-      actions.removeInstance({ tId: tile.type, iId: tile.id })
+      actions.removeInstance({ tId: tile.type, iId: tile.id, boardId: this.boardId, tileType: tile.type })
     })
   }
 
@@ -74,6 +91,8 @@ export default class QuestsWS extends Vue {
     return {
       tId: this.entityTypeId,
       iId: this.selectedEntityId,
+      boardId: this.boardId,
+      tileType: this.tileType
     }
   }
 }
