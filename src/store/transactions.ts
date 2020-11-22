@@ -1,6 +1,7 @@
 import { Vue } from 'vue-class-component'
 import { Store } from 'vuex'
 import * as utils from './utils'
+import { typesWithBoards } from './builtInData'
 
 export const transactionHandler = {
   store: {} as Store<ApplicationState>,
@@ -14,7 +15,9 @@ export const transactionHandler = {
     iId = '', // instance id
     pN = '', // prop name
     newName = '', // it's needed for renaming props
-    initial = false
+    initial = false,
+    boardId = '',
+    tileType: TileType = '',
   ) {
     let entity
     let entityCopy
@@ -31,7 +34,7 @@ export const transactionHandler = {
       entity = this.store.state.project.instances[tId][iId][pN] as PropValues
       entityCopy = !entity ? null : utils.copyPropValues(entity)
     }
-    this.registerChange(entityCopy, eT, tId, iId, pN, newName, initial)
+    this.registerChange(entityCopy, eT, tId, iId, pN, newName, initial, boardId, tileType)
   },
   mutate(
     mN: string | null, // mutation name
@@ -40,7 +43,9 @@ export const transactionHandler = {
     tId: string, // type id
     iId = '', // instance id
     pN = '', // prop name
-    newName = '' // it's needed for renaming props
+    newName = '', // it's needed for renaming props
+    boardId = '',
+    tileType: TileType = ''
   ) {
     // Make first snapshot if there is none
     const recentChanges = this.store.state.project.recentChanges
@@ -55,7 +60,7 @@ export const transactionHandler = {
     if (mN !== null) {
       this.store.commit(mN, { tId, iId, pN, ...args })
     }
-    this.makeSnapshot(eT, tId, iId, pN, newName)
+    this.makeSnapshot(eT, tId, iId, pN, newName, false, boardId, tileType)
   },
   act(actionType: ActionType, context: PublicActionContext) {
     this.store.dispatch('publicAction', { actionType, context })
@@ -67,7 +72,9 @@ export const transactionHandler = {
     iId = '',
     pN = '',
     newName = '',
-    initial = false
+    initial = false,
+    boardId = '',
+    tileType: TileType = ''
   ) {
     const state = this.store.state
 
@@ -90,7 +97,9 @@ export const transactionHandler = {
       tId,
       iId,
       pN,
-      newName
+      newName,
+      boardId,
+      tileType,
     })
   },
   /**
@@ -130,8 +139,20 @@ export const transactionHandler = {
         entity = change.entityBefore as Instance
         if (entity === null) {
           delete state.project.instances[change.tId][change.iId]
+          if (typesWithBoards.includes(change.tId)) {
+            this.store.dispatch('deleteBoard', change.iId)
+          }
         } else {
           state.project.instances[change.tId][change.iId] = entity
+          if (typesWithBoards.includes(change.tId)) {
+            if (!(change.iId in state.project.uiData.boards)) {
+              this.store.dispatch('createBoard', change.iId)
+            }
+          } else if (change.tileType) {
+            if (!state.project.uiData.boards.types.tiles.some((t) => t.id === change.iId)) {
+              this.store.dispatch('createNewTile', { boardId: change.boardId, type: change.tileType, id: change.iId })
+            }
+          }
         }
         break;
       case 'PropValues': // tId, iId, pN
@@ -240,9 +261,11 @@ export function mutate(
   eT: EntityType,
   tId: string, // type id
   iId = '', // instance id
-  pN = '' // prop name
+  pN = '', // prop name,
+  boardId = '',
+  tileType = '',
 ) {
-  transactionHandler.mutate(mN, args, eT, tId, iId, pN)
+  transactionHandler.mutate(mN, args, eT, tId, iId, pN, boardId, tileType)
 }
 
 export default transactionHandler

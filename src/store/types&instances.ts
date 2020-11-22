@@ -1,6 +1,6 @@
 import { createStore } from 'vuex';
 import * as utils from './utils';
-import { getNewTypeData, getNewInstanceData, getPropDef } from './builtInData';
+import { getNewTypeData, getNewInstanceData, getPropDef, typesWithTiles, typesWithBoards } from './builtInData';
 import initialState from './state';
 import { mutate } from './transactions';
 
@@ -657,20 +657,36 @@ export default typesAndInstances({
         mutate('REMOVE_PROP_VALUE', { value }, 'PropValues', tId, iId, pN)
       }
     },
-    createInstance(state, p: { tId: string }) { // OK
-      const { tId } = p
+    createInstance(state, p: { tId: string, boardId: string, tileType: TileType }) { // OK
+      const { tId, boardId, tileType } = p
       const iId = utils.getUniqueId(state.state)
       const tN = state.getters.getTypeName({ typeId: tId })
 
-      mutate('CREATE_INSTANCE', { tN }, 'Instance', tId, iId)
+      mutate('CREATE_INSTANCE', { tN }, 'Instance', tId, iId, '', boardId, tileType)
+
+      if (typesWithBoards.includes(tId)) {
+        this.dispatch('createBoard', iId)
+      } else if ((typesWithTiles as string[]).includes(tId)) {
+        if (boardId && tileType) {
+          this.dispatch('createNewTile', { boardId, type: tileType, id: iId })
+        } else throw Error('No data for tile creation provided.')
+      }
     },
-    removeInstance(state, p: { tId: string, iId: string }) { // OK
-      const { tId, iId } = p
+    removeInstance(state, p: { tId: string, iId: string, boardId: string, tileType: TileType }) { // OK
+      const { tId, iId, boardId, tileType } = p
 
       this.dispatch('removeAllRefsFromInstA', { iId })
       this.dispatch('removeAllRefsToInstA', { iId })
 
-      mutate('REMOVE_INSTANCE', {}, 'Instance', tId, iId)
+      mutate('REMOVE_INSTANCE', {}, 'Instance', tId, iId, '', boardId, tileType)
+
+      if (typesWithBoards.includes(tId)) {
+        this.dispatch('deleteBoard', iId)
+      } else if ((typesWithTiles as string[]).includes(tId)) {
+        if (boardId) {
+          this.dispatch('deleteTile', { boardId, tileId: iId })
+        } else throw Error('No data for tile removal provided.')
+      }
     },
     // Meta fileds have always order -2
     // Id has always order -1

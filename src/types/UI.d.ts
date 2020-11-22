@@ -98,7 +98,7 @@ interface Workspace {
   // config?: Workspace
 }
 
-type TileType = 'type' | 'task' | 'dialogChoice' | 'dialog' | 'other'
+type TileType = 'type' | 'questNode' | 'dialogNode' | ''
 
 interface Tile {
   id: string;
@@ -207,6 +207,8 @@ type modalTypes =
     iId: string;
     pN: string;
     newName?: string;
+    boardId?: string;
+    tileType?: TileType;
   }
 
 // ===================

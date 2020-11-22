@@ -1,7 +1,7 @@
 import { createStore } from 'vuex';
 import initialState from './state';
 import UI from './UI'
-import typesAndInstances from './types&instance'
+import typesAndInstances from './types&instances'
 
 export default createStore({
   state: initialState,

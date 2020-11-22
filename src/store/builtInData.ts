@@ -1,6 +1,6 @@
 export const workspaceTypes: WorkspaceType[] = ['types', 'quest', 'dialog', 'table']
 export const typesWithBoards = ['quest', 'dialog']
-export const typesWithTiles = ['type', 'questNode', 'dialogNode']
+export const typesWithTiles: TileType[] = ['questNode', 'dialogNode']
 
 export const builtInWorkspaces = [
   {
