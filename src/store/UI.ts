@@ -233,38 +233,9 @@ export default UI({
         ...newConfig
       }
     },
-    // SET_WORKSPACE_CONFIG(state, { workspaceId, newConfig }) {
-    //   registerUiDataMutation(state)
-
-    //   const workspace = state.project.uiData.workspaces.find((w) => w.id === workspaceId)
-    //   if (!workspace) return
-    //   workspace.configuration = {
-    //     ...workspace.configuration,
-    //     ...newConfig
-    //   }
-    // },
-    // SNAP_WORKSPACE_TILES_TO_MODULUS(state, { workspaceId, modulus }) {
-    //   registerUiDataMutation(state)
-
-    //   const workspace = state.project.uiData.workspaces.find((w) => w.id === workspaceId)
-    //   if (!workspace) return
-    //   const alignToModulus = (n: number, mod: number) => {
-    //     return n - (n % mod)
-    //   }
-    //   state.project.uiData.boards[boardId].tiles.forEach((t) => {
-    //     if (t.workspaceId === workspaceId) {
-    //       t.x = alignToModulus(t.x, modulus)
-    //       t.y = alignToModulus(t.y, modulus)
-    //       t.width = alignToModulus(t.width, modulus)
-    //       t.height = alignToModulus(t.height, modulus)
-    //     }
-    //   })
-    // },
     SNAP_BOARD_TILES_TO_MODULUS(state, { boardId, modulus }) {
       registerUiDataMutation(state)
 
-      const workspace = state.project.uiData.workspaces.find((w) => w.id === boardId)
-      if (!workspace) return
       const alignToModulus = (n: number, mod: number) => {
         return n - (n % mod)
       }
@@ -525,11 +496,11 @@ export default UI({
     swapWorkspacesOrder(state, { workspaceToMoveLeft, workspaceToMoveRight }) {
       this.commit('SWAP_WORKSPACES_ORDER', { workspaceToMoveLeft, workspaceToMoveRight })
     },
-    setWorkspaceConfig(state, { workspaceId, newConfig }) {
-      this.commit('SET_WORKSPACE_CONFIG', { workspaceId, newConfig })
+    setBoardConfig(state, { boardId, newConfig }) {
+      this.commit('SET_BOARD_CONFIG', { boardId, newConfig })
     },
-    snapWorkspaceTilesToModulus(state, { workspaceId, modulus }) {
-      this.commit('SNAP_WORKSPACE_TILES_TO_MODULUS', { workspaceId, modulus })
+    snapBoardTilesToModulus(state, { boardId, modulus }) {
+      this.commit('SNAP_BOARD_TILES_TO_MODULUS', { boardId, modulus })
     },
     openModal(state, modalType: modalTypes) {
       this.commit('OPEN_MODAL', modalType)

@@ -3,9 +3,8 @@
     <div v-if="localBoardId" class="top-bar">
       <button @click="centerOnTiles">Center view</button>
       <button :disabled="disableZoom" @click="zoomIn">Zoom in</button>
-      <button :disabled="disableZoom" @click="resetZoom">Reset zoom</button>
       <button :disabled="disableZoom" @click="zoomOut">Zoom out</button>
-      |
+      <button :disabled="disableZoom" @click="resetZoom">Reset zoom</button>
       <div class="widget">
         <label>Mod:
           <input
@@ -17,16 +16,16 @@
           >
         </label>
       </div>
-      <div class="widget">
+      <!-- <div class="widget">
         <label>Zoom lock:
           <input type="checkbox" class="board-zoom-lock" v-model="config.lockScale" @change="onZoomLockChange">
         </label>
-      </div>
-      <div class="widget">
+      </div> -->
+      <!-- <div class="widget">
         <label>Anchor view:
           <input type="checkbox" class="board-view-lock" v-model="config.lockView" @change="onViewLockChange">
         </label>
-      </div>
+      </div> -->
     </div>
     <div
       v-if="localBoardId"
@@ -283,12 +282,10 @@ export default class Board extends Vue {
   }
 
   snapTilesToModulus(modulus: number) {
-    // this.$store.dispatch('snapWorkspaceTilesToModulus', { workspaceId: this.activeWorkspaceId, modulus })
     this.$store.dispatch('snapBoardTilesToModulus', { boardId: this.localBoardId, modulus })
   }
 
   setconfig(newConfig: Partial<BoardConfig>) {
-    // this.$store.dispatch('setconfig', { workspaceId: this.activeWorkspaceId, newConfig })
     this.$store.dispatch('setBoardConfig', { boardId: this.localBoardId, newConfig })
   }
 

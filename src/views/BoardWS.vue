@@ -68,8 +68,8 @@ export default class BoardWS extends Vue {
   }
 
   createNewEntity() {
-    console.log('active workspace: ', this.activeWorkspace)
-    console.log('creating instance with entity type id: ', this.entityTypeId)
+    const decision1 = window.confirm(`Create new ${this.entityName}?`)
+    if (!decision1) return
     actions.createInstance(this.simpCtx)
   }
 
