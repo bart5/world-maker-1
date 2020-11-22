@@ -2,8 +2,10 @@
   <div class="workspace-wrapper">
     <div class="top-bar">
       <button @click="createNewEntity">{{ `New ${entityName}` }}</button>
-      <button @click="removeEntity">{{ `New ${entityName}` }}</button>
-      <select class="" :value="selectedEntityId" @change="updateBoardId(selectedEntityId)">
+      <button @click="removeEntity">{{ `Remove ${entityName}` }}</button>
+      |
+      Filter {{ entityName }}s:
+      <select class="" v-model="selectedEntityId" @change="updateBoardId(selectedEntityId)">
         <option v-for="entity in filteredEntities" :key="entity.id[0]" :value="entity.id[0]">
           {{ entity.name[0] || entity.id[0] }}
         </option>
@@ -33,6 +35,7 @@ export default class BoardWS extends Vue {
   selectedEntityId = ''
 
   updateBoardId(id: string) {
+    console.log('updating board id to', id)
     this.$store.dispatch('setActiveBoardId', { workspaceId: this.workspaceId, boardId: id })
   }
 
@@ -56,10 +59,12 @@ export default class BoardWS extends Vue {
   }
 
   get filteredEntities(): Instance[] {
-    return this.$store.getters.getFilteredInstances(this.simpCtx)
+    return this.$store.getters.getFilteredInstances({ tId: this.entityTypeId })
   }
 
   createNewEntity() {
+    console.log('active workspace: ', this.activeWorkspace)
+    console.log('creating instance with entity type id: ', this.entityTypeId)
     actions.createInstance(this.simpCtx)
   }
 

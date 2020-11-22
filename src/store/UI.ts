@@ -286,6 +286,7 @@ export default UI({
     },
     CREATE_BOARD(state, id: string) {
       registerUiDataMutation(state)
+      console.log('creating board of id: ', id)
       state.project.uiData.boards[id] = {
         ...getEmptyBoard(id)
       }
@@ -299,6 +300,7 @@ export default UI({
       registerUiDataMutation(state)
       const workspace = state.project.uiData.workspaces.find((ws) => ws.id === workspaceId)
       if (workspace) {
+        console.log('setting active board id of workspace to: ', boardId)
         workspace.activeBoardId = boardId
       }
     },

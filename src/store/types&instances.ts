@@ -42,6 +42,7 @@ export default typesAndInstances({
       return getters.getType(p)?.definition
     },
     getTypeName: (state, getters) => (p: { tId: string, iId: string }) => {
+      console.log('getting name for type of id: ', p.tId)
       return (getters.getType(p) as TypeWrapper).name
     },
     getPDef: (state, getters) => (p: { tId: string, tN: string, iId: string, pN: string }) => {
@@ -434,10 +435,10 @@ export default typesAndInstances({
       // At this point all instances refs business is resolved
       state.project.instances[tId][iId][pN].remove(value[0])
     },
-    CREATE_INSTANCE(state, p: { tId: string, iId: string, tN: string, }) { // Ok
-      const { tId, iId, tN } = p
+    CREATE_INSTANCE(state, p: { tId: string, iId: string }) { // Ok
+      const { tId, iId } = p
 
-      state.project.instances[tId][iId] = getNewInstanceData(state, tN, iId)
+      state.project.instances[tId][iId] = getNewInstanceData(state, tId, iId)
     },
     REMOVE_INSTANCE(state, p: { tId: string, iId: string }) { // OK
       const { tId, iId } = p
@@ -660,9 +661,8 @@ export default typesAndInstances({
     createInstance(state, p: { tId: string, boardId: string, tileType: TileType }) { // OK
       const { tId, boardId, tileType } = p
       const iId = utils.getUniqueId(state.state)
-      const tN = state.getters.getTypeName({ typeId: tId })
 
-      mutate('CREATE_INSTANCE', { tN }, 'Instance', tId, iId, '', boardId, tileType)
+      mutate('CREATE_INSTANCE', {}, 'Instance', tId, iId, '', boardId, tileType)
 
       if (typesWithBoards.includes(tId)) {
         this.dispatch('createBoard', iId)
@@ -742,7 +742,7 @@ export default typesAndInstances({
 
       mutate('ADD_PROP_VALUE', { value }, 'PropValues', tId, '', pN)
 
-      const iA = state.getters.getInstance({ typeId: tId })
+      const iA = state.getters.getInstance({ tId })
       const iB = state.getters.getInstance(value)
 
       this.dispatch('updateMetaOfRefsFromInstAToInstB', { iA, iB })
@@ -753,7 +753,7 @@ export default typesAndInstances({
 
       mutate('REMOVE_PROP_VALUE', { value }, 'PropValues', tId, iId, pN)
 
-      const iA = state.getters.getInstance({ typeId: tId })
+      const iA = state.getters.getInstance({ tId })
       const iB = state.getters.getInstance(value)
 
       this.dispatch('updateMetaOfRefsFromInstAToInstB', { iA, iB })

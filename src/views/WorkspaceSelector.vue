@@ -16,11 +16,10 @@
           'table': workspace.type === 'table',
         }"
         :style="getTabIsDragged(workspace.id) ? dragTabStyle : { order: workspace.order * 10 }"
+        @dblclick="startRenamingWorkspace(workspace)"
+        @mousedown="(e) => onWorkspaceTabMousedown(e, workspace.id)"
       >
-        <div
-          @dblclick="startRenamingWorkspace(workspace)"
-          @mousedown="(e) => onWorkspaceTabMousedown(e, workspace.id)"
-        >
+        <div>
           <input
             v-if="workspaceToRename === workspace.id"
             ref="workspaceNameInput"
@@ -351,7 +350,7 @@ export default class WorkspaceSelector extends Vue {
     border-bottom: none;
     text-align: center;
     min-width: 88px;
-    padding: 0 6px 0 6px;
+    // padding: 0 6px 0 6px;
     margin: 6px 2px 0 0;
     font-size: 14px;
     display: flex;

@@ -3,8 +3,8 @@
     <template v-if="projectDataIsLoaded">
       <WorkspaceSelector />
       <div class="main-view">
-        <TypesWS v-if="is('types')" />
-        <TableWS v-if="is('table')" />
+        <TypesWS v-if="is('types')"/>
+        <TableWS v-else-if="is('table')" />
         <BoardWS v-else :workspaceId="activeWorkspace.id" :entityName="activeWorkspace.type" />
       </div>
 
@@ -19,6 +19,7 @@
 import { Options, Vue } from 'vue-class-component'
 import WorkspaceSelector from '@/views/WorkspaceSelector.vue'
 import TableWS from '@/views/TableWS.vue'
+import TypesWS from '@/views/TypesWS.vue'
 import BoardWS from '@/views/BoardWS.vue'
 import Sidebar from '@/views/Sidebar.vue'
 
@@ -28,6 +29,7 @@ import Sidebar from '@/views/Sidebar.vue'
     TableWS,
     BoardWS,
     Sidebar,
+    TypesWS,
   },
 })
 export default class Frame extends Vue {
@@ -72,6 +74,7 @@ export default class Frame extends Vue {
 
   mounted() {
     window.addEventListener('keydown', this.keyboardHandler)
+    console.log('active workspace: ', this.activeWorkspace)
   }
 }
 </script>
