@@ -18,7 +18,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import Board from '@/views/Board.vue';
 import { actions } from '@/store/transactions'
 
@@ -33,6 +33,11 @@ export default class BoardWS extends Vue {
   @Prop() entityTypeId: 'quest' | 'dialog' = this.entityName
 
   selectedEntityId = ''
+
+  @Watch('workspaceId', { immediate: true })
+  updateSelection() {
+    this.selectedEntityId = this.boardId
+  }
 
   updateBoardId(id: string) {
     console.log('updating board id to', id)

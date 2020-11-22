@@ -104,11 +104,14 @@ export default class WorkspaceSelector extends Vue {
     })
   }
 
+  get activeWidgetKey() { return this.$store.getters.activeWidgetKey }
+
   get projectDataIsLoaded() {
     return this.$store.getters.projectDataIsLoaded
   }
 
   get workspaces(): Workspace[] {
+    console.log('workspaces: ', this.$store.getters.workspaces)
     return this.$store.getters.workspaces
   }
 
@@ -350,7 +353,8 @@ export default class WorkspaceSelector extends Vue {
     border-bottom: none;
     text-align: center;
     min-width: 88px;
-    // padding: 0 6px 0 6px;
+    box-sizing: content-box;
+    padding: 0 8px 0 8px;
     margin: 6px 2px 0 0;
     font-size: 14px;
     display: flex;
@@ -426,59 +430,68 @@ export default class WorkspaceSelector extends Vue {
   }
 }
 
-.values-list {
-  font-size: 14px;
-  position: absolute;
-  right: 0;
-  top: 100%;
-  width: 85%;
-  border-top: none;
-  background: lightgray;
-  display: flex;
-  flex-flow: column nowrap;
-  max-height: calc(6 * 24px);
-  overflow-y: scroll;
-  z-index: 2;
-  box-shadow:
-    3px 3px 4px 2px rgba(80,80,80, 0.4),
-    -3px 3px 4px 2px rgba(80,80,80, 0.4);
+.list {
+  position: relative;
 
-  & > div {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    height: 24px;
-  }
-
-  .value-selected {
-    display: flex;
+  .top-field {
     width: 100%;
-    justify-content: space-between;
-
-    .value {
-      margin-left: 6px;
-      flex-grow: 1;
-      text-align: left;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-
-    .remove-value-button {
-      background-color: rgba(255,0,0,0.22);
-    }
   }
 
-  .value-available {
-    padding-left: 6px;
+  .values-list {
+    font-size: 14px;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    min-width: 170px;
+    width: 85%;
+    border-top: none;
+    background: lightgray;
+    display: flex;
+    flex-flow: column nowrap;
+    max-height: calc(6 * 24px);
+    overflow-y: scroll;
+    z-index: 2;
+    box-shadow:
+      3px 3px 4px 2px rgba(80,80,80, 0.4),
+      -3px 3px 4px 2px rgba(80,80,80, 0.4);
 
-    &:hover {
-      cursor: pointer;
-      color: white;
-      background: gray;
+    & > div {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      height: 24px;
+    }
+
+    .value-selected {
+      display: flex;
+      width: 100%;
+      justify-content: space-between;
+
+      .value {
+        margin-left: 6px;
+        flex-grow: 1;
+        text-align: left;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .remove-value-button {
+        background-color: rgba(255,0,0,0.22);
+      }
+    }
+
+    .value-available {
+      padding-left: 6px;
+
+      &:hover {
+        cursor: pointer;
+        color: white;
+        background: gray;
+      }
     }
   }
 }

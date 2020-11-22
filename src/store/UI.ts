@@ -300,6 +300,7 @@ export default UI({
       registerUiDataMutation(state)
       const workspace = state.project.uiData.workspaces.find((ws) => ws.id === workspaceId)
       if (workspace) {
+        console.log('setting active board for workspace: ', workspaceId)
         console.log('setting active board id of workspace to: ', boardId)
         workspace.activeBoardId = boardId
       }
