@@ -37,7 +37,7 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import TypeView from '@/views/TypeView.vue'
+import TypeView from '@/components/TypeView.vue'
 
 @Options({
   components: {

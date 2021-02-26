@@ -41,7 +41,7 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator';
-import PropView from '@/views/PropView.vue'
+import PropView from '@/components/PropView.vue'
 import { actions } from '@/store/transactions'
 
 type FieldType = '' | 'typeName'

@@ -60,10 +60,10 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import TypeViewUniversal from '@/views/TypeViewUniversal.vue'
-import Changes from '@/views/Changes.vue'
-import Collapsible from '@/views/Collapsible.vue'
-import Filters from '@/views/Filters.vue'
+import TypeViewUniversal from '@/components/TypeViewUniversal.vue'
+import Changes from '@/components/Changes.vue'
+import Collapsible from '@/components/Collapsible.vue'
+import Filters from '@/components/Filters.vue'
 
 type TabType = 'instances' | 'types' | 'changes'
 

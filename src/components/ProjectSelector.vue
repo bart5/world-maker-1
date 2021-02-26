@@ -39,7 +39,7 @@
 <script lang="ts">
 import { validateProjectDataKeys } from '@/store/utils'
 import { Options, Vue } from 'vue-class-component'
-import ModalWrapper from '@/views/ModalWrapper.vue'
+import ModalWrapper from '@/components/ModalWrapper.vue'
 
 @Options({
   components: {

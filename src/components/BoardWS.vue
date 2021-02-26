@@ -19,7 +19,7 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import Board from '@/views/Board.vue';
+import Board from '@/components/Board.vue';
 import { actions } from '@/store/transactions'
 
 @Options({

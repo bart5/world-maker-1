@@ -79,8 +79,8 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator';
-import TileComponent from '@/views/Tile.vue'
-import Curve from '@/views/Curve.vue'
+import TileComponent from '@/components/Tile.vue'
+import Curve from '@/components/Curve.vue'
 
 @Options({
   components: {

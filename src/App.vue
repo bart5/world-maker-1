@@ -8,11 +8,11 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import Frame from '@/views/Frame.vue';
-import ConfigModal from '@/views/ConfigModal.vue';
-import ProjectSelector from '@/views/ProjectSelector.vue';
-import AppLoader from '@/views/AppLoader.vue';
-import ProjectLoader from '@/views/ProjectLoader.vue';
+import Frame from '@/components/Frame.vue';
+import ConfigModal from '@/components/ConfigModal.vue';
+import ProjectSelector from '@/components/ProjectSelector.vue';
+import AppLoader from '@/components/AppLoader.vue';
+import ProjectLoader from '@/components/ProjectLoader.vue';
 
 @Options({
   components: {

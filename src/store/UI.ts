@@ -1,4 +1,4 @@
-import { ipc } from '@/game/data/ipcHandlersRenderer';
+import { ipc } from '@/ipcHandlersRenderer';
 import { createStore } from 'vuex';
 import * as utils from './utils';
 import { getEmptyBoard, builtInBoards } from './builtInData';

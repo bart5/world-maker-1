@@ -17,11 +17,11 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import WorkspaceSelector from '@/views/WorkspaceSelector.vue'
-import TableWS from '@/views/TableWS.vue'
-import TypesWS from '@/views/TypesWS.vue'
-import BoardWS from '@/views/BoardWS.vue'
-import Sidebar from '@/views/Sidebar.vue'
+import WorkspaceSelector from '@/components/WorkspaceSelector.vue'
+import TableWS from '@/components/TableWS.vue'
+import TypesWS from '@/components/TypesWS.vue'
+import BoardWS from '@/components/BoardWS.vue'
+import Sidebar from '@/components/Sidebar.vue'
 
 @Options({
   components: {

@@ -4,7 +4,7 @@
 </template>
 
 <script lang="ts">
-import { ipc } from '@/game/data/ipcHandlersRenderer'
+import { ipc } from '@/ipcHandlersRenderer'
 import { transactionHandler } from '@/store/transactions'
 import { Options, Vue } from 'vue-class-component'
 

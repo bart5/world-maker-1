@@ -141,9 +141,9 @@
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 import { Watch } from 'vue-property-decorator';
-import TileComponent from '@/views/Tile.vue'
-import Curve from '@/views/Curve.vue'
-import Sidebar from '@/views/Sidebar.vue'
+import TileComponent from '@/components/Tile.vue'
+import Curve from '@/components/Curve.vue'
+import Sidebar from '@/components/Sidebar.vue'
 
 @Options({
   components: {

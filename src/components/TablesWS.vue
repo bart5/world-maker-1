@@ -8,7 +8,7 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import Board from '@/views/Board.vue';
+import Board from '@/components/Board.vue';
 import { actions } from '@/store/transactions'
 
 @Options({
